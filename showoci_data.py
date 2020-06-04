@@ -1,5 +1,7 @@
 ##########################################################################
-# Copyright(c) 2016, 2019, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2016, 2020, Oracle and/or its affiliates.  All rights reserved.
+# This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
+#
 # showoci_data.py
 #
 # @author: Adi Zohar
@@ -1371,9 +1373,21 @@ class ShowOCIData(object):
             instances = self.service.search_multi_items(self.service.C_COMPUTE, self.service.C_COMPUTE_INST, 'region_name', region_name, 'compartment_id', compartment['id'])
 
             for instance in instances:
+
+                # fix the shape image for the summary
+                sum_shape = ""
+                if instance['image'] == "Not Found" or instance['image'] == "Custom" or "Oracle-Linux" in instance['image']:
+                    sum_shape = instance['image_os'][0:35]
+                elif 'Windows-Server' in instance['image']:
+                    sum_shape = instance['image'][0:19]
+                elif instance['image_os'] == "PaaS Image":
+                    sum_shape = "PaaS Image - " + instance['display_name'].split("|", 2)[1] if len(instance['display_name'].split("|", 2)) >= 2 else instance['image_os']
+                else:
+                    sum_shape = instance['image'][0:35]
+
                 inst = {'id': instance['id'], 'name': instance['shape'] + " - " + instance['display_name'] + " - " + instance['lifecycle_state'],
                         'sum_info': 'Compute',
-                        'sum_shape': instance['image_os'][0:14] + " - " + instance['shape'],
+                        'sum_shape': instance['shape'].ljust(16, ' ')[0:15] + " - " + sum_shape,
                         'availability_domain': instance['availability_domain'],
                         'fault_domain': instance['fault_domain'],
                         'time_maintenance_reboot_due': str(instance['time_maintenance_reboot_due']),
@@ -1853,6 +1867,7 @@ class ShowOCIData(object):
                          'backup_subnet_id': dbs['backup_subnet_id'],
                          'scan_dns': dbs['scan_dns_record_id'],
                          'scan_ips': dbs['scan_ips'],
+                         'scan_dns_name': dbs['hostname'] + "-scan." + dbs['domain'],
                          'data_storage_size_in_gbs': dbs['data_storage_size_in_gbs'],
                          'reco_storage_size_in_gb': dbs['reco_storage_size_in_gb'],
                          'sparse_diskgroup': dbs['sparse_diskgroup'],

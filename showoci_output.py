@@ -1,5 +1,7 @@
 ##########################################################################
-# Copyright(c) 2016, 2019, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2016, 2020, Oracle and/or its affiliates.  All rights reserved.
+# This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
+#
 # showoci_output.py
 #
 # @author: Adi Zohar
@@ -277,6 +279,28 @@ class ShowOCIOutput(object):
             self.__print_error("__print_identity_dynamic_groups", e)
 
     ##########################################################################
+    # Print network sources
+    ##########################################################################
+
+    def __print_network_sources(self, network_sources):
+        try:
+            if not network_sources:
+                return
+            self.print_header("Network Sources", 2)
+
+            for ns in network_sources:
+                print(self.taba + ns['name'])
+                print(self.tabs + "Desc      : " + ns['description'])
+                print(self.tabs + "Services  : " + ", ".join(ns['services']))
+                print(self.tabs + "Public IPs: " + ", ".join(ns['public_source_list']))
+                print(self.tabs + "VCN IPs   : " + ", ".join(x['ip_ranges'] for x in ns['virtual_source_list']))
+
+            print("")
+
+        except Exception as e:
+            self.__print_error("__print_network_sources", e)
+
+    ##########################################################################
     # Print Cost Tracking Tags
     ##########################################################################
     def __print_identity_cost_tracking_tags(self, tags):
@@ -308,6 +332,8 @@ class ShowOCIOutput(object):
                 self.__print_identity_groups(data['groups'])
             if 'dynamic_groups' in data:
                 self.__print_identity_dynamic_groups(data['dynamic_groups'])
+            if 'network_sources' in data:
+                self.__print_network_sources(data['network_sources'])
             if 'policies' in data:
                 self.__print_identity_policies(data['policies'])
             if 'providers' in data:
@@ -832,7 +858,7 @@ class ShowOCIOutput(object):
 
             if 'scan_dns' in dbs:
                 if dbs['scan_dns']:
-                    print(self.tabs + "Scan DNS: " + dbs['scan_dns'])
+                    print(self.tabs + "Scan    : " + dbs['scan_dns_name'])
 
             if 'scan_ips' in dbs:
                 for ip in dbs['scan_ips']:
@@ -957,15 +983,15 @@ class ShowOCIOutput(object):
     def __print_database_mysql(self, dbs):
         try:
             for db in dbs:
-                print(self.taba + "MYSQL   : " + db['display_name'] + " - " + db['description'] + "(" + db['mysql_version'] + ") - " + db['shape_name'])
-                print(self.taba + "AD      : " + db['availability_domain'] + " - " + db['fault_domain'])
-                print(self.tabs + "Created : " + db['time_created'][0:16] + " (" + db['lifecycle_state'] + ")")
-                print(self.tabs + "Subnet  : " + db['subnet_name'] + ", AutoBackup = " + db['backup_is_enabled'])
+                print(self.taba + "MYSQL   : " + db['display_name'] + " - " + db['description'] + " (" + db['mysql_version'] + ") - " + db['shape_name'])
+                print(self.tabs + "AD      : " + db['availability_domain'] + " - " + db['fault_domain'])
+                print(self.tabs + "Created : " + db['time_created'][0:16] + " (" + db['lifecycle_state'] + "), AutoBackup = " + db['backup_is_enabled'])
+                print(self.tabs + "Subnet  : " + db['subnet_name'])
                 print(self.tabs + "Size    : " + db['data_storage_size_in_gbs'] + "gb")
 
                 # Endpoints
                 for ep in db['endpoints']:
-                    print(self.tabs + "endpoint : " + str(ep['hostname']) + ":" + ep['port'] + " (" + ep['ip_address'] + ")," + ep['modes'])
+                    print(self.tabs + "endpoint: " + str(ep['ip_address']) + ":" + ep['port'] + ", Modes: " + ep['modes'] + " (" + ep['status'] + ")")
                 print("")
 
         except Exception as e:
@@ -1482,7 +1508,7 @@ class ShowOCIOutput(object):
                         print(self.tabs2 + "MRB  : Maintenance Reboot Due " + instance['time_maintenance_reboot_due'])
 
                 if 'image' in instance:
-                    print(self.tabs2 + "Img  : " + instance['image'])
+                    print(self.tabs2 + "Img  : " + instance['image'] + " (" + instance['image_os'] + ")")
 
                 if 'boot_volume' in instance:
                     for bv in instance['boot_volume']:
@@ -2266,6 +2292,7 @@ class ShowOCICSV(object):
     csv_network_security_group = []
     csv_network_routes = []
     csv_network_dhcp_options = []
+    csv_file_storage = []
     csv_load_balancer = []
     csv_load_balancer_bs = []
     csv_limits = []
@@ -2317,6 +2344,7 @@ class ShowOCICSV(object):
             self.__export_to_csv_file("database_autonomous", self.csv_db_autonomous)
             self.__export_to_csv_file("load_balancer_listeners", self.csv_load_balancer)
             self.__export_to_csv_file("load_balancer_backendset", self.csv_load_balancer_bs)
+            self.__export_to_csv_file("file_storage", self.csv_file_storage)
             self.__export_to_csv_file("limits", self.csv_limits)
 
             print("")
@@ -2442,16 +2470,13 @@ class ShowOCICSV(object):
 
                 # Check if credential exist
                 if 'api_keys' in user:
-                    data['api_keys'] = str(', '.join(x['id'] + " - " + x['lifecycle_state'] for x in user['api_keys']))
-
+                    data['api_keys'] = str(', '.join(x['id'] + " - " + x['lifecycle_state'] + " - " + x['time_created'] for x in user['api_keys']))
                 if 'auth_token' in user:
-                    data['auth_token'] = str(', '.join(x['id'] + " - " + x['description'] for x in user['auth_token']))
-
+                    data['auth_token'] = str(', '.join(x['id'] + " - " + x['description'] + " - " + x['time_created'] for x in user['auth_token']))
                 if 'secret_key' in user:
-                    data['secret_key'] = str(', '.join(x['id'] + " - " + x['display_name'] for x in user['secret_key']))
-
+                    data['secret_key'] = str(', '.join(x['id'] + " - " + x['display_name'] + " - " + x['time_created'] for x in user['secret_key']))
                 if 'smtp_cred' in user:
-                    data['smtp_cred'] = str(', '.join(x['id'] + " - " + x['description'] for x in user['smtp_cred']))
+                    data['smtp_cred'] = str(', '.join(x['id'] + " - " + x['description'] + " - " + x['time_created'] for x in user['smtp_cred']))
 
                 self.csv_identity_users.append(data)
 
@@ -3184,6 +3209,47 @@ class ShowOCICSV(object):
             self.__print_error("__csv_load_balancer_main", e)
 
     ##########################################################################
+    # File Storage
+    ##########################################################################
+
+    def __csv_file_storage_main(self, region_name, file_storage):
+        try:
+
+            if len(file_storage) == 0:
+                return
+
+            if file_storage:
+                for fs in file_storage:
+
+                    mount_ips = ""
+                    exports = ""
+                    # list the exports
+                    for ex in fs['exports']:
+                        if ex['path'] not in exports:
+                            exports += ex['path'] + ","
+
+                        # list the Ips for each mount
+                        for mnt in ex['mount_target']:
+                            ip_to_add = str(','.join(x for x in mnt['private_ip_ids']))
+                            if ip_to_add not in mount_ips:
+                                mount_ips += ip_to_add + ","
+
+                    data = {'region_name': region_name,
+                            'compartment_name': fs['compartment_name'],
+                            'availability_domain': fs['availability_domain'],
+                            'display_name': fs['display_name'],
+                            'size_gb': fs['size_gb'],
+                            'id': fs['id'],
+                            'exports': exports,
+                            'mount_ips': mount_ips
+                            }
+
+                    self.csv_file_storage.append(data)
+
+        except Exception as e:
+            self.__print_error("__csv_file_storage_main", e)
+
+    ##########################################################################
     # Print Identity data
     ##########################################################################
     def __csv_region_data(self, region_name, data):
@@ -3201,6 +3267,8 @@ class ShowOCICSV(object):
                     self.__csv_database_main(region_name, cdata['database'])
                 if 'load_balancer' in cdata:
                     self.__csv_load_balancer_main(region_name, cdata['load_balancer'])
+                if 'file_storage' in cdata:
+                    self.__csv_file_storage_main(region_name, cdata['file_storage'])
 
         except Exception as e:
             self.__print_error("__csv_region_data", e)

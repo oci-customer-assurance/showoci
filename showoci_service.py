@@ -1,5 +1,7 @@
 ##########################################################################
-# Copyright(c) 2016, 2019, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2016, 2020, Oracle and/or its affiliates.  All rights reserved.
+# This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
+#
 # showoci_service.py
 #
 # @author: Adi Zohar
@@ -168,6 +170,7 @@ class ShowOCIService(object):
     C_IDENTITY_REGIONS = 'regions'
     C_IDENTITY_PROVIDERS = 'providers'
     C_IDENTITY_DYNAMIC_GROUPS = 'dynamic_groups'
+    C_IDENTITY_NETWORK_SOURCES = 'network_sources'
     C_IDENTITY_USERS_GROUPS_MEMBERSHIP = 'users_groups_membership'
     C_IDENTITY_COST_TRACKING_TAGS = 'cost_tracking_tags'
 
@@ -935,6 +938,7 @@ class ShowOCIService(object):
 
             # if loading the full identity - load the rest
             if self.flags.read_identity:
+                self.__load_identity_network_sources(identity, tenancy_id)
                 self.__load_identity_users_groups(identity, tenancy_id)
                 self.__load_identity_dynamic_groups(identity, tenancy_id)
                 self.__load_identity_policies(identity)
@@ -1399,7 +1403,7 @@ class ShowOCIService(object):
                     continue
 
                 try:
-                    policies = identity.list_policies(c['id']).data
+                    policies = oci.pagination.list_call_get_all_results(identity.list_policies, c['id']).data
 
                     if policies:
                         datapol = []
@@ -1521,6 +1525,56 @@ class ShowOCIService(object):
             raise
         except Exception as e:
             self.__print_error("__load_identity_dynamic_groups", e)
+
+    ##########################################################################
+    # Load Network Sources
+    ##########################################################################
+    def __load_identity_network_sources(self, identity, tenancy_id):
+
+        data = []
+        self.__load_print_status("Network Sources")
+        start_time = time.time()
+
+        try:
+            network_sources = []
+            try:
+                network_sources = oci.pagination.list_call_get_all_results(identity.list_network_sources, tenancy_id).data
+            except oci.exceptions.ServiceError as e:
+                if self.__check_service_error(e.code):
+                    self.__load_print_auth_warning()
+                else:
+                    raise
+
+            # oci.identity.models.NetworkSourcesSummary
+            for ns in network_sources:
+                print(".", end="")
+
+                # compile vcn ip list
+                vcn_list = []
+                for vcn in ns.virtual_source_list:
+                    vcn_list.append({
+                        'vcn_id': vcn.vcn_id,
+                        'ip_ranges': str(', '.join(x for x in vcn.ip_ranges)),
+                    })
+
+                data.append({
+                    'id': str(ns.id),
+                    'name': str(ns.name),
+                    'description': str(ns.description),
+                    'virtual_source_list': vcn_list,
+                    'public_source_list': ns.public_source_list,
+                    'services': ns.services,
+                    'time_created': str(ns.time_created)
+                })
+
+            # add to data
+            self.data[self.C_IDENTITY][self.C_IDENTITY_NETWORK_SOURCES] = data
+            self.__load_print_cnt(len(data), start_time)
+
+        except oci.exceptions.RequestException:
+            raise
+        except Exception as e:
+            self.__print_error("__load_identity_network_sources", e)
 
     ##########################################################################
     # load cost tracking tags
@@ -4961,9 +5015,9 @@ class ShowOCIService(object):
                             raise
 
                     if lp:
-                        for l in lp.items:
-                            val['object_lifecycle'] += " , LifeCycle: " + str(l.name) + ", " + str(
-                                l.action) + ", " + str(l.time_amount) + " " + str(l.time_unit)
+                        for lc in lp.items:
+                            val['object_lifecycle'] += " , LifeCycle: " + str(lc.name) + ", " + str(
+                                lc.action) + ", " + str(lc.time_amount) + " " + str(lc.time_unit)
 
                     data.append(val)
                     cnt += 1
@@ -5883,7 +5937,10 @@ class ShowOCIService(object):
 
         data = []
         try:
-            dbps = oci.pagination.list_call_get_all_results(database_client.list_db_home_patches, dbhome_id).data
+            dbps = oci.pagination.list_call_get_all_results(
+                database_client.list_db_home_patches,
+                dbhome_id
+            ).data
 
             for dbp in dbps:
                 data.append({'id': dbp.id, 'description': str(dbp.description), 'version': str(dbp.version), 'time_released': str(dbp.time_released),
@@ -5894,6 +5951,10 @@ class ShowOCIService(object):
             if self.__check_service_error(e.code):
                 return data
             else:
+                # Added in order to avoid internal error which happen often here
+                if 'InternalError' in str(e.code):
+                    print('p', end="")
+                    return data
                 raise
         except oci.exceptions.RequestException as e:
             if self.__check_request_error(e):
@@ -6279,7 +6340,7 @@ class ShowOCIService(object):
                                  }
 
                         # get shape
-                        if mysql.shape:
+                        if mysql.shape_name:
                             shape_sizes = self.get_shape_details(str(mysql.shape_name))
                             if shape_sizes:
                                 value['shape_ocpu'] = shape_sizes['cpu']
