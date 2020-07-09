@@ -5,6 +5,23 @@ All notable changes to this project will be documented in this file.
 The format is based on `Keep a Changelog <http://keepachangelog.com/>`_.
 
 =====================
+20.07.14 - 2020-07-14
+=====================
+* Added retry policy for identity
+
+=====================
+20.06.30 - 2020-06-30
+=====================
+* Added compute agent information
+* Added password policy to the tenant json (thanks to Josh)
+
+=====================
+20.06.15 - 2020-06-15
+=====================
+* Added Maintatance for DBSystem including alert if maintenance is less than 14 days
+* Added -nobackups flags
+
+=====================
 20.06.09 - 2020-06-09
 =====================
 * Added file storage to the csv file
