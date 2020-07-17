@@ -6104,7 +6104,7 @@ class ShowOCIService(object):
 
             # dg = oci.database.models.DataGuardAssociationSummary
             for dg in dgs:
-                if dg.lifecycle_state == oci.database.models.DataGuardAssociationSummary.LIFECYCLE_STATE_TERMINATED or dg.lifecycle_state == oci.database.models.DataGuardAssociationSummary.LIFECYCLE_STATE_FAILED:
+                if not dg.peer_database_id or dg.lifecycle_state == oci.database.models.DataGuardAssociationSummary.LIFECYCLE_STATE_TERMINATED or dg.lifecycle_state == oci.database.models.DataGuardAssociationSummary.LIFECYCLE_STATE_FAILED:
                     continue
 
                 val = ({'id': str(dg.id),
@@ -6127,9 +6127,9 @@ class ShowOCIService(object):
                     dbsystem = database_client.get_db_system(dg.peer_db_system_id).data
                     if database and dbsystem:
                         val['db_name'] = str(dbsystem.display_name) + ":" + str(database.db_unique_name)
-                except oci.exceptions.ServiceError as e:
-                    if not self.__check_service_error(e.code):
-                        raise
+                except Exception:
+                    # incase error use ocid
+                    val['db_name'] = str(dg.peer_db_system_id)
 
                 # add the data
                 data.append(val)

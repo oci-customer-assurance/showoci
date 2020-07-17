@@ -8,6 +8,7 @@ The format is based on `Keep a Changelog <http://keepachangelog.com/>`_.
 20.07.21 - 2020-07-21
 =====================
 * Remove vcn_id from several network list options to boost the performance - list_dhcp_options, list_local_peering_gateways, list_route_tables, list_security_lists, list_subnets and list_internet_gateways
+* Fix database error if DG is in different region
 
 =====================
 20.07.14 - 2020-07-14
