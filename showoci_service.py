@@ -1165,7 +1165,16 @@ class ShowOCIService(object):
                     raise
 
             if compartment:
-                cvalue = {'id': str(compartment.id), 'name': str(compartment.name), 'path': str(compartment.name)}
+                cvalue = {
+                    'id': str(compartment.id),
+                    'name': str(compartment.name),
+                    'description': str(compartment.description),
+                    'time_created': str(compartment.time_created),
+                    'is_accessible': str(compartment.is_accessible),
+                    'path': str(compartment.name),
+                    'defined_tags': [] if compartment.defined_tags is None else compartment.defined_tags,
+                    'freeform_tags': [] if compartment.freeform_tags is None else compartment.freeform_tags
+                }
                 compartments.append(cvalue)
 
             self.data[self.C_IDENTITY][self.C_IDENTITY_COMPARTMENTS] = compartments
@@ -6223,8 +6232,27 @@ class ShowOCIService(object):
                              'nsg_ids': dbs.nsg_ids,
                              'private_endpoint': str(dbs.private_endpoint),
                              'private_endpoint_label': str(dbs.private_endpoint_label),
-                             'backups': []
+                             'backups': [],
+                             'autonomous_container_database_id': str(dbs.autonomous_container_database_id),
+                             'is_data_guard_enabled': dbs.is_data_guard_enabled,
+                             'is_free_tier': dbs.is_free_tier,
+                             'is_preview': dbs.is_preview,
+                             'infrastructure_type': str(dbs.infrastructure_type),
+                             'time_deletion_of_free_autonomous_database': str(dbs.time_deletion_of_free_autonomous_database),
+                             'time_reclamation_of_free_autonomous_database': str(dbs.time_reclamation_of_free_autonomous_database),
+                             'system_tags': dbs.system_tags,
+                             'time_of_last_switchover': str(dbs.time_of_last_switchover),
+                             'time_of_last_failover': str(dbs.time_of_last_failover),
+                             'failed_data_recovery_in_seconds': str(dbs.failed_data_recovery_in_seconds),
+                             'available_upgrade_versions': dbs.available_upgrade_versions,
+                             'standby_lag_time_in_seconds': "",
+                             'standby_lifecycle_state': ""
                              }
+
+                    # if standby object exist
+                    if dbs.standby_db:
+                        value['standby_lag_time_in_seconds'] = str(dbs.standby_db.lag_time_in_seconds)
+                        value['standby_lifecycle_state'] = str(dbs.standby_db.lifecycle_state)
 
                     # load bakcups
                     if not self.flags.skip_backups:

@@ -4,6 +4,17 @@ All notable changes to this project will be documented in this file.
 
 The format is based on `Keep a Changelog <http://keepachangelog.com/>`_.
 
+
+=====================
+20.08.18 - 2020-08-18
+=====================
+* Fixed bug searching compartment by OCID
+
+=====================
+20.07.28 - 2020-07-28
+=====================
+* Added Autonomous database properties for standby database
+
 =====================
 20.07.21 - 2020-07-21
 =====================
