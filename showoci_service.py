@@ -6389,16 +6389,17 @@ class ShowOCIService(object):
                     databases = oci.pagination.list_call_get_all_results(
                         mysql_client.list_db_systems,
                         compartment['id'],
-                        sort_by="displayName",
-                        retry_strategy=oci.retry.DEFAULT_RETRY_STRATEGY
+                        sort_by="displayName"
                     ).data
 
+                # mysql throw service error often, ignoring incase it does
                 except oci.exceptions.ServiceError as e:
                     if self.__check_service_error(e.code):
                         self.__load_print_auth_warning("m", False)
                         continue
                     else:
-                        raise
+                        print("e - " + str(e))
+                        return data
 
                 # loop on auto
                 # databases = oci.mysql.models.DbSystemSummary
@@ -8410,7 +8411,7 @@ class ShowOCIService(object):
                                'instance_url': str(oic.instance_url),
                                'message_packs': str(oic.message_packs),
                                'is_byol': oic.is_byol,
-                               'sum_info': "PaaS OIC Native - Msg Pack",
+                               'sum_info': "PaaS OIC Native " + ("BYOL" if oic.is_byol else "INCL") + " - Msg Pack",
                                'sum_size_gb': str(oic.message_packs),
                                'compartment_name': str(compartment['name']),
                                'compartment_id': str(compartment['id']),
