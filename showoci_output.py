@@ -1429,7 +1429,7 @@ class ShowOCIOutput(object):
                               ", " + log['source_service'] +
                               " (" + log['source_sourcetype'] + ")" +
                               ", Category = " + log['source_category'] +
-                              ", Resource: " + log['source_resource'].split(".")[1] +
+                              ", Resource: " + str(log['source_resource'] + "..").split(".")[1] +
                               ", State: " + log['lifecycle_state'] +
                               ", Created: " + log['time_created'][0:16])
                     print("")
