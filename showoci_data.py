@@ -1428,7 +1428,9 @@ class ShowOCIData(object):
                         'agent_is_management_disabled': instance['agent_is_management_disabled'],
                         'agent_is_monitoring_disabled': instance['agent_is_monitoring_disabled'],
                         'defined_tags': instance['defined_tags'],
-                        'freeform_tags': instance['freeform_tags']
+                        'freeform_tags': instance['freeform_tags'],
+                        'metadata': instance['metadata'],
+                        'extended_metadata': instance['extended_metadata']
                         }
 
                 # boot volumes attachments
