@@ -8,6 +8,7 @@ The format is based on `Keep a Changelog <http://keepachangelog.com/>`_.
 20.10.27 - 20.10.27
 =====================
 * Added metadata and extended metadata for instances using json output
+* Added tags to load balancer resource
 
 =====================
 20.10.20 - 20.10.20
