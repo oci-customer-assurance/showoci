@@ -2332,6 +2332,8 @@ class ShowOCIData(object):
             data['compartment_name'] = lb['compartment_name']
             data['compartment_id'] = lb['compartment_id']
             data['subnet_ids'] = lb['subnet_ids']
+            data['defined_tags'] = lb['defined_tags']
+            data['freeform_tags'] = lb['freeform_tags']
 
             # subnets
             datasub = []
