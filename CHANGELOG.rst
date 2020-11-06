@@ -7,7 +7,8 @@ The format is based on `Keep a Changelog <http://keepachangelog.com/>`_.
 =====================
 20.11.17 - 20.11.17
 =====================
-* Added secondat IP address to vnic
+* Added secondary IP address to vnic
+* Added several ocids to the json files
 
 =====================
 20.11.03 - 20.11.03

@@ -1584,7 +1584,7 @@ class ShowOCIOutput(object):
                             if vnic['details']['nsg_names']:
                                 print(self.tabs2 + "     : SecGrp: " + vnic['details']['nsg_names'])
                         if 'ip_addresses' in vnic:
-                            print(self.tabs2 + "     : IP Addresses : " + str(', '.join(x for x in vnic['ip_addresses'])))
+                            print(self.tabs2 + "     : IP Addresses : " + str(', '.join(x['ip_address'] for x in vnic['ip_addresses'])))
 
                 if 'console' in instance:
                     if instance['console']:
