@@ -1472,6 +1472,8 @@ class ShowOCIData(object):
                     if 'vnic_details' in vnic:
                         if 'display_name' in vnic['vnic_details']:
                             val = {'id': vnic['vnic_id'], 'desc': vnic['vnic_details']['display_name'] + str(comp_text), 'details': vnic['vnic_details']}
+                            if 'ip_addresses' in vnic['vnic_details']:
+                                val['ip_addresses'] = vnic['vnic_details']['ip_addresses']
                             vnicdata.append(val)
 
                 inst['vnic'] = vnicdata

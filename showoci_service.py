@@ -4086,6 +4086,23 @@ class ShowOCIService(object):
             # subnet
             data['dbdesc'] = data['display_name']
             data['display_name'] += subnet_display
+
+            # get all private_ip_addresses for vnic
+            data['ip_addresses'] = []
+            private_ip_addresses = virtual_network.list_private_ips(vnic_id=vnic_id).data
+            for pip in private_ip_addresses:
+                data['ip_addresses'].append(str(pip.ip_address))
+
+                # get public ip assigned to the private ip
+                try:
+                    privdetails = oci.core.models.GetPublicIpByPrivateIpIdDetails()
+                    privdetails.private_ip_id = pip.id
+                    pub_ip = virtual_network.get_public_ip_by_private_ip_id(privdetails)
+                    if pub_ip.status == 200:
+                        data['ip_addresses'].append(str(pub_ip.data.ip_address))
+                except Exception:
+                    pass
+
             return data
 
         except oci.exceptions.RequestException as e:
