@@ -839,6 +839,9 @@ class ShowOCIData(object):
                                  'name': vcn['name'],
                                  'display_name': vcn['display_name'],
                                  'cidr_block': vcn['cidr_block'],
+                                 'cidr_blocks': vcn['cidr_blocks'],
+                                 'ipv6_cidr_block': vcn['ipv6_cidr_block'],
+                                 'ipv6_public_cidr_block': vcn['ipv6_public_cidr_block'],
                                  'compartment_name': str(compartment['name']),
                                  'compartment_id': str(compartment['id']),
                                  'data': val})
@@ -2341,6 +2344,7 @@ class ShowOCIData(object):
             data['nsg_ids'] = lb['nsg_ids']
             data['nsg_names'] = lb['nsg_names']
             data['hostnames'] = [x['desc'] for x in lb['hostnames']]
+            data['rule_sets'] = lb['rule_sets']
             data['compartment_name'] = lb['compartment_name']
             data['compartment_id'] = lb['compartment_id']
             data['subnet_ids'] = lb['subnet_ids']
@@ -2418,6 +2422,7 @@ class ShowOCIData(object):
                            'stack_name': str(stack['display_name']) + " - " + str(stack['description']),
                            'display_name': stack['display_name'],
                            'description': stack['description'],
+                           'jobs': stack['jobs'],
                            'compartment_id': stack['compartment_id'],
                            'compartment_name': stack['compartment_name'],
                            'region_name': stack['region_name'],
@@ -2425,18 +2430,6 @@ class ShowOCIData(object):
                            'defined_tags': stack['defined_tags'],
                            'freeform_tags': stack['freeform_tags']}
 
-                # query jobs
-                datajob = []
-                for job in stack['jobs']:
-                    datajob.append(
-                        str(job['display_name']) + " - " +
-                        str(job['operation']).ljust(10) + " - " +
-                        str(job['lifecycle_state']).ljust(10) + " - " +
-                        str(job['time_finished'])[0:16]
-                    )
-
-                # add the jobs to the array
-                dataval['jobs'] = datajob
                 data.append(dataval)
 
             return data

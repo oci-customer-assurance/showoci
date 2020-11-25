@@ -5,10 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on `Keep a Changelog <http://keepachangelog.com/>`_.
 
 =====================
+20.12.01 - 20.12.01
+=====================
+* Added retry policy to all pagination calls
+* Added job id for resource manager
+
+=====================
+20.11.24 - 20.11.24
+=====================
+* Added multiple VCN CIDR blocks
+
+=====================
 20.11.17 - 20.11.17
 =====================
 * Added secondary IP address to vnic
 * Added several ocids to the json files
+* Added load balancer rule sets
 
 =====================
 20.11.03 - 20.11.03
