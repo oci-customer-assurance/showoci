@@ -5,10 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on `Keep a Changelog <http://keepachangelog.com/>`_.
 
 =====================
-20.12.01 - 20.12.01
+20.12.15 - 20.12.15
+=====================
+* Added OCVS Support (VMWare) under -paas
+* Enable OAC Native under -paas
+
+=====================
+20.12.08 - 20.12.08
 =====================
 * Added retry policy to all pagination calls
 * Added job id for resource manager
+* Added Exadata Infrastructure and VM Clusters
 
 =====================
 20.11.24 - 20.11.24

@@ -224,6 +224,7 @@ class ShowOCIService(object):
     # database
     C_DATABASE = "database"
     C_DATABASE_DBSYSTEMS = "dbsystems"
+    C_DATABASE_EXADATA = "exadata"
     C_DATABASE_AUTONOMOUS = "autonomous"
     C_DATABASE_NOSQL = "nosql"
     C_DATABASE_MYSQL = "mysql"
@@ -273,6 +274,7 @@ class ShowOCIService(object):
     C_PAAS_NATIVE_OIC = "oic"
     C_PAAS_NATIVE_OAC = "oac"
     C_PAAS_NATIVE_OCE = "oce"
+    C_PAAS_NATIVE_OCVS = "ocvs"
 
     # function
     C_FUNCTION = "functions"
@@ -333,6 +335,7 @@ class ShowOCIService(object):
         {'shape': 'Exadata.Full3.400', 'cpu': 400, 'memory': 5760, 'storage': 598},
         {'shape': 'Exadata.Half3.200', 'cpu': 200, 'memory': 2880, 'storage': 298},
         {'shape': 'Exadata.Quarter3.100', 'cpu': 100, 'memory': 1440, 'storage': 149},
+        {'shape': 'Exadata.X8M', 'cpu': 100, 'memory': 1440, 'storage': 149},
         {'shape': 'Exadata.Base.48', 'cpu': 48, 'memory': 720, 'storage': 74.8},
         {'shape': 'VM.CPU3.1', 'cpu': 6, 'memory': 90, 'storage': 0},
         {'shape': 'VM.CPU3.2', 'cpu': 12, 'memory': 180, 'storage': 0},
@@ -624,7 +627,7 @@ class ShowOCIService(object):
                     print("Error, OCI SDK version " + self.oci_compatible_version + " required !")
                     print("OCI SDK Version installed = " + self.get_oci_version())
                     print("Please use below command to upgrade OCI SDK:")
-                    print("   pip install --upgrade oci")
+                    print("   python -m pip install --upgrade oci")
                     print("")
                     print("Aboting.")
                     print("*********************************************************************")
@@ -3615,7 +3618,7 @@ class ShowOCIService(object):
                            'region_name': str(self.config['region']),
                            'defined_tags': [] if arr.defined_tags is None else arr.defined_tags,
                            'freeform_tags': [] if arr.freeform_tags is None else arr.freeform_tags,
-                           'base_image_name': (str(compute.get_image(arr.base_image_id).data.display_name) if arr.base_image_id else "")
+                           'base_image_name': (str(compute.get_image(arr.base_image_id, retry_strategy=oci.retry.DEFAULT_RETRY_STRATEGY).data.display_name) if arr.base_image_id else "")
                            }
                     data.append(val)
                     cnt += 1
@@ -5764,6 +5767,7 @@ class ShowOCIService(object):
 
             # add the key if not exists
             self.__initialize_data_key(self.C_DATABASE, self.C_DATABASE_DBSYSTEMS)
+            self.__initialize_data_key(self.C_DATABASE, self.C_DATABASE_EXADATA)
             self.__initialize_data_key(self.C_DATABASE, self.C_DATABASE_AUTONOMOUS)
             self.__initialize_data_key(self.C_DATABASE, self.C_DATABASE_NOSQL)
             self.__initialize_data_key(self.C_DATABASE, self.C_DATABASE_MYSQL)
@@ -5772,6 +5776,7 @@ class ShowOCIService(object):
             db = self.data[self.C_DATABASE]
 
             # append the data
+            db[self.C_DATABASE_EXADATA] += self.__load_database_exadata_infrastructure(database_client, virtual_network, compartments)
             db[self.C_DATABASE_DBSYSTEMS] += self.__load_database_dbsystems(database_client, virtual_network, compartments)
             db[self.C_DATABASE_AUTONOMOUS] += self.__load_database_autonomouns(database_client, compartments)
             db[self.C_DATABASE_NOSQL] += self.__load_database_nosql(nosql_client, compartments)
@@ -5853,6 +5858,257 @@ class ShowOCIService(object):
             self.__print_error("__load_database_maintatance_windows", e)
 
     ##########################################################################
+    # __load_database_exadata_infrastructure
+    ##########################################################################
+
+    def __load_database_exadata_infrastructure(self, database_client, virtual_network, compartments):
+
+        data = []
+        cnt = 0
+        start_time = time.time()
+
+        try:
+
+            self.__load_print_status("Exadata Infrastructure")
+
+            # loop on all compartments
+            for compartment in compartments:
+                # skip managed paas compartment
+                if self.__if_managed_paas_compartment(compartment['name']):
+                    print(".", end="")
+                    continue
+
+                print(".", end="")
+
+                # list db system
+                list_exa = []
+                try:
+                    list_exa = oci.pagination.list_call_get_all_results(
+                        database_client.list_cloud_exadata_infrastructures,
+                        compartment['id'],
+                        sort_by="DISPLAYNAME",
+                        retry_strategy=oci.retry.DEFAULT_RETRY_STRATEGY
+                    ).data
+
+                except oci.exceptions.ServiceError as e:
+                    if self.__check_service_error(e.code):
+                        self.__load_print_auth_warning()
+                        continue
+                    else:
+                        raise
+
+                # loop on the Exadata infrastructure
+                # dbs = oci.database.models.CloudExadataInfrastructureSummary
+                for dbs in list_exa:
+                    if (dbs.lifecycle_state == oci.database.models.CloudExadataInfrastructureSummary.LIFECYCLE_STATE_TERMINATED or
+                            dbs.lifecycle_state == oci.database.models.CloudExadataInfrastructureSummary.LIFECYCLE_STATE_TERMINATING):
+                        continue
+
+                    value = {'id': str(dbs.id),
+                             'display_name': str(dbs.display_name),
+                             'shape': str(dbs.shape),
+                             'shape_ocpu': 0,
+                             'shape_memory_gb': 0,
+                             'shape_storage_tb': 0,
+                             'version': 'XP',
+                             'lifecycle_state': str(dbs.lifecycle_state),
+                             'lifecycle_details': str(dbs.lifecycle_details),
+                             'availability_domain': str(dbs.availability_domain),
+                             'compute_count': str(dbs.compute_count),
+                             'storage_count': str(dbs.storage_count),
+                             'total_storage_size_in_gbs': str(dbs.total_storage_size_in_gbs),
+                             'available_storage_size_in_gbs': str(dbs.available_storage_size_in_gbs),
+                             'compartment_name': str(compartment['name']),
+                             'compartment_id': str(compartment['id']),
+                             'time_created': str(dbs.time_created),
+                             'last_maintenance_run': self.__load_database_maintatance(database_client, dbs.last_maintenance_run_id, str(dbs.display_name) + " - " + str(dbs.shape)),
+                             'next_maintenance_run': self.__load_database_maintatance(database_client, dbs.next_maintenance_run_id, str(dbs.display_name) + " - " + str(dbs.shape)),
+                             'maintenance_window': self.__load_database_maintatance_windows(dbs.maintenance_window),
+                             'defined_tags': [] if dbs.defined_tags is None else dbs.defined_tags,
+                             'freeform_tags': [] if dbs.freeform_tags is None else dbs.freeform_tags,
+                             'region_name': str(self.config['region']),
+                             'vm_clusters': self.__load_database_exadata_vm_clusters(database_client, virtual_network, dbs.id, compartment)
+                             }
+
+                    # get shape
+                    if dbs.shape:
+                        shape_sizes = self.get_shape_details(str(dbs.shape))
+                        if shape_sizes:
+                            value['shape_ocpu'] = shape_sizes['cpu']
+                            value['shape_memory_gb'] = shape_sizes['memory']
+                            value['shape_storage_tb'] = shape_sizes['storage']
+
+                        # if x8m calculate ocpu and storage
+                        if dbs.shape == "Exadata.X8M":
+                            if dbs.compute_count != "2" or dbs.storage_count != "3":
+                                value['shape_ocpu'] = dbs.compute_count * 50
+                                value['shape_storage_tb'] = dbs.storage_count * 49.5
+                                value['shape_memory_gb'] = dbs.compute_count * 720
+
+                    # add the data
+                    cnt += 1
+                    data.append(value)
+
+            self.__load_print_cnt(cnt, start_time)
+            return data
+
+        except oci.exceptions.RequestException as e:
+            if self.__check_request_error(e):
+                return data
+            raise
+        except Exception as e:
+            self.__print_error("__load_database_exadata_infrastructure", e)
+            return data
+
+    ##########################################################################
+    # __load_database_exadata_vm_clusters
+    ##########################################################################
+    def __load_database_exadata_vm_clusters(self, database_client, virtual_network, exa_id, compartment):
+
+        data = []
+        try:
+            vms = database_client.list_cloud_vm_clusters(
+                compartment['id'],
+                cloud_exadata_infrastructure_id=exa_id,
+                retry_strategy=oci.retry.DEFAULT_RETRY_STRATEGY
+            ).data
+
+            # arr = oci.database.models.CloudVmClusterSummary
+            for arr in vms:
+                if (arr.lifecycle_state == oci.database.models.CloudVmClusterSummary.LIFECYCLE_STATE_TERMINATED or
+                        arr.lifecycle_state == oci.database.models.CloudVmClusterSummary.LIFECYCLE_STATE_TERMINATING):
+                    continue
+
+                value = {
+                    'id': str(arr.id),
+                    'cluster_name': str(arr.cluster_name),
+                    'hostname': str(arr.hostname),
+                    'compartment_id': str(arr.compartment_id),
+                    'availability_domain': str(arr.availability_domain),
+                    'data_subnet_id': str(arr.subnet_id),
+                    'data_subnet': self.get_network_subnet(str(arr.subnet_id), True),
+                    'backup_subnet_id': str(arr.backup_subnet_id),
+                    'backup_subnet': "" if arr.backup_subnet_id is None else self.get_network_subnet(str(arr.backup_subnet_id), True),
+                    'nsg_ids': str(arr.nsg_ids),
+                    'backup_network_nsg_ids': str(arr.backup_network_nsg_ids),
+                    'last_update_history_entry_id': str(arr.last_update_history_entry_id),
+                    'shape': str(arr.shape),
+                    'listener_port': str(arr.listener_port),
+                    'lifecycle_state': str(arr.lifecycle_state),
+                    'node_count': str(arr.node_count),
+                    'storage_size_in_gbs': str(arr.storage_size_in_gbs),
+                    'display_name': str(arr.display_name),
+                    'time_created': str(arr.time_created),
+                    'lifecycle_details': str(arr.lifecycle_details),
+                    'time_zone': str(arr.time_zone),
+                    'domain': str(arr.domain),
+                    'cpu_core_count': str(arr.cpu_core_count),
+                    'data_storage_percentage': str(arr.data_storage_percentage),
+                    'is_local_backup_enabled': str(arr.is_local_backup_enabled),
+                    'is_sparse_diskgroup_enabled': str(arr.is_sparse_diskgroup_enabled),
+                    'gi_version': str(arr.gi_version),
+                    'system_version': str(arr.system_version),
+                    'ssh_public_keys': str(arr.ssh_public_keys),
+                    'license_model': str(arr.license_model),
+                    'disk_redundancy': str(arr.disk_redundancy),
+                    'scan_ip_ids': str(arr.scan_ip_ids),
+                    'vip_ids': str(arr.vip_ids),
+                    'scan_dns_record_id': str(arr.scan_dns_record_id),
+                    'defined_tags': [] if arr.defined_tags is None else arr.defined_tags,
+                    'freeform_tags': [] if arr.freeform_tags is None else arr.freeform_tags,
+                    'patches': [],
+                    'db_homes': self.__load_database_dbsystems_dbhomes(database_client, virtual_network, compartment, arr.id, exa=True),
+                    'db_nodes': self.__load_database_dbsystems_dbnodes(database_client, virtual_network, compartment, arr.id, exa=True),
+                    'region_name': str(self.config['region']),
+                    'scan_ips': [],
+                    'vip_ips': []
+                }
+
+                # Skip the patches, there is an issue with the api for the vm cluster
+                # value['patches'] = self.__load_database_exadata_vm_patches(database_client, arr.id),
+
+                # get shape
+                if arr.shape:
+                    shape_sizes = self.get_shape_details(str(arr.shape))
+                    if shape_sizes:
+                        value['shape_ocpu'] = shape_sizes['cpu']
+                        value['shape_memory_gb'] = shape_sizes['memory']
+                        value['shape_storage_tb'] = shape_sizes['storage']
+
+                # license model
+                if arr.license_model == oci.database.models.CloudVmClusterSummary.LICENSE_MODEL_LICENSE_INCLUDED:
+                    value['license_model'] = "INCL"
+                elif arr.license_model == oci.database.models.CloudVmClusterSummary.LICENSE_MODEL_BRING_YOUR_OWN_LICENSE:
+                    value['license_model'] = "BYOL"
+                else:
+                    value['license_model'] = str(arr.license_model)
+
+                # scan IPs
+                if arr.scan_ip_ids is not None:
+                    scan_ips = []
+                    for scan_ip in arr.scan_ip_ids:
+                        scan_ips.append(self.__load_core_network_single_privateip(virtual_network, scan_ip))
+                    value['scan_ips'] = scan_ips
+
+                # VIPs
+                if arr.vip_ids is not None:
+                    vip_ips = []
+                    for vipip in arr.vip_ids:
+                        vip_ips.append(self.__load_core_network_single_privateip(virtual_network, vipip))
+                    value['vip_ips'] = vip_ips
+
+                # add to main data
+                data.append(value)
+
+            return data
+
+        except oci.exceptions.ServiceError as e:
+            if self.__check_service_error(e.code):
+                self.__load_print_auth_warning()
+                return data
+            else:
+                raise
+        except oci.exceptions.RequestException as e:
+            if self.__check_request_error(e):
+                return data
+            raise
+        except Exception as e:
+            self.__print_error("__load_database_exadata_vm_clusters", e)
+            return data
+
+    ##########################################################################
+    # __load_database_exadata_vm_patches
+    ##########################################################################
+    def __load_database_exadata_vm_patches(self, database_client, vm_id):
+
+        data = []
+        try:
+            dbps = oci.pagination.list_call_get_all_results(
+                database_client.list_vm_cluster_patches,
+                vm_id,
+                retry_strategy=oci.retry.DEFAULT_RETRY_STRATEGY
+            ).data
+
+            for dbp in dbps:
+                data.append({'id': dbp.id, 'description': str(dbp.description),
+                             'version': str(dbp.version), 'time_released': str(dbp.time_released),
+                             'last_action': str(dbp.last_action)})
+            return data
+
+        except oci.exceptions.ServiceError as e:
+            if self.__check_service_error(e.code):
+                return data
+            else:
+                raise
+        except oci.exceptions.RequestException as e:
+            if self.__check_request_error(e):
+                return data
+            raise
+        except Exception as e:
+            self.__print_error("__load_database_exadata_vm_patches", e)
+            return data
+
+    ##########################################################################
     # __load_database_dbsystems
     ##########################################################################
 
@@ -5895,7 +6151,7 @@ class ShowOCIService(object):
                 # loop on the db systems
                 # dbs = oci.database.models.DbSystemSummary
                 for dbs in list_db_systems:
-                    if dbs.lifecycle_state == oci.database.models.DbSystemSummary.LIFECYCLE_STATE_TERMINATED:
+                    if (dbs.lifecycle_state == oci.database.models.DbSystemSummary.LIFECYCLE_STATE_TERMINATED or dbs.lifecycle_state == "MIGRATED"):
                         continue
 
                     value = {'id': str(dbs.id),
@@ -5934,8 +6190,9 @@ class ShowOCIService(object):
                              'defined_tags': [] if dbs.defined_tags is None else dbs.defined_tags,
                              'freeform_tags': [] if dbs.freeform_tags is None else dbs.freeform_tags,
                              'patches': self.__load_database_dbsystems_patches(database_client, dbs.id),
-                             'db_nodes': self.__load_database_dbsystems_dbnodes(database_client, virtual_network, dbs.id, compartment),
-                             'db_homes': self.__load_database_dbsystems_dbhomes(database_client, virtual_network, dbs.id, compartment)}
+                             'db_nodes': self.__load_database_dbsystems_dbnodes(database_client, virtual_network, compartment, dbs.id),
+                             'db_homes': self.__load_database_dbsystems_dbhomes(database_client, virtual_network, compartment, dbs.id)
+                             }
 
                     # get shape
                     if dbs.shape:
@@ -6002,17 +6259,28 @@ class ShowOCIService(object):
             return data
 
     ##########################################################################
-    # __load_database_dbsystems_dbnodes
+    # __load_database_exadata_infrastructure
     ##########################################################################
-    def __load_database_dbsystems_dbnodes(self, database_client, virtual_network, dbs_id, compartment):
+    def __load_database_dbsystems_dbnodes(self, database_client, virtual_network, compartment, dbs_id, exa=False):
 
         data = []
+        db_nodes = []
+        api_call = ""
         try:
-            db_nodes = database_client.list_db_nodes(
-                compartment['id'],
-                db_system_id=dbs_id,
-                retry_strategy=oci.retry.DEFAULT_RETRY_STRATEGY
-            ).data
+            if not exa:
+                api_call = "database_client.list_db_nodes with db_system_id"
+                db_nodes = database_client.list_db_nodes(
+                    compartment['id'],
+                    db_system_id=dbs_id,
+                    retry_strategy=oci.retry.DEFAULT_RETRY_STRATEGY
+                ).data
+            else:
+                api_call = "database_client.list_db_nodes with vm_cluster_id"
+                db_nodes = database_client.list_db_nodes(
+                    compartment['id'],
+                    vm_cluster_id=dbs_id,
+                    retry_strategy=oci.retry.DEFAULT_RETRY_STRATEGY
+                ).data
 
             # db_node = oci.database.models.DbNodeSummary
             for db_node in db_nodes:
@@ -6042,28 +6310,43 @@ class ShowOCIService(object):
                 self.__load_print_auth_warning()
                 return data
             else:
+                print("Error at API " + api_call)
                 raise
         except oci.exceptions.RequestException as e:
             if self.__check_request_error(e):
                 return data
-            raise
+            else:
+                print("Error at API " + api_call)
+                raise
         except Exception as e:
-            self.__print_error("__load_database_dbsystems_dbnodes", e)
+            self.__print_error("__load_database_dbsystems_dbnodes, API=" + api_call, e)
             return data
 
     ##########################################################################
     # __load_database_dbsystems_dbhomes
     ##########################################################################
-    def __load_database_dbsystems_dbhomes(self, database_client, virtual_network, dbs_id, compartment):
+    def __load_database_dbsystems_dbhomes(self, database_client, virtual_network, compartment, dbs_id, exa=False):
 
         data = []
+        db_homes = []
+        api_call = ""
         try:
-            db_homes = oci.pagination.list_call_get_all_results(
-                database_client.list_db_homes,
-                compartment['id'],
-                db_system_id=dbs_id,
-                retry_strategy=oci.retry.DEFAULT_RETRY_STRATEGY
-            ).data
+            if not exa:
+                api_call = "database_client.list_db_homes with db_system_id"
+                db_homes = oci.pagination.list_call_get_all_results(
+                    database_client.list_db_homes,
+                    compartment['id'],
+                    db_system_id=dbs_id,
+                    retry_strategy=oci.retry.DEFAULT_RETRY_STRATEGY
+                ).data
+            else:
+                api_call = "database_client.list_db_homes with vm_cluster_id"
+                db_homes = oci.pagination.list_call_get_all_results(
+                    database_client.list_db_homes,
+                    compartment['id'],
+                    vm_cluster_id=dbs_id,
+                    retry_strategy=oci.retry.DEFAULT_RETRY_STRATEGY
+                ).data
 
             # db_home = oci.database.models.DbHomeSummary
             for db_home in db_homes:
@@ -6074,6 +6357,7 @@ class ShowOCIService(object):
                      'last_patch_history_entry_id': str(db_home.last_patch_history_entry_id),
                      'lifecycle_state': str(db_home.lifecycle_state),
                      'db_system_id': str(db_home.db_system_id),
+                     'vm_cluster_id': str(db_home.vm_cluster_id),
                      'db_version': str(db_home.db_version),
                      'time_created': str(db_home.time_created),
                      'databases': self.__load_database_dbsystems_dbhomes_databases(database_client, db_home.id, compartment),
@@ -6087,13 +6371,16 @@ class ShowOCIService(object):
                 self.__load_print_auth_warning("h")
                 return data
             else:
+                print("Error at API " + api_call)
                 raise
         except oci.exceptions.RequestException as e:
             if self.__check_request_error(e):
                 return data
-            raise
+            else:
+                print("Error at API " + api_call)
+                raise
         except Exception as e:
-            self.__print_error("__load_database_dbsystems_dbhomess", e)
+            self.__print_error("__load_database_dbsystems_dbhomess, API=" + api_call, e)
             return data
 
     ##########################################################################
@@ -8519,11 +8806,15 @@ class ShowOCIService(object):
             oic_client = oci.integration.IntegrationInstanceClient(self.config, signer=self.signer, timeout=1)
             oac_client = oci.analytics.AnalyticsClient(self.config, signer=self.signer, timeout=0.1)
             oce_client = oci.oce.OceInstanceClient(self.config, signer=self.signer, timeout=1)
+            ocvs_client = oci.ocvp.SddcClient(self.config, signer=self.signer, timeout=1)
+            esxi_client = oci.ocvp.EsxiHostClient(self.config, signer=self.signer, timeout=1)
 
             if self.flags.proxy:
                 oic_client.base_client.session.proxies = {'https': self.flags.proxy}
                 oac_client.base_client.session.proxies = {'https': self.flags.proxy}
                 oce_client.base_client.session.proxies = {'https': self.flags.proxy}
+                ocvs_client.base_client.session.proxies = {'https': self.flags.proxy}
+                esxi_client.base_client.session.proxies = {'https': self.flags.proxy}
 
             # reference to compartments
             compartments = self.get_compartment()
@@ -8532,16 +8823,16 @@ class ShowOCIService(object):
             self.__initialize_data_key(self.C_PAAS_NATIVE, self.C_PAAS_NATIVE_OAC)
             self.__initialize_data_key(self.C_PAAS_NATIVE, self.C_PAAS_NATIVE_OIC)
             self.__initialize_data_key(self.C_PAAS_NATIVE, self.C_PAAS_NATIVE_OCE)
+            self.__initialize_data_key(self.C_PAAS_NATIVE, self.C_PAAS_NATIVE_OCVS)
 
             # reference to paas
             paas = self.data[self.C_PAAS_NATIVE]
 
             # append the data
+            paas[self.C_PAAS_NATIVE_OCVS] += self.__load_paas_ocvs(ocvs_client, esxi_client, compartments)
             paas[self.C_PAAS_NATIVE_OIC] += self.__load_paas_oic(oic_client, compartments)
             paas[self.C_PAAS_NATIVE_OCE] += self.__load_paas_oce(oce_client, compartments)
-
-            # TBD: oac native not yet enabled in all regions, disabling for now
-            # paas[self.C_PAAS_NATIVE_OAC] += self.__load_paas_oac(oac_client, compartments)
+            paas[self.C_PAAS_NATIVE_OAC] += self.__load_paas_oac(oac_client, compartments)
             print("")
 
         except oci.exceptions.RequestException:
@@ -8607,6 +8898,8 @@ class ShowOCIService(object):
                                'is_byol': oic.is_byol,
                                'sum_info': "PaaS OIC Native " + ("BYOL" if oic.is_byol else "INCL") + " - Msg Pack",
                                'sum_size_gb': str(oic.message_packs),
+                               'is_file_server_enabled': str(oic.is_file_server_enabled),
+                               'consumption_model': str(oic.consumption_model),
                                'compartment_name': str(compartment['name']),
                                'compartment_id': str(compartment['id']),
                                'region_name': str(self.config['region'])}
@@ -8624,6 +8917,118 @@ class ShowOCIService(object):
             raise
         except Exception as e:
             self.__print_error("__load_paas_oic", e)
+            return data
+
+    ##########################################################################
+    # __load_paas_osvc - vmware
+    ##########################################################################
+    def __load_paas_ocvs(self, ocvs_client, esxi_client, compartments):
+
+        data = []
+        cnt = 0
+        start_time = time.time()
+
+        try:
+            self.__load_print_status("OCVS Native - VMWare")
+
+            # loop on all compartments
+            for compartment in compartments:
+
+                # skip managed paas compartment
+                if self.__if_managed_paas_compartment(compartment['name']):
+                    print(".", end="")
+                    continue
+
+                ocvs = []
+                try:
+                    ocvs = oci.pagination.list_call_get_all_results(
+                        ocvs_client.list_sddcs,
+                        compartment['id'],
+                        sort_by="displayName",
+                        retry_strategy=oci.retry.DEFAULT_RETRY_STRATEGY
+                    ).data
+
+                except oci.exceptions.ServiceError as e:
+                    if self.__check_service_error(e.code):
+                        self.__load_print_auth_warning()
+                        continue
+                    raise
+                except oci.exceptions.ConnectTimeout:
+                    self.__load_print_auth_warning()
+                    continue
+
+                print(".", end="")
+
+                # vmware = oci.ocvp.models.SddcSummary
+                for vmware in ocvs:
+                    if (vmware.lifecycle_state == 'ACTIVE' or vmware.lifecycle_state == 'UPDATING' or vmware.lifecycle_state == 'CREATING'):
+
+                        val = {'id': str(vmware.id),
+                               'display_name': str(vmware.display_name),
+                               'compute_availability_domain': str(vmware.compute_availability_domain),
+                               'vmware_software_version': str(vmware.vmware_software_version),
+                               'esxi_hosts_count': str(vmware.esxi_hosts_count),
+                               'hcx_fqdn': str(vmware.hcx_fqdn),
+                               'is_hcx_enabled': str(vmware.is_hcx_enabled),
+                               'vcenter_fqdn': str(vmware.vcenter_fqdn),
+                               'nsx_manager_fqdn': str(vmware.nsx_manager_fqdn),
+                               'time_created': str(vmware.time_created),
+                               'time_updated': str(vmware.time_updated),
+                               'lifecycle_state': str(vmware.lifecycle_state),
+                               'sum_info': "PaaS OCVS VMWare ESXi Servers",
+                               'sum_size_gb': str(vmware.esxi_hosts_count),
+                               'compartment_name': str(compartment['name']),
+                               'compartment_id': str(compartment['id']),
+                               'defined_tags': [] if vmware.defined_tags is None else vmware.defined_tags,
+                               'freeform_tags': [] if vmware.freeform_tags is None else vmware.freeform_tags,
+                               'esxihosts': [],
+                               'region_name': str(self.config['region'])}
+
+                        #######################
+                        # get the esxi hosts
+                        #######################
+                        esxis = []
+                        try:
+                            esxis = esxi_client.list_esxi_hosts(
+                                sddc_id=vmware.id,
+                                sort_by="displayName",
+                                retry_strategy=oci.retry.DEFAULT_RETRY_STRATEGY
+                            ).data
+
+                        except oci.exceptions.ServiceError:
+                            pass
+                        except oci.exceptions.ConnectTimeout:
+                            pass
+
+                        # esxi = classoci.ocvp.models.EsxiHostSummary
+                        if esxis:
+                            for esxi in esxis.items:
+                                val['esxihosts'].append(
+                                    {
+                                        'id': str(esxi.id),
+                                        'display_name': str(esxi.display_name),
+                                        'compute_instance_id': str(esxi.compute_instance_id),
+                                        'time_created': str(esxi.time_created),
+                                        'time_updated': str(esxi.time_updated),
+                                        'lifecycle_state': str(esxi.lifecycle_state),
+                                        'defined_tags': [] if esxi.defined_tags is None else esxi.defined_tags,
+                                        'freeform_tags': [] if esxi.freeform_tags is None else esxi.freeform_tags
+                                    }
+                                )
+
+                        # add the data
+                        cnt += 1
+                        data.append(val)
+
+            self.__load_print_cnt(cnt, start_time)
+            return data
+
+        except oci.exceptions.RequestException as e:
+            if self.__check_request_error(e):
+                return data
+            raise
+        except Exception as e:
+            self.__print_error("__load_paas_ocvs", e)
             return data
 
     ##########################################################################
@@ -8662,7 +9067,8 @@ class ShowOCIService(object):
                     raise
                 except oci.exceptions.ConnectTimeout:
                     self.__load_print_auth_warning()
-                    continue
+                    # for OAC skip this region
+                    break
 
                 print(".", end="")
 
@@ -8682,7 +9088,7 @@ class ShowOCIService(object):
                                'capacity_value': str(oac.capacity.capacity_value),
                                'email_notification': str(oac.email_notification),
                                'service_url': str(oac.service_url),
-                               'sum_info': "PaaS OAC Native",
+                               'sum_info': "PaaS OAC Native " + ("BYOL" if 'BRING' in oac.license_type else "INCL"),
                                'sum_size_gb': str(oac.capacity.capacity_value),
                                'compartment_name': str(compartment['name']),
                                'compartment_id': str(compartment['id']),
