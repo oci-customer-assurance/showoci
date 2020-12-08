@@ -9,6 +9,9 @@ The format is based on `Keep a Changelog <http://keepachangelog.com/>`_.
 =====================
 * Added OCVS Support (VMWare) under -paas
 * Enable OAC Native under -paas
+* Added Network Vlans
+* Added Users Capabilities and last login
+* Added tag namespace to identity
 
 =====================
 20.12.08 - 20.12.08

@@ -172,7 +172,9 @@ class ShowOCIOutput(object):
             self.print_header("Users", 2)
 
             for user in users:
-                print(self.taba + user['name'])
+                last_login = "" if user['last_successful_login_time'] == "None" else ", Last Login = " + user['last_successful_login_time'][0:10]
+                mfa_enabled = "" if user['is_mfa_activated'] == "False" else ", MFA Enabled"
+                print(self.taba + user['name'] + mfa_enabled + last_login)
                 print(self.tabs + "Groups     : " + user['groups'])
 
                 if 'api_keys' in user:
@@ -213,7 +215,6 @@ class ShowOCIOutput(object):
     ##########################################################################
     # Print Identity Policies
     ##########################################################################
-
     def __print_identity_policies(self, policies_data):
         try:
             if not policies_data:
@@ -234,6 +235,29 @@ class ShowOCIOutput(object):
 
         except Exception as e:
             self.__print_error("__print_identity_policies", e)
+
+    ##########################################################################
+    # Print Tag Namespace
+    ##########################################################################
+    def __print_identity_tag_namespace(self, tag_data):
+        try:
+            if not tag_data:
+                return
+
+            self.print_header("Tag Namespace", 2)
+
+            for c in tag_data:
+                tags = c['tags']
+                if not tags:
+                    continue
+
+                print("\nCompartment " + c['compartment_path'] + ":")
+                for tag in tags:
+                    retired = "" if tag['is_retired'] == "False" else " Retired "
+                    print(self.taba + tag['name'] + retired + " (" + tag['lifecycle_state'] + "), " + tag['description'])
+
+        except Exception as e:
+            self.__print_error("__print_identity_tag_namespace", e)
 
     ##########################################################################
     # Print Identity Providers
@@ -343,6 +367,8 @@ class ShowOCIOutput(object):
                 self.__print_identity_providers(data['providers'])
             if 'cost_tracking_tags' in data:
                 self.__print_identity_cost_tracking_tags(data['cost_tracking_tags'])
+            if 'tag_namespace' in data:
+                self.__print_identity_tag_namespace(data['tag_namespace'])
 
         except Exception as e:
             self.__print_error("__print_identity_data", e)
@@ -375,6 +401,24 @@ class ShowOCIOutput(object):
 
         except Exception as e:
             self.__print_error("__print_core_network_vcn_subnet", e)
+
+    ##########################################################################
+    # Print Network VCN VLAN
+    ##########################################################################
+
+    def __print_core_network_vcn_vlan(self, vlans, vcn_compartment):
+        try:
+            for vlan in vlans:
+                print("")
+                print(self.tabs + "VLAN " + vlan['vlan'] + self.__print_core_network_vcn_compartment(vcn_compartment,
+                                                                                                     vlan[
+                                                                                                         'compartment_name']))
+                print(self.tabs + self.tabs + "Route   : " + vlan['route'])
+                for s in vlan['nsg']:
+                    print(self.tabs + self.tabs + "NSG     : " + s)
+
+        except Exception as e:
+            self.__print_error("__print_core_network_vcn_vlan", e)
 
     ##########################################################################
     # get DHCP options for DHCP_ID
@@ -493,6 +537,9 @@ class ShowOCIOutput(object):
 
                 if 'subnets' in vcn['data']:
                     self.__print_core_network_vcn_subnet(vcn['data']['subnets'], vcn_compartment)
+
+                if 'vlans' in vcn['data']:
+                    self.__print_core_network_vcn_vlan(vcn['data']['vlans'], vcn_compartment)
 
                 if 'security_lists' in vcn['data']:
                     self.__print_core_network_vcn_security_lists(vcn['data']['security_lists'], vcn_compartment)
