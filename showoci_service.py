@@ -126,7 +126,8 @@ class ShowOCIFlags(object):
                 self.read_load_balancer or
                 self.read_containers or
                 self.read_function or
-                self.read_api)
+                self.read_api or
+                self.read_paas_native)
 
 
 ##########################################################################
@@ -607,7 +608,7 @@ class ShowOCIService(object):
     # find shape info
     # returns CPUs, Memory and Local Storage SSD
     ##########################################################################
-    def get_shape_details(self, shape_name):
+    def shape_details(self, shape_name):
         for array in self.shapes_array:
             if array['shape'] == shape_name:
                 return array
@@ -2003,7 +2004,8 @@ class ShowOCIService(object):
                         if 'not whitelisted' in str(e.message).lower():
                             print(" tenant not enabled for this region, skipped.")
                             return data
-
+                        if 'NotAuthorizedOrNotFound' in str(e.message):
+                            continue
                         if self.__check_service_error(e.code):
                             self.__load_print_auth_warning()
                         raise
@@ -3255,16 +3257,22 @@ class ShowOCIService(object):
     ##########################################################################
     # query private ip
     ##########################################################################
-    def __load_core_network_single_privateip(self, virtual_network, ip_id):
+    def __load_core_network_single_privateip(self, virtual_network, ip_id, return_name=True):
 
         try:
+            if 'privateip' not in ip_id:
+                return ""
+
             arr = virtual_network.get_private_ip(
                 ip_id,
                 retry_strategy=oci.retry.DEFAULT_RETRY_STRATEGY
             ).data
 
             if arr:
-                return str(arr.ip_address) + " - " + str(arr.display_name)
+                if return_name:
+                    return str(arr.ip_address) + " - " + str(arr.display_name)
+                else:
+                    return str(arr.ip_address)
             return ""
 
         except oci.exceptions.ServiceError as e:
@@ -3273,6 +3281,32 @@ class ShowOCIService(object):
             raise
         except Exception as e:
             self.__print_error("__get_core_network_privateip", e)
+            return ""
+
+    ##########################################################################
+    # query vlan ip
+    ##########################################################################
+    def __load_core_network_single_vlan(self, virtual_network, vlan_id):
+
+        try:
+            if 'vlan' not in vlan_id:
+                return ""
+
+            arr = virtual_network.get_vlan(
+                vlan_id,
+                retry_strategy=oci.retry.DEFAULT_RETRY_STRATEGY
+            ).data
+
+            if arr:
+                return "VLAN " + str(arr.vlan_tag) + " - " + str(arr.cidr_block).ljust(20) + " - " + str(arr.display_name)
+            return ""
+
+        except oci.exceptions.ServiceError as e:
+            if self.__check_service_error(e.code):
+                pass
+            raise
+        except Exception as e:
+            self.__print_error("__load_core_network_single_vlan", e)
             return ""
 
     ##########################################################################
@@ -8970,6 +9004,7 @@ class ShowOCIService(object):
             oce_client = oci.oce.OceInstanceClient(self.config, signer=self.signer, timeout=(1, 1))
             ocvs_client = oci.ocvp.SddcClient(self.config, signer=self.signer, timeout=(1, 1))
             esxi_client = oci.ocvp.EsxiHostClient(self.config, signer=self.signer, timeout=(1, 1))
+            virtual_network = oci.core.VirtualNetworkClient(self.config, signer=self.signer)
 
             if self.flags.proxy:
                 oic_client.base_client.session.proxies = {'https': self.flags.proxy}
@@ -8977,6 +9012,7 @@ class ShowOCIService(object):
                 oce_client.base_client.session.proxies = {'https': self.flags.proxy}
                 ocvs_client.base_client.session.proxies = {'https': self.flags.proxy}
                 esxi_client.base_client.session.proxies = {'https': self.flags.proxy}
+                virtual_network.base_client.session.proxies = {'https': self.flags.proxy}
 
             # reference to compartments
             compartments = self.get_compartment()
@@ -8991,7 +9027,7 @@ class ShowOCIService(object):
             paas = self.data[self.C_PAAS_NATIVE]
 
             # append the data
-            paas[self.C_PAAS_NATIVE_OCVS] += self.__load_paas_ocvs(ocvs_client, esxi_client, compartments)
+            paas[self.C_PAAS_NATIVE_OCVS] += self.__load_paas_ocvs(ocvs_client, esxi_client, virtual_network, compartments)
             paas[self.C_PAAS_NATIVE_OIC] += self.__load_paas_oic(oic_client, compartments)
             paas[self.C_PAAS_NATIVE_OCE] += self.__load_paas_oce(oce_client, compartments)
             paas[self.C_PAAS_NATIVE_OAC] += self.__load_paas_oac(oac_client, compartments)
@@ -9084,7 +9120,7 @@ class ShowOCIService(object):
     ##########################################################################
     # __load_paas_osvc - vmware
     ##########################################################################
-    def __load_paas_ocvs(self, ocvs_client, esxi_client, compartments):
+    def __load_paas_ocvs(self, ocvs_client, esxi_client, virtual_network, compartments):
 
         data = []
         cnt = 0
@@ -9121,19 +9157,56 @@ class ShowOCIService(object):
 
                 print(".", end="")
 
-                # vmware = oci.ocvp.models.SddcSummary
-                for vmware in ocvs:
-                    if (vmware.lifecycle_state == 'ACTIVE' or vmware.lifecycle_state == 'UPDATING' or vmware.lifecycle_state == 'CREATING'):
+                # vmware_summary = oci.ocvp.models.SddcSummary
+                for vmware_summary in ocvs:
+                    if (vmware_summary.lifecycle_state == 'ACTIVE' or vmware_summary.lifecycle_state == 'UPDATING' or vmware_summary.lifecycle_state == 'CREATING'):
+
+                        # get vmware object with more details
+                        # vmware = oci.ocvp.models.Sddc
+                        vmware = ocvs_client.get_sddc(vmware_summary.id).data
 
                         val = {'id': str(vmware.id),
                                'display_name': str(vmware.display_name),
                                'compute_availability_domain': str(vmware.compute_availability_domain),
+                               'instance_display_name_prefix': str(vmware.instance_display_name_prefix),
                                'vmware_software_version': str(vmware.vmware_software_version),
                                'esxi_hosts_count': str(vmware.esxi_hosts_count),
-                               'hcx_fqdn': str(vmware.hcx_fqdn),
-                               'is_hcx_enabled': str(vmware.is_hcx_enabled),
-                               'vcenter_fqdn': str(vmware.vcenter_fqdn),
                                'nsx_manager_fqdn': str(vmware.nsx_manager_fqdn),
+                               'nsx_manager_private_ip_id': str(vmware.nsx_manager_private_ip_id),
+                               'nsx_manager_private_ip': self.__load_core_network_single_privateip(virtual_network, vmware.nsx_manager_private_ip_id, False),
+                               'nsx_manager_username': str(vmware.nsx_manager_username),
+                               'nsx_manager_initial_password': str(vmware.nsx_manager_initial_password),
+                               'vcenter_fqdn': str(vmware.vcenter_fqdn),
+                               'vcenter_username': str(vmware.vcenter_username),
+                               'vcenter_private_ip_id': str(vmware.vcenter_private_ip_id),
+                               'vcenter_private_ip': self.__load_core_network_single_privateip(virtual_network, vmware.vcenter_private_ip_id, False),
+                               'vcenter_initial_password': str(vmware.vcenter_initial_password),
+                               'workload_network_cidr': str(vmware.workload_network_cidr),
+                               'nsx_overlay_segment_name': str(vmware.nsx_overlay_segment_name),
+                               'nsx_edge_uplink_ip_id': str(vmware.nsx_edge_uplink_ip_id),
+                               'nsx_edge_uplink_ip': self.__load_core_network_single_privateip(virtual_network, vmware.nsx_edge_uplink_ip_id, True),
+                               'provisioning_subnet_id': str(vmware.provisioning_subnet_id),
+                               'provisioning_subnet': self.get_network_subnet(vmware.provisioning_subnet_id, True),
+                               'vsphere_vlan_id': str(vmware.vsphere_vlan_id),
+                               'vsphere_vlan': self.__load_core_network_single_vlan(virtual_network, vmware.vsphere_vlan_id),
+                               'vmotion_vlan_id': str(vmware.vmotion_vlan_id),
+                               'vmotion_vlan': self.__load_core_network_single_vlan(virtual_network, vmware.vmotion_vlan_id),
+                               'vsan_vlan_id': str(vmware.vsan_vlan_id),
+                               'vsan_vlan': self.__load_core_network_single_vlan(virtual_network, vmware.vsan_vlan_id),
+                               'nsx_v_tep_vlan_id': str(vmware.nsx_v_tep_vlan_id),
+                               'nsx_v_tep_vlan': self.__load_core_network_single_vlan(virtual_network, vmware.nsx_v_tep_vlan_id),
+                               'nsx_edge_v_tep_vlan_id': str(vmware.nsx_edge_v_tep_vlan_id),
+                               'nsx_edge_v_tep_vlan': self.__load_core_network_single_vlan(virtual_network, vmware.nsx_edge_v_tep_vlan_id),
+                               'nsx_edge_uplink1_vlan_id': str(vmware.nsx_edge_uplink1_vlan_id),
+                               'nsx_edge_uplink1_vlan': self.__load_core_network_single_vlan(virtual_network, vmware.nsx_edge_uplink1_vlan_id),
+                               'nsx_edge_uplink2_vlan_id': str(vmware.nsx_edge_uplink2_vlan_id),
+                               'nsx_edge_uplink2_vlan': self.__load_core_network_single_vlan(virtual_network, vmware.nsx_edge_uplink2_vlan_id),
+                               'hcx_private_ip_id': str(vmware.hcx_private_ip_id),
+                               'hcx_fqdn': str(vmware.hcx_fqdn),
+                               'hcx_initial_password': str(vmware.hcx_initial_password),
+                               'hcx_vlan_id': str(vmware.hcx_vlan_id),
+                               'hcx_on_prem_key': str(vmware.hcx_on_prem_key),
+                               'is_hcx_enabled': str(vmware.is_hcx_enabled),
                                'time_created': str(vmware.time_created),
                                'time_updated': str(vmware.time_updated),
                                'lifecycle_state': str(vmware.lifecycle_state),
