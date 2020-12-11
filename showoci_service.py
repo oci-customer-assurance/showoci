@@ -134,7 +134,7 @@ class ShowOCIFlags(object):
 # class ShowOCIService
 ##########################################################################
 class ShowOCIService(object):
-    oci_compatible_version = "2.23.5"
+    oci_compatible_version = "2.25.1"
 
     ##########################################################################
     # Global Constants
@@ -608,7 +608,7 @@ class ShowOCIService(object):
     # find shape info
     # returns CPUs, Memory and Local Storage SSD
     ##########################################################################
-    def shape_details(self, shape_name):
+    def get_shape_details(self, shape_name):
         for array in self.shapes_array:
             if array['shape'] == shape_name:
                 return array
@@ -6088,7 +6088,7 @@ class ShowOCIService(object):
 
                 except oci.exceptions.ServiceError as e:
                     if self.__check_service_error(e.code):
-                        self.__load_print_auth_warning()
+                        self.__load_print_auth_warning("a", False)
                         continue
                     else:
                         raise
