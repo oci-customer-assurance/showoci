@@ -142,10 +142,9 @@ class ShowOCIData(object):
         return self.service.error
 
     ##########################################################################
-    # get service error flag
+    # get service warnings flag
     ##########################################################################
     def get_service_warnings(self):
-
         return self.service.warning
 
     ##########################################################################
@@ -378,9 +377,12 @@ class ShowOCIData(object):
             for arr in list_nat_gateways:
                 value = {'id': arr['id'],
                          'name': arr['name'],
+                         'display_name': arr['display_name'],
+                         'nat_ip': arr['nat_ip'],
                          'compartment_name': arr['compartment_name'],
                          'compartment_id': arr['compartment_id'],
                          'time_created': arr['time_created'],
+                         'block_traffic': arr['block_traffic'],
                          'defined_tags': arr['defined_tags'],
                          'freeform_tags': arr['freeform_tags']}
 
@@ -422,10 +424,24 @@ class ShowOCIData(object):
 
             list_service_gateways = self.service.search_multi_items(self.service.C_NETWORK, self.service.C_NETWORK_SGW, 'vcn_id', vcn_id)
             for arr in list_service_gateways:
-                value = {'id': arr['id'], 'name': arr['name'], 'services': arr['services'],
+                value = {'id': arr['id'],
+                         'name': arr['name'],
+                         'services': arr['services'],
                          'compartment_name': arr['compartment_name'],
                          'compartment_id': arr['compartment_id'],
-                         'time_created': arr['time_created'], 'defined_tags': arr['defined_tags'], 'freeform_tags': arr['freeform_tags']}
+                         'route_table_id': arr['route_table_id'],
+                         'route_table': "",
+                         'transit': "",
+                         'time_created': arr['time_created'],
+                         'defined_tags': arr['defined_tags'],
+                         'freeform_tags': arr['freeform_tags']}
+
+                # check route table
+                if value['route_table_id'] != "None":
+                    route_table = self.__get_core_network_route(value['route_table_id'])
+                    value['route_table'] = route_table
+                    value['transit'] = " + Transit Route(" + route_table + ")"
+
                 data.append(value)
             return data
 
@@ -440,6 +456,7 @@ class ShowOCIData(object):
     def __get_core_network_vcn_drg_details(self, drg_attachment):
         retStr = ""
         name = ""
+        route_table = ""
         try:
             drg_id = drg_attachment['drg_id']
 
@@ -461,9 +478,10 @@ class ShowOCIData(object):
 
             # check transit routing
             if drg_attachment['route_table_id'] != "None":
-                retStr += " + Transit Route(" + str(self.__get_core_network_route(drg_attachment['route_table_id']) + ")")
+                route_table = str(self.__get_core_network_route(drg_attachment['route_table_id']))
+                retStr += " + Transit Route(" + route_table + ")"
 
-            return retStr, name
+            return retStr, name, route_table
 
         except Exception as e:
             self.__print_error("__get_core_network_vcn_drg_details", e)
@@ -479,10 +497,11 @@ class ShowOCIData(object):
 
             list_drg_attachments = self.service.search_multi_items(self.service.C_NETWORK, self.service.C_NETWORK_DRG_AT, 'vcn_id', vcn_id)
             for da in list_drg_attachments:
-                val, display_name = self.__get_core_network_vcn_drg_details(da)
+                val, display_name, route_table = self.__get_core_network_vcn_drg_details(da)
                 value = {'id': da['id'],
                          'drg_id': da['drg_id'],
                          'route_table_id': da['route_table_id'],
+                         'route_table': route_table,
                          'display_name': display_name,
                          'name': val,
                          'compartment_name': da['compartment_name'],
@@ -504,8 +523,10 @@ class ShowOCIData(object):
             local_peering_gateways = self.service.search_multi_items(self.service.C_NETWORK, self.service.C_NETWORK_LPG, 'vcn_id', vcn_id)
             for lpg in local_peering_gateways:
                 routestr = ""
+                route_table = ""
                 if lpg['route_table_id'] != "None":
-                    routestr = " + Transit Route(" + str(self.__get_core_network_route(lpg['route_table_id'])) + ")"
+                    route_table = str(self.__get_core_network_route(lpg['route_table_id']))
+                    routestr = " + Transit Route(" + route_table + ")"
 
                 value = {'id': lpg['id'],
                          'name': (lpg['name'] + routestr),
@@ -514,8 +535,10 @@ class ShowOCIData(object):
                          'compartment_name': lpg['compartment_name'],
                          'time_created': lpg['time_created'],
                          'route_table_id': lpg['route_table_id'],
-                         'route_table_name': routestr,
+                         'route_table_name': route_table,
+                         'route_table': routestr,
                          'vcn_id': lpg['vcn_id'],
+                         'peering_status': lpg['peering_status'],
                          'peer_advertised_cidr': lpg['peer_advertised_cidr'],
                          'peer_advertised_cidr_details': lpg['peer_advertised_cidr_details'],
                          'is_cross_tenancy_peering': lpg['is_cross_tenancy_peering']
@@ -2220,6 +2243,20 @@ class ShowOCIData(object):
             return data
 
     ##########################################################################
+    # __get_database_software_images
+    ##########################################################################
+    def __get_database_software_images(self, region_name, compartment):
+
+        data = []
+        try:
+            database_software_images = self.service.search_multi_items(self.service.C_DATABASE, self.service.C_DATABASE_SOFTWARE_IMAGES, 'region_name', region_name, 'compartment_id', compartment['id'])
+            return database_software_images
+
+        except Exception as e:
+            self.__print_error("__get_database_software_images", e)
+            return data
+
+    ##########################################################################
     # Database
     ##########################################################################
     def __get_database_main(self, region_name, compartment):
@@ -2251,6 +2288,11 @@ class ShowOCIData(object):
             if data:
                 if len(data) > 0:
                     return_data['mysql'] = data
+
+            data = self.__get_database_software_images(region_name, compartment)
+            if data:
+                if len(data) > 0:
+                    return_data['software_images'] = data
 
             return return_data
 
@@ -2484,10 +2526,13 @@ class ShowOCIData(object):
         data = {}
         try:
             lb = load_balance_obj
+            flexible = (str(lb['shape_min_mbps']) + "mbps:" + str(lb['shape_max_mbps']) + "mbps - ") if lb['shape_min_mbps'] else ""
             data['id'] = str(lb['id'])
-            data['name'] = str(lb['display_name']) + " - " + str(lb['shape_name']) + " - " + ("(Private)" if lb['is_private'] else "(Public)")
+            data['name'] = str(lb['display_name']) + " - " + str(lb['shape_name']) + " - " + flexible + ("(Private)" if lb['is_private'] else "(Public)")
             data['status'] = lb['status']
             data['shape_name'] = lb['shape_name']
+            data['shape_min_mbps'] = lb['shape_min_mbps']
+            data['shape_max_mbps'] = lb['shape_max_mbps']
             data['display_name'] = lb['display_name']
             data['is_private'] = lb['is_private']
             data['ips'] = lb['ip_addresses']
