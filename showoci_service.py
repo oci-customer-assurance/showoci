@@ -700,7 +700,7 @@ class ShowOCIService(object):
             return [e for e in array if e[p1] == v1]
 
         except Exception as e:
-            self.__print_error("search_multi_items", e)
+            self.__print_error("search_multi_items " + module + ":" + section, e)
 
     ##########################################################################
     # initialize data key if not exist
@@ -1945,13 +1945,14 @@ class ShowOCIService(object):
                 # loop on the array
                 # vcn = oci.core.models.Vcn()
                 for vcn in vcns:
-                    val = {'id': str(vcn.id), 'name': str(', '.join(x for x in vcn.cidr_blocks)) + " - " + str(vcn.display_name) + " - " + str(vcn.vcn_domain_name) + " - Main: " + str(vcn.cidr_block),
+                    val = {'id': str(vcn.id), 'name': str(', '.join(x for x in vcn.cidr_blocks)) + " - " + str(vcn.display_name) + " - " + str(vcn.vcn_domain_name),
                            'display_name': str(vcn.display_name),
                            'cidr_block': str(vcn.cidr_block),
                            'cidr_blocks': vcn.cidr_blocks,
                            'ipv6_cidr_block': str(vcn.ipv6_cidr_block),
                            'ipv6_public_cidr_block': str(vcn.ipv6_public_cidr_block),
                            'time_created': str(vcn.time_created),
+                           'vcn_domain_name': str(vcn.vcn_domain_name),
                            'compartment_name': str(compartment['name']),
                            'defined_tags': [] if vcn.defined_tags is None else vcn.defined_tags,
                            'freeform_tags': [] if vcn.freeform_tags is None else vcn.freeform_tags,
@@ -2902,6 +2903,8 @@ class ShowOCIService(object):
                            'vcn_id': str(subnet.vcn_id),
                            'vcn_name': "",
                            'vcn_cidr': "",
+                           'vcn_domain_name': "",
+                           'dns': "",
                            'name': str(subnet.display_name),
                            'cidr_block': str(subnet.cidr_block),
                            'subnet': (str(subnet.cidr_block) + "  " + availability_domain + (" (Private) " if subnet.prohibit_public_ip_on_vnic else " (Public)")),
@@ -2910,7 +2913,8 @@ class ShowOCIService(object):
                            'time_created': str(subnet.time_created),
                            'security_list_ids': [str(es) for es in subnet.security_list_ids],
                            'dhcp_options_id': str(subnet.dhcp_options_id),
-                           'route_table_id': str(subnet.route_table_id), 'dns_label': str(subnet.dns_label),
+                           'route_table_id': str(subnet.route_table_id),
+                           'dns_label': str(subnet.dns_label),
                            'defined_tags': [] if subnet.defined_tags is None else subnet.defined_tags,
                            'freeform_tags': [] if subnet.freeform_tags is None else subnet.freeform_tags,
                            'compartment_name': str(compartment['name']), 'compartment_id': str(compartment['id']),
@@ -2920,7 +2924,9 @@ class ShowOCIService(object):
                     # find vcn
                     for vcn in vcns:
                         if str(subnet.vcn_id) == vcn['id']:
+                            val['dns'] = str(subnet.dns_label) + "." + vcn['vcn_domain_name']
                             val['vcn_name'] = vcn['display_name']
+                            val['vcn_domain_name'] = vcn['vcn_domain_name']
                             val['vcn_cidr'] = str(', '.join(x for x in vcn['cidr_blocks']))
 
                     data.append(val)
@@ -3493,6 +3499,7 @@ class ShowOCIService(object):
                         data_tun = []
                         try:
                             tunnels = virtual_network.list_ip_sec_connection_tunnels(arr.id).data
+                            tunnels_status = ""
                             for tunnel in tunnels:
                                 tun_val = {'id': str(tunnel.id),
                                            'status': str(tunnel.status),
@@ -3503,6 +3510,9 @@ class ShowOCIService(object):
                                            'cpe_ip': str(tunnel.cpe_ip),
                                            'vpn_ip': str(tunnel.vpn_ip),
                                            'bgp_info': ""}
+                                if tunnels_status:
+                                    tunnels_status += " "
+                                tunnels_status += str(tunnel.status)
 
                                 if tunnel.bgp_session_info:
                                     bs = tunnel.bgp_session_info
@@ -3512,7 +3522,10 @@ class ShowOCIService(object):
                         except Exception:
                             pass
 
-                        val = {'id': str(arr.id), 'name': str(arr.display_name), 'drg_id': str(arr.drg_id),
+                        val = {'id': str(arr.id),
+                               'name': str(arr.display_name),
+                               'drg_id': str(arr.drg_id),
+                               'tunnels_status': tunnels_status,
                                'cpe_id': str(arr.cpe_id), 'time_created': str(arr.time_created),
                                'compartment_name': str(compartment['name']), 'compartment_id': str(compartment['id']),
                                'defined_tags': [] if arr.defined_tags is None else arr.defined_tags,
@@ -4296,6 +4309,10 @@ class ShowOCIService(object):
             data['skip_source_dest_check'] = vnic.skip_source_dest_check
             data['is_primary'] = vnic.is_primary
             data['subnet'] = ""
+            data['hostname_label'] = str(vnic.hostname_label)
+            data['internal_fqdn'] = ""
+            data['mac_address'] = str(vnic.mac_address)
+            data['time_created'] = str(vnic.time_created)
             data['subnet_id'] = ""
             data['nsg_ids'] = [x for x in vnic.nsg_ids]
             data['nsg_names'] = self.__load_core_network_get_nsg_names(vnic.nsg_ids)
@@ -4309,6 +4326,7 @@ class ShowOCIService(object):
                 data['vcn'] = subnet['vcn_name'] + " " + subnet['vcn_cidr']
                 data['subnet_id'] = subnet['id']
                 subnet_display = ", Subnet (" + data['subnet'] + "), VCN (" + data['vcn'] + ")"
+                data['internal_fqdn'] = str(vnic.hostname_label) + '.' + subnet['dns']
 
             # check vnic information
             if vnic.public_ip is not None:

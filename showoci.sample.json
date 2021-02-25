@@ -52,6 +52,7 @@
                                 "drg_attached": [],
                                 "local_peering": [],
                                 "subnets": [],
+                                "vlans": [],
                                 "security_lists": [],
                                 "security_groups": [],
                                 "route_tables": [],
