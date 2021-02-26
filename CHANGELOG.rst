@@ -5,7 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on `Keep a Changelog <http://keepachangelog.com/>`_.
 
 =====================
-21.02.30 - 21.02.30
+21.03.09 - 21.03.09
+=====================
+* Added flag -csv_nodate to remove the extract date from the csv files
+
+=====================
+21.03.02 - 21.03.02
 =====================
 * Added Created for database componenets
 * Added internal fqdn to compute and CSV

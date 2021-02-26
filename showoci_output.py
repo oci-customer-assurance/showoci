@@ -2790,6 +2790,7 @@ class ShowOCICSV(object):
     csv_load_balancer_bs = []
     csv_limits = []
     start_time = ""
+    csv_add_date_field = True
 
     ############################################
     # Init
@@ -2801,8 +2802,8 @@ class ShowOCICSV(object):
     ##########################################################################
     # generate_csv
     ##########################################################################
-    def generate_csv(self, data, csv_file_header):
-
+    def generate_csv(self, data, csv_file_header, add_date_field=True):
+        self.csv_add_date_field = add_date_field
         self.csv_file_header = csv_file_header
         try:
             for d in data:
@@ -2869,7 +2870,11 @@ class ShowOCICSV(object):
             file_name = self.csv_file_header + "_" + file_subject + ".csv"
 
             # add start_date to each dictionary
-            result = [dict(item, extract_date=self.start_time) for item in data]
+            result = []
+            if self.csv_add_date_field:
+                result = [dict(item, extract_date=self.start_time) for item in data]
+            else:
+                result = [dict(item) for item in data]
 
             # generate fields
             fields = [key for key in result[0].keys()]
