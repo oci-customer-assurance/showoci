@@ -67,6 +67,7 @@
 # - oci.cloud_guard.CloudGuardClient
 # - oci.logging.LoggingManagementClient
 # - oci.ocvp.EsxiHostClient and oci.ocvp.SddcClient
+# - oci.golden_gate.GoldenGateClient
 #
 # Modules Not Yet Covered:
 # - oci.secrets.SecretsClient
@@ -79,7 +80,6 @@
 # - oci.os_management.OsManagementClient
 # - oci.log_analytics.LogAnalyticsClient
 # - oci.tenant_manager_control_plane.LinkClient
-# - oci.cims.IncidentClient
 
 ##########################################################################
 from __future__ import print_function
@@ -92,7 +92,7 @@ import sys
 import argparse
 import datetime
 
-version = "21.03.02"
+version = "21.03.23"
 
 ##########################################################################
 # check OCI version
