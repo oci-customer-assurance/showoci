@@ -141,7 +141,7 @@ class ShowOCIService(object):
     ##########################################################################
 
     # print header options
-    print_header_options = {0: 90, 1: 60, 2: 30, 3: 75}
+    print_header_options = {0: 90, 1: 60, 2: 40, 3: 75}
 
     # Network Identifiers
     C_NETWORK = 'network'
@@ -316,6 +316,7 @@ class ShowOCIService(object):
     warning = 0
     reboot_migration_counter = 0
     dbsystem_maintenance = []
+    tenancy_home_region = ""
 
     ##########################################################################
     # Service not yet available - need to remove on availability
@@ -827,6 +828,10 @@ class ShowOCIService(object):
             # load identity
             self.__load_identity_main()
 
+            # set tenant home region
+            self.config['region'] = self.tenancy_home_region
+            self.signer.region = self.tenancy_home_region
+
             # if announcement
             if self.flags.read_announcement:
                 self.__load_announcement_main()
@@ -1063,6 +1068,12 @@ class ShowOCIService(object):
                 'list_region_subscriptions': data_subs,
                 'password_policy': password_policy
             }
+
+            # home region
+            for reg in sub_regions:
+                if reg.is_home_region:
+                    self.tenancy_home_region = str(reg.region_name)
+
             self.data[self.C_IDENTITY][self.C_IDENTITY_TENANCY] = data
             self.__load_print_cnt(1, start_time)
 
@@ -10533,7 +10544,7 @@ class ShowOCIService(object):
     def __load_security_scores_main(self):
 
         try:
-            print("Security Scores...")
+            print("Cloud Guard Scores...")
 
             # clients
             cg_client = oci.cloud_guard.CloudGuardClient(self.config, signer=self.signer, timeout=1)
@@ -10650,7 +10661,7 @@ class ShowOCIService(object):
         start_time = time.time()
 
         try:
-            self.__load_print_status("Cloud Guard Risk Scores")
+            self.__load_print_status("Risk Scores")
 
             array = []
             try:
@@ -10660,6 +10671,9 @@ class ShowOCIService(object):
                 ).data
 
             except oci.exceptions.ServiceError as e:
+                if e.code == 404:
+                    print(" Not Enabled")
+                    return data
                 if self.__check_service_error(e.code):
                     self.__load_print_auth_warning()
                     return data
@@ -10695,7 +10709,7 @@ class ShowOCIService(object):
         start_time = time.time()
 
         try:
-            self.__load_print_status("Cloud Guard Security Scores")
+            self.__load_print_status("Security Scores")
 
             array = []
             try:
@@ -10705,6 +10719,9 @@ class ShowOCIService(object):
                 ).data
 
             except oci.exceptions.ServiceError as e:
+                if e.code == 404:
+                    print(" Not Enabled")
+                    return data
                 if self.__check_service_error(e.code):
                     self.__load_print_auth_warning()
                     return data
