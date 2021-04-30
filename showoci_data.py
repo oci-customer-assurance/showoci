@@ -76,6 +76,11 @@ class ShowOCIData(object):
                 announcement_data = {'type': "announcement", 'data': self.service.get_announcement()}
                 self.data.append(announcement_data)
 
+            # run on announcement module
+            if self.service.flags.read_security:
+                security_scores_data = {'type': "security_scores", 'data': self.service.get_security_scores()}
+                self.data.append(security_scores_data)
+
             # run on compartments
             if self.service.flags.is_loop_on_compartments:
 
@@ -552,6 +557,8 @@ class ShowOCIData(object):
                          'route_table': routestr,
                          'vcn_id': lpg['vcn_id'],
                          'peering_status': lpg['peering_status'],
+                         'peer_id': lpg['peer_id'],
+                         'peer_name': self.__get_core_network_local_peering(lpg['peer_id']),
                          'peer_advertised_cidr': lpg['peer_advertised_cidr'],
                          'peer_advertised_cidr_details': lpg['peer_advertised_cidr_details'],
                          'is_cross_tenancy_peering': lpg['is_cross_tenancy_peering']
@@ -624,6 +631,13 @@ class ShowOCIData(object):
             self.__print_error("__get_core_network_vcn_subnets", e)
             return data
             pass
+
+    ##########################################################################
+    # __get_core_network_vcn_vlans
+    ##########################################################################
+    def __get_core_network_vcn_dns_resolver(self, vcn_id):
+        resolvers = self.service.search_multi_items(self.service.C_NETWORK, self.service.C_NETWORK_DNS_RESOLVERS, 'vcn_id', vcn_id)
+        return resolvers
 
     ##########################################################################
     # __get_core_network_vcn_vlans
@@ -921,6 +935,7 @@ class ShowOCIData(object):
                        'local_peering': self.__get_core_network_vcn_local_peering(vcn['id']),
                        'subnets': self.__get_core_network_vcn_subnets(vcn['id']),
                        'vlans': self.__get_core_network_vcn_vlans(vcn['id']),
+                       'dns_resolvers': self.__get_core_network_vcn_dns_resolver(vcn['id']),
                        'security_lists': self.__get_core_network_vcn_security_lists(vcn['id']),
                        'security_groups': self.__get_core_network_vcn_security_groups(vcn['id']),
                        'route_tables': self.__get_core_network_vcn_route_tables(vcn['id']),
@@ -932,8 +947,6 @@ class ShowOCIData(object):
                                  'display_name': vcn['display_name'],
                                  'cidr_block': vcn['cidr_block'],
                                  'cidr_blocks': vcn['cidr_blocks'],
-                                 'ipv6_cidr_block': vcn['ipv6_cidr_block'],
-                                 'ipv6_public_cidr_block': vcn['ipv6_public_cidr_block'],
                                  'compartment_name': str(compartment['name']),
                                  'compartment_id': str(compartment['id']),
                                  'data': val})
@@ -1540,18 +1553,24 @@ class ShowOCIData(object):
 
                 # fix the shape image for the summary
                 sum_shape = ""
+                sum_flex = ""
                 if instance['image'] == "Not Found" or instance['image'] == "Custom" or "Oracle-Linux" in instance['image']:
                     sum_shape = instance['image_os'][0:35]
                 elif 'Windows-Server' in instance['image']:
                     sum_shape = instance['image'][0:19]
                 elif instance['image_os'] == "PaaS Image":
                     sum_shape = "PaaS Image - " + instance['display_name'].split("|", 2)[1] if len(instance['display_name'].split("|", 2)) >= 2 else instance['image_os']
+                elif instance['image_os'] == "Windows":
+                    sum_shape = "Windows-" + instance['image'][0:25]
                 else:
                     sum_shape = instance['image'][0:35]
 
+                if 'Flex' in instance['shape']:
+                    sum_flex = "." + str(int(instance['shape_ocpu']))
+
                 inst = {'id': instance['id'], 'name': instance['shape'] + " - " + instance['display_name'] + " - " + instance['lifecycle_state'],
                         'sum_info': 'Compute',
-                        'sum_shape': instance['shape'].ljust(16, ' ')[0:15] + " - " + sum_shape,
+                        'sum_shape': str(instance['shape'].replace("Flex", "F") + sum_flex).ljust(22, ' ')[0:21] + " - " + sum_shape,
                         'availability_domain': instance['availability_domain'],
                         'fault_domain': instance['fault_domain'],
                         'time_maintenance_reboot_due': str(instance['time_maintenance_reboot_due']),

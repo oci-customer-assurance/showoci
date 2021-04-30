@@ -134,7 +134,7 @@ class ShowOCIFlags(object):
 # class ShowOCIService
 ##########################################################################
 class ShowOCIService(object):
-    oci_compatible_version = "2.34.0"
+    oci_compatible_version = "2.38.0"
 
     ##########################################################################
     # Global Constants
@@ -164,6 +164,7 @@ class ShowOCIService(object):
     C_NETWORK_SUBNET = 'subnet'
     C_NETWORK_VC = 'virtualcircuit'
     C_NETWORK_PRIVATEIP = 'privateip'
+    C_NETWORK_DNS_RESOLVERS = 'dns_resolvers'
 
     # Identity Identifiers
     C_IDENTITY = 'identity'
@@ -304,6 +305,11 @@ class ShowOCIService(object):
     C_SECURITY = "security"
     C_SECURITY_CLOUD_GUARD = "cloud_guard"
     C_SECURITY_LOGGING = "logging"
+
+    # Security Scores
+    C_SECURITY_SCORES = "security_scores"
+    C_SECURITY_SCORES_GUARD_SECURITY_SCORES = "cloud_guard_security_scores"
+    C_SECURITY_SCORES_GUARD_RISK_SCORES = "cloud_guard_risk_scores"
 
     # Error flag and reboot migration
     error = 0
@@ -572,6 +578,14 @@ class ShowOCIService(object):
         return []
 
     ##########################################################################
+    # return security scores
+    ##########################################################################
+    def get_security_scores(self):
+        if self.C_SECURITY_SCORES in self.data:
+            return self.data[self.C_SECURITY_SCORES]
+        return []
+
+    ##########################################################################
     # return subnet
     ##########################################################################
     def get_network_subnet(self, subnet_id, detailed=False):
@@ -587,6 +601,20 @@ class ShowOCIService(object):
 
         except Exception as e:
             self.__print_error("get_network_subnet", e)
+
+    ##########################################################################
+    # return vcn
+    ##########################################################################
+    def get_network_vcn(self, vcn_id):
+        try:
+            result = self.search_unique_item(self.C_NETWORK, self.C_NETWORK_VCN, 'id', vcn_id)
+            if result:
+                if result != "":
+                    return result['name']
+            return ""
+
+        except Exception as e:
+            self.__print_error("get_network_vcn", e)
 
     ##########################################################################
     # return identity data
@@ -802,6 +830,10 @@ class ShowOCIService(object):
             # if announcement
             if self.flags.read_announcement:
                 self.__load_announcement_main()
+
+            # if cloud guard scores
+            if self.flags.read_security:
+                self.__load_security_scores_main()
 
             # check if data not loaded, abort
             if self.C_IDENTITY not in self.data:
@@ -1837,6 +1869,11 @@ class ShowOCIService(object):
             if self.flags.proxy:
                 virtual_network.base_client.session.proxies = {'https': self.flags.proxy}
 
+            # Open connectivity to OCI
+            dns_client = oci.dns.DnsClient(self.config, signer=self.signer)
+            if self.flags.proxy:
+                dns_client.base_client.session.proxies = {'https': self.flags.proxy}
+
             # reference to compartments
             compartments = self.data[self.C_IDENTITY][self.C_IDENTITY_COMPARTMENTS]
 
@@ -1863,6 +1900,7 @@ class ShowOCIService(object):
                 self.__initialize_data_key(self.C_NETWORK, self.C_NETWORK_SLIST)
                 self.__initialize_data_key(self.C_NETWORK, self.C_NETWORK_DHCP)
                 self.__initialize_data_key(self.C_NETWORK, self.C_NETWORK_PRIVATEIP)
+                self.__initialize_data_key(self.C_NETWORK, self.C_NETWORK_DNS_RESOLVERS)
 
             # reference to network:
             network = self.data[self.C_NETWORK]
@@ -1899,6 +1937,7 @@ class ShowOCIService(object):
                     network[self.C_NETWORK_IGW] += self.__load_core_network_igw(virtual_network, compartments)
                     network[self.C_NETWORK_SLIST] += self.__load_core_network_seclst(virtual_network, compartments)
                     network[self.C_NETWORK_DHCP] += self.__load_core_network_dhcpop(virtual_network, compartments)
+                    network[self.C_NETWORK_DNS_RESOLVERS] += self.__load_core_network_dns_resolvers(dns_client, compartments)
 
                     routes = self.__load_core_network_routet(virtual_network, compartments)
                     network[self.C_NETWORK_ROUTE] += routes
@@ -1953,8 +1992,6 @@ class ShowOCIService(object):
                            'display_name': str(vcn.display_name),
                            'cidr_block': str(vcn.cidr_block),
                            'cidr_blocks': vcn.cidr_blocks,
-                           'ipv6_cidr_block': str(vcn.ipv6_cidr_block),
-                           'ipv6_public_cidr_block': str(vcn.ipv6_public_cidr_block),
                            'time_created': str(vcn.time_created),
                            'vcn_domain_name': str(vcn.vcn_domain_name),
                            'compartment_name': str(compartment['name']),
@@ -1994,50 +2031,46 @@ class ShowOCIService(object):
             for compartment in compartments:
                 print(".", end="")
 
-                for vcn in vcns:
+                vlans = []
+                try:
+                    vlans = oci.pagination.list_call_get_all_results(
+                        virtual_network.list_vlans,
+                        compartment['id'],
+                        lifecycle_state=oci.core.models.Vlan.LIFECYCLE_STATE_AVAILABLE,
+                        retry_strategy=oci.retry.DEFAULT_RETRY_STRATEGY
+                    ).data
 
-                    vlans = []
-                    try:
-                        vlans = oci.pagination.list_call_get_all_results(
-                            virtual_network.list_vlans,
-                            compartment['id'],
-                            vcn_id=vcn['id'],
-                            lifecycle_state=oci.core.models.Vlan.LIFECYCLE_STATE_AVAILABLE,
-                            retry_strategy=oci.retry.DEFAULT_RETRY_STRATEGY
-                        ).data
+                except oci.exceptions.ServiceError as e:
+                    if 'not whitelisted' in str(e.message).lower():
+                        print(" tenant not enabled for this region, skipped.")
+                        return data
+                    if self.__check_service_error(e.code):
+                        self.__load_print_auth_warning('a', False)
+                        continue
+                    else:
+                        raise
 
-                    except oci.exceptions.ServiceError as e:
-                        if 'not whitelisted' in str(e.message).lower():
-                            print(" tenant not enabled for this region, skipped.")
-                            return data
-                        if self.__check_service_error(e.code):
-                            self.__load_print_auth_warning('a', False)
-                            continue
-                        else:
-                            raise
+                for vlan in vlans:
+                    val = {'id': str(vlan.id),
+                           'vlan': str(vlan.vlan_tag) + " - " + str(vlan.cidr_block) + " - " + str(vlan.display_name),
+                           'availability_domain': str(vlan.availability_domain),
+                           'cidr_block': str(vlan.cidr_block),
+                           'vlan_tag': str(vlan.vlan_tag),
+                           'display_name': str(vlan.display_name),
+                           'time_created': str(vlan.time_created),
+                           'lifecycle_state': str(vlan.lifecycle_state),
+                           'nsg_ids': vlan.nsg_ids,
+                           'route_table_id': str(vlan.route_table_id),
+                           'vcn_id': str(vlan.vcn_id),
+                           'compartment_name': str(compartment['name']),
+                           'compartment_id': str(compartment['id']),
+                           'defined_tags': [] if vlan.defined_tags is None else vlan.defined_tags,
+                           'freeform_tags': [] if vlan.freeform_tags is None else vlan.freeform_tags,
+                           'region_name': str(self.config['region'])
+                           }
 
-                    for vlan in vlans:
-                        val = {'id': str(vlan.id),
-                               'vlan': str(vlan.vlan_tag) + " - " + str(vlan.cidr_block) + " - " + str(
-                                   vlan.display_name),
-                               'availability_domain': str(vlan.availability_domain),
-                               'cidr_block': str(vlan.cidr_block),
-                               'vlan_tag': str(vlan.vlan_tag),
-                               'display_name': str(vlan.display_name),
-                               'time_created': str(vlan.time_created),
-                               'lifecycle_state': str(vlan.lifecycle_state),
-                               'nsg_ids': vlan.nsg_ids,
-                               'route_table_id': str(vlan.route_table_id),
-                               'vcn_id': str(vlan.vcn_id),
-                               'compartment_name': str(compartment['name']),
-                               'compartment_id': str(compartment['id']),
-                               'defined_tags': [] if vlan.defined_tags is None else vlan.defined_tags,
-                               'freeform_tags': [] if vlan.freeform_tags is None else vlan.freeform_tags,
-                               'region_name': str(self.config['region'])
-                               }
-
-                        data.append(val)
-                        cnt += 1
+                    data.append(val)
+                    cnt += 1
 
             self.__load_print_cnt(cnt, start_time)
             return data
@@ -2151,6 +2184,8 @@ class ShowOCIService(object):
                            'is_cross_tenancy_peering': str(lpg.is_cross_tenancy_peering),
                            'peer_advertised_cidr_details': lpg.peer_advertised_cidr_details,
                            'route_table_id': str(lpg.route_table_id),
+                           'peer_id': str(lpg.peer_id),
+                           'peering_status_details': str(lpg.peering_status_details),
                            'compartment_name': str(compartment['name']),
                            'compartment_id': str(compartment['id']),
                            'defined_tags': [] if lpg.defined_tags is None else lpg.defined_tags,
@@ -7542,7 +7577,6 @@ class ShowOCIService(object):
 
                 # skip managed paas compartment
                 if self.__if_managed_paas_compartment(compartment['name']):
-                    print(".", end="")
                     continue
 
                 gg_deployments = []
@@ -7556,7 +7590,7 @@ class ShowOCIService(object):
 
                 except oci.exceptions.ServiceError as e:
                     if self.__check_service_error(e.code):
-                        self.__load_print_auth_warning()
+                        self.__load_print_auth_warning("a", False)
                         continue
                     else:
                         print("e - " + str(e))
@@ -7625,17 +7659,14 @@ class ShowOCIService(object):
 
         try:
 
-            self.__load_print_status("Golden Gate DB Registration")
+            self.__load_print_status("Golden Gate DB Reg.")
 
             # loop on all compartments
             for compartment in compartments:
 
                 # skip managed paas compartment
                 if self.__if_managed_paas_compartment(compartment['name']):
-                    print(".", end="")
                     continue
-
-                print(".", end="")
 
                 db_registrations = []
                 try:
@@ -7648,11 +7679,13 @@ class ShowOCIService(object):
 
                 except oci.exceptions.ServiceError as e:
                     if self.__check_service_error(e.code):
-                        self.__load_print_auth_warning()
+                        self.__load_print_auth_warning("a", False)
                         continue
                     else:
                         print("e - " + str(e))
                         return data
+
+                print(".", end="")
 
                 # loop on auto
                 # array = oci.golden_gate.models.DatabaseRegistrationSummary(*
@@ -9045,6 +9078,118 @@ class ShowOCIService(object):
             return data
 
     ##########################################################################
+    # __load_core_network_dns_resolvers
+    ##########################################################################
+    def __load_core_network_dns_resolvers(self, dns_client, compartments):
+
+        data = []
+        cnt = 0
+        start_time = time.time()
+
+        try:
+            self.__load_print_status("DNS Resolvers")
+
+            # loop on all compartments
+            for compartment in compartments:
+
+                # skip managed paas compartment
+                if self.__if_managed_paas_compartment(compartment['name']):
+                    print(".", end="")
+                    continue
+
+                array = []
+                try:
+                    array = oci.pagination.list_call_get_all_results(
+                        dns_client.list_resolvers,
+                        compartment['id'],
+                        lifecycle_state='ACTIVE',
+                        sort_by="displayName",
+                        scope="PRIVATE",
+                        retry_strategy=oci.retry.DEFAULT_RETRY_STRATEGY
+                    ).data
+
+                except oci.exceptions.ServiceError as e:
+                    if self.__check_service_error(e.code):
+                        self.__load_print_auth_warning()
+                        continue
+                    raise
+                except oci.exceptions.ConnectTimeout:
+                    self.__load_print_auth_warning()
+                    continue
+
+                print(".", end="")
+
+                # arr = oci.dns.models.ResolverSummary
+                for arrsummary in array:
+
+                    # get the resolver model
+                    arr = dns_client.get_resolver(arrsummary.id, scope="PRIVATE").data
+
+                    val = {'id': str(arr.id),
+                           'display_name': str(arr.display_name),
+                           'vcn_id': str(arr.attached_vcn_id),
+                           'vcn_name': self.get_network_vcn(arr.attached_vcn_id),
+                           'time_created': str(arr.time_created),
+                           'time_updated': str(arr.time_updated),
+                           'default_view_id': str(arr.default_view_id),
+                           'is_protected': arr.is_protected,
+                           'endpoints': [],
+                           'rules': [],
+                           'compartment_name': str(compartment['name']),
+                           'compartment_id': str(compartment['id']),
+                           'defined_tags': [] if arr.defined_tags is None else arr.defined_tags,
+                           'freeform_tags': [] if arr.freeform_tags is None else arr.freeform_tags,
+                           'region_name': str(self.config['region'])
+                           }
+
+                    # endpoints
+                    for ep in arr.endpoints:
+                        epval = {
+                            'name': str(ep.name),
+                            'endpoint_type': str(ep.endpoint_type),
+                            'forwarding_address': str(ep.forwarding_address) if ep.forwarding_address else "",
+                            'is_forwarding': ep.is_forwarding,
+                            'is_listening': ep.is_listening,
+                            'listening_address': str(ep.listening_address) if ep.listening_address else "",
+                            'time_created': str(ep.time_created),
+                            'time_updated': str(ep.time_updated)
+                        }
+                        val['endpoints'].append(epval)
+
+                    # rules
+                    for ep in arr.rules:
+                        if ep.action == "FORWARD":
+                            epval = {
+                                'client_address_conditions': str(', '.join(x for x in ep.client_address_conditions)),
+                                'qname_cover_conditions': str(', '.join(x for x in ep.qname_cover_conditions)),
+                                'destination_addresses': str(', '.join(x for x in ep.destination_addresses)),
+                                'source_endpoint_name': str(ep.source_endpoint_name),
+                                'action': "FORWARD"
+                            }
+                        else:
+                            epval = {
+                                'client_address_conditions': str(', '.join(x for x in ep.client_address_conditions)),
+                                'qname_cover_conditions': str(', '.join(x for x in ep.qname_cover_conditions)),
+                                'action': str(ep.action)
+                            }
+                        val['rules'].append(epval)
+
+                    # add the data
+                    cnt += 1
+                    data.append(val)
+
+            self.__load_print_cnt(cnt, start_time)
+            return data
+
+        except oci.exceptions.RequestException as e:
+            if self.__check_request_error(e):
+                return data
+            raise
+        except Exception as e:
+            self.__print_error("__load_core_network_dns_resolvers", e)
+            return data
+
+    ##########################################################################
     # __load_edge_waas_policies
     ##########################################################################
     def __load_edge_waas_policies(self, waas, compartments):
@@ -10378,6 +10523,48 @@ class ShowOCIService(object):
             self.__print_error("__load_security_main", e)
 
     ##########################################################################
+    # __load_security_scores_main
+    ##########################################################################
+    #
+    # OCI Classes used:
+    #
+    # oci.cloud_guard.CloudGuardClient(config, **kwargs)
+    ##########################################################################
+    def __load_security_scores_main(self):
+
+        try:
+            print("Security Scores...")
+
+            # clients
+            cg_client = oci.cloud_guard.CloudGuardClient(self.config, signer=self.signer, timeout=1)
+
+            if self.flags.proxy:
+                cg_client.base_client.session.proxies = {'https': self.flags.proxy}
+
+            # reference to compartments
+            root_compartment = self.get_tenancy_id()
+
+            # add the key if not exists
+            self.__initialize_data_key(self.C_SECURITY_SCORES, self.C_SECURITY_SCORES_GUARD_SECURITY_SCORES)
+            self.__initialize_data_key(self.C_SECURITY_SCORES, self.C_SECURITY_SCORES_GUARD_RISK_SCORES)
+
+            # reference to paas
+            sec = self.data[self.C_SECURITY_SCORES]
+
+            # append the data
+            sec[self.C_SECURITY_SCORES_GUARD_SECURITY_SCORES] += self.__load_security_cloud_guard_security_scores(cg_client, root_compartment)
+            sec[self.C_SECURITY_SCORES_GUARD_RISK_SCORES] += self.__load_security_cloud_guard_risk_scores(cg_client, root_compartment)
+
+            print("")
+
+        except oci.exceptions.RequestException:
+            raise
+        except oci.exceptions.ServiceError:
+            raise
+        except Exception as e:
+            self.__print_error("__load_security_scores_main", e)
+
+    ##########################################################################
     # __load_security_cloud_guard
     ##########################################################################
     def __load_security_cloud_guard(self, cg_client, compartments):
@@ -10452,6 +10639,96 @@ class ShowOCIService(object):
             raise
         except Exception as e:
             self.__print_error("__load_security_cloud_guard", e)
+            return data
+
+    ##########################################################################
+    # __load_security_cloud_guard_risk_scores
+    ##########################################################################
+    def __load_security_cloud_guard_risk_scores(self, cg_client, root_compartment):
+
+        data = []
+        start_time = time.time()
+
+        try:
+            self.__load_print_status("Cloud Guard Risk Scores")
+
+            array = []
+            try:
+                array = cg_client.request_risk_scores(
+                    root_compartment,
+                    retry_strategy=oci.retry.DEFAULT_RETRY_STRATEGY
+                ).data
+
+            except oci.exceptions.ServiceError as e:
+                if self.__check_service_error(e.code):
+                    self.__load_print_auth_warning()
+                    return data
+                raise
+            except oci.exceptions.ConnectTimeout:
+                self.__load_print_auth_warning()
+                return data
+
+            # item = oci.cloud_guard.models.TargetSummary
+            for item in array.items:
+                val = {'dimensions_map': item.dimensions_map,
+                       'risk_score': item.risk_score}
+
+                data.append(val)
+
+            self.__load_print_cnt(1, start_time)
+            return data
+
+        except oci.exceptions.RequestException as e:
+            if self.__check_request_error(e):
+                return data
+            raise
+        except Exception as e:
+            self.__print_error("__load_security_cloud_guard_risk_scores", e)
+            return data
+
+    ##########################################################################
+    # __load_security_cloud_guard_risk_scores
+    ##########################################################################
+    def __load_security_cloud_guard_security_scores(self, cg_client, root_compartment):
+
+        data = []
+        start_time = time.time()
+
+        try:
+            self.__load_print_status("Cloud Guard Security Scores")
+
+            array = []
+            try:
+                array = cg_client.request_security_scores(
+                    root_compartment,
+                    retry_strategy=oci.retry.DEFAULT_RETRY_STRATEGY
+                ).data
+
+            except oci.exceptions.ServiceError as e:
+                if self.__check_service_error(e.code):
+                    self.__load_print_auth_warning()
+                    return data
+                raise
+            except oci.exceptions.ConnectTimeout:
+                self.__load_print_auth_warning()
+                return data
+
+            for item in array.items:
+                val = {'dimensions_map': item.dimensions_map,
+                       'security_rating': str(item.security_rating),
+                       'security_score': item.security_score}
+
+                data.append(val)
+
+            self.__load_print_cnt(1, start_time)
+            return data
+
+        except oci.exceptions.RequestException as e:
+            if self.__check_request_error(e):
+                return data
+            raise
+        except Exception as e:
+            self.__print_error("__load_security_cloud_guard_security_scores", e)
             return data
 
     ##########################################################################
