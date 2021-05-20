@@ -6284,7 +6284,7 @@ class ShowOCIService(object):
             print("Database...")
 
             # LoadBalancerClient
-            database_client = oci.database.DatabaseClient(self.config, signer=self.signer, timeout=1)
+            database_client = oci.database.DatabaseClient(self.config, signer=self.signer, timeout=5)
             if self.flags.proxy:
                 database_client.base_client.session.proxies = {'https': self.flags.proxy}
 

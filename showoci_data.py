@@ -2100,7 +2100,7 @@ class ShowOCIData(object):
                         'defined_tags': vm['defined_tags'],
                         'freeform_tags': vm['freeform_tags'],
                         'region_name': vm['region_name'],
-                        'sum_info': 'Database XP - ' + dbs['shape'],
+                        'sum_info': 'Database XP - ' + dbs['shape'] + " - " + vm['license_model'],
                         'sum_info_storage': 'Database - Storage (GB)',
                         'sum_size_gb': vm['storage_size_in_gbs'],
                         'patches': self.__get_database_db_patches(vm['patches']),
