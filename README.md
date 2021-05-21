@@ -52,6 +52,8 @@ Output can be printer friendly, CSV files or JSON file.
 - oci.ocvp.EsxiHostClient and oci.ocvp.SddcClient
 - oci.golden_gate.GoldenGateClient
 - oci.network_load_balancer.NetworkLoadBalancerClient
+- oci.management_agent.ManagementAgentClient
+- oci.database_management.DbManagementClient
 
 
 ** DISCLAIMER – This is not an official Oracle application

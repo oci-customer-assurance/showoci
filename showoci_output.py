@@ -1352,6 +1352,21 @@ class ShowOCIOutput(object):
             self.__print_error("__print_database_software_images", e)
 
     ##########################################################################
+    # print database external cdb
+    ##########################################################################
+    def __print_database_external(self, dbs):
+        try:
+            for db in dbs:
+                print(self.taba + "Name      : " + db['display_name'] + " - " + db['db_unique_name'] + " - " + db['database_configuration'])
+                print(self.tabs + "Created   : " + db['time_created'][0:16] + " (" + db['lifecycle_state'] + ")")
+                print(self.tabs + "DB Manage : " + db['database_management_status'] + ", " + db['database_management_license_model'])
+                print(self.tabs + "DB Version: " + db['database_version'] + ", " + db['database_edition'])
+                print("")
+
+        except Exception as e:
+            self.__print_error("__print_database_external", e)
+
+    ##########################################################################
     # print database nosql
     ##########################################################################
 
@@ -1464,6 +1479,18 @@ class ShowOCIOutput(object):
             if 'software_images' in list_databases:
                 self.print_header("Database Software Images", 2)
                 self.__print_database_software_images(list_databases['software_images'])
+
+            if 'db_external_cdb' in list_databases:
+                self.print_header("Database External CDB", 2)
+                self.__print_database_external(list_databases['db_external_cdb'])
+
+            if 'db_external_pdb' in list_databases:
+                self.print_header("Database External PDB", 2)
+                self.__print_database_external(list_databases['db_external_pdb'])
+
+            if 'db_external_nonpdb' in list_databases:
+                self.print_header("Database External NON-PDB", 2)
+                self.__print_database_external(list_databases['db_external_nonpdb'])
 
         except Exception as e:
             self.__print_error("__print_database_main", e)
@@ -1666,6 +1693,29 @@ class ShowOCIOutput(object):
                         print(self.taba + event['display_name'] + " (" + event['description'] + "), Enabled = " + str(event['is_enabled']))
                         print(self.tabs + "Condition : " + event['condition'])
                         print("")
+
+            # if agents
+            if 'agents' in monitorings:
+                if monitorings['agents']:
+                    agents = monitorings['agents']
+                    self.print_header("Management Agents", 2)
+
+                    for event in agents:
+                        print(self.taba + event['display_name'] + " (" + event['platform_name'] + "), Version = " + str(event['version']) + ", Status = " + event['availability_status'])
+                        print(self.tabs + "Auto Upgradable : " + event['is_agent_auto_upgradable'])
+                        print(self.tabs + "Plugin List     : " + event['plugin_list'])
+                        print(self.tabs + "Created         : " + event['time_created'][0:16] + ", Last Beat: " + event['time_last_heartbeat'][0:16])
+                        print(self.tabs + "Host            : " + event['host'])
+                        print("")
+
+            # if db_managements
+            if 'db_managements' in monitorings:
+                if monitorings['db_managements']:
+                    agents = monitorings['db_managements']
+                    self.print_header("DB Managements", 2)
+
+                    for event in agents:
+                        print(self.taba + event['name'] + ", " + event['database_type'] + ", " + str(event['database_sub_type']) + ", is_cluster = " + event['is_cluster'] + ", Created : " + event['time_created'][0:16])
 
         except Exception as e:
             self.__print_error("__print_monitoring_main", e)
