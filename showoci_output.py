@@ -586,14 +586,14 @@ class ShowOCIOutput(object):
             self.print_header("DRGs", 2)
             for drg in drgs:
                 print(self.taba + "DRG   Name   : " + drg['name'] + ", Redundant: " + drg['redundancy'])
-                if drg['ip_sec_connections']:
-                    print(self.tabs + "      IPSECs : " + str(', '.join(x['name'] + " (" + x['tunnels_status'] + ")" for x in drg['ip_sec_connections'])))
-                if drg['virtual_circuits']:
-                    print(self.tabs + "      VCs    : " + str(', '.join(x['name'] + " (" + x['bgp_session_state'] + ")" for x in drg['virtual_circuits'])))
-                if drg['remote_peerings']:
-                    print(self.tabs + "      RPCs   : " + str(', '.join(x['name'] + " (" + x['peering_status'] + ")" for x in drg['remote_peerings'])))
-                if drg['vcns']:
-                    print(self.tabs + "      VCNs   : " + str(', '.join(x['name'] for x in drg['vcns'])))
+                for index, arr in enumerate(drg['ip_sec_connections'], start=1):
+                    print(self.tabs + "      IPSEC " + str(index) + ": " + arr['name'] + " (" + arr['tunnels_status'] + ")")
+                for index, arr in enumerate(drg['virtual_circuits'], start=1):
+                    print(self.tabs + "      VC " + str(index) + "    : " + arr['name'] + " (" + arr['bgp_session_state'] + ")")
+                for index, arr in enumerate(drg['remote_peerings'], start=1):
+                    print(self.tabs + "      RPC " + str(index) + "  : " + arr['name'] + " (" + arr['peering_status'] + ")")
+                for index, arr in enumerate(drg['vcns'], start=1):
+                    print(self.tabs + "      VCN " + str(index) + "  : " + arr['name'])
                 print("")
 
         except Exception as e:
@@ -2635,6 +2635,20 @@ class ShowOCISummary(object):
             self.__print_error("__summary_database_nosql", e)
 
     ##########################################################################
+    # print external
+    ##########################################################################
+
+    def __summary_database_external(self, dbs):
+
+        try:
+            for db in dbs:
+                if 'sum_info' in db:
+                    self.summary_global_list.append({'type': db['sum_info'], 'size': float(db['sum_size_gb'])})
+
+        except Exception as e:
+            self.__print_error("__summary_database_external", e)
+
+    ##########################################################################
     # Database
     ##########################################################################
 
@@ -2665,6 +2679,15 @@ class ShowOCISummary(object):
 
             if 'goldengate' in list_databases:
                 self.__summary_database_goldengate(list_databases['goldengate'])
+
+            if 'db_external_cdb' in list_databases:
+                self.__summary_database_external(list_databases['db_external_cdb'])
+
+            if 'db_external_pdb' in list_databases:
+                self.__summary_database_external(list_databases['db_external_pdb'])
+
+            if 'db_external_nonpdb' in list_databases:
+                self.__summary_database_external(list_databases['db_external_nonpdb'])
 
         except Exception as e:
             self.__print_error("__summary_database_main", e)

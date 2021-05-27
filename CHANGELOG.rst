@@ -5,6 +5,11 @@ All notable changes to this project will be documented in this file.
 The format is based on `Keep a Changelog <http://keepachangelog.com/>`_.
 
 =====================
+21.06.09 - 21.06.09
+=====================
+* Support for New DRG
+
+=====================
 21.06.02 - 21.06.02
 =====================
 * Added Management Agent

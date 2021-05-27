@@ -518,9 +518,11 @@ class ShowOCIData(object):
                 val, display_name, route_table = self.__get_core_network_vcn_drg_details(da)
                 value = {'id': da['id'],
                          'drg_id': da['drg_id'],
+                         'display_name': da['display_name'],
                          'route_table_id': da['route_table_id'],
                          'route_table': route_table,
-                         'display_name': display_name,
+                         'drg_route_table_id': da['drg_route_table_id'],
+                         'export_drg_route_distribution_id': da['export_drg_route_distribution_id'],
                          'name': val,
                          'compartment_name': da['compartment_name'],
                          'compartment_id': da['compartment_id'],

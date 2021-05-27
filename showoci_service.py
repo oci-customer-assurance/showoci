@@ -3168,14 +3168,20 @@ class ShowOCIService(object):
                 # arr = oci.core.models.DrgAttachment
                 for arr in arrs:
                     if arr.lifecycle_state == oci.core.models.DrgAttachment.LIFECYCLE_STATE_ATTACHED:
-                        val = {'id': str(arr.id),
-                               'vcn_id': str(arr.vcn_id),
-                               'drg_id': str(arr.drg_id),
-                               'time_created': str(arr.time_created),
-                               'route_table_id': "" if str(arr.route_table_id) == "None" else str(arr.route_table_id),
-                               'compartment_name': str(compartment['name']),
-                               'compartment_id': str(compartment['id']),
-                               'region_name': str(self.config['region'])}
+                        val = {
+                            'id': str(arr.id),
+                            'vcn_id': str(arr.vcn_id),
+                            'drg_id': str(arr.drg_id),
+                            'time_created': str(arr.time_created),
+                            'display_name': str(arr.display_name),
+                            'is_cross_tenancy': str(arr.is_cross_tenancy),
+                            'export_drg_route_distribution_id': str(arr.export_drg_route_distribution_id),
+                            'drg_route_table_id': str(arr.drg_route_table_id),
+                            'route_table_id': "" if str(arr.route_table_id) == "None" else str(arr.route_table_id),
+                            'compartment_name': str(compartment['name']),
+                            'compartment_id': str(compartment['id']),
+                            'region_name': str(self.config['region'])
+                        }
                         data.append(val)
                         cnt += 1
 
@@ -7520,6 +7526,15 @@ class ShowOCIService(object):
                     if dbs.lifecycle_state == "TERMINATING" or dbs.lifecycle_state == "TERMINATED":
                         continue
 
+                    # management license
+                    manage_license = ""
+                    if dbs.database_management_config:
+                        if dbs.database_management_config.license_model:
+                            if "BRING" in dbs.database_management_config.license_model:
+                                manage_license = "BYOL"
+                            else:
+                                manage_license = "INCL"
+
                     value = {'id': str(dbs.id),
                              'display_name': str(dbs.display_name),
                              'lifecycle_state': str(dbs.lifecycle_state),
@@ -7529,6 +7544,8 @@ class ShowOCIService(object):
                              'db_id': str(dbs.db_id),
                              'database_version': str(dbs.database_version),
                              'database_edition': str(dbs.database_edition),
+                             'sum_info': "Database External CDB " + ("Managed " + manage_license if manage_license else "Not Managed") + " (Count)",
+                             'sum_size_gb': str("1"),
                              'time_zone': str(dbs.time_zone),
                              'character_set': str(dbs.character_set),
                              'ncharacter_set': str(dbs.ncharacter_set),
@@ -7604,6 +7621,15 @@ class ShowOCIService(object):
                     if dbs.lifecycle_state == "TERMINATING" or dbs.lifecycle_state == "TERMINATED":
                         continue
 
+                    # management license
+                    manage_license = ""
+                    if dbs.database_management_config:
+                        if dbs.database_management_config.license_model:
+                            if "BRING" in dbs.database_management_config.license_model:
+                                manage_license = "BYOL"
+                            else:
+                                manage_license = "INCL"
+
                     value = {'id': str(dbs.id),
                              'source_id': str(dbs.source_id),
                              'external_container_database_id': str(dbs.external_container_database_id),
@@ -7615,6 +7641,8 @@ class ShowOCIService(object):
                              'db_id': str(dbs.db_id),
                              'database_version': str(dbs.database_version),
                              'database_edition': str(dbs.database_edition),
+                             'sum_info': "Database External PDB " + ("Managed " + manage_license if manage_license else "Not Managed") + " (Count)",
+                             'sum_size_gb': str("1"),
                              'time_zone': str(dbs.time_zone),
                              'character_set': str(dbs.character_set),
                              'ncharacter_set': str(dbs.ncharacter_set),
@@ -7622,7 +7650,7 @@ class ShowOCIService(object):
                              'database_configuration': str(dbs.database_configuration),
                              'database_management_status': "" if dbs.database_management_config is None else str(dbs.database_management_config.database_management_status),
                              'database_management_connection_id': "" if dbs.database_management_config is None else str(dbs.database_management_config.database_management_connection_id),
-                             'database_management_license_model': "" if dbs.database_management_config is None else str(dbs.database_management_config.license_model),
+                             'database_management_license_model': manage_license,
                              'compartment_name': str(compartment['name']),
                              'compartment_id': str(compartment['id']),
                              'defined_tags': [] if dbs.defined_tags is None else dbs.defined_tags,
@@ -7656,7 +7684,7 @@ class ShowOCIService(object):
 
         try:
 
-            self.__load_print_status("External PDB Databases")
+            self.__load_print_status("External NonPDB Databases")
 
             # loop on all compartments
             for compartment in compartments:
@@ -7689,9 +7717,16 @@ class ShowOCIService(object):
                     if dbs.lifecycle_state == "TERMINATING" or dbs.lifecycle_state == "TERMINATED":
                         continue
 
+                    # management license
+                    manage_license = ""
+                    if dbs.database_management_config:
+                        if dbs.database_management_config.license_model:
+                            if "BRING" in dbs.database_management_config.license_model:
+                                manage_license = "BYOL"
+                            else:
+                                manage_license = "INCL"
+
                     value = {'id': str(dbs.id),
-                             'source_id': str(dbs.source_id),
-                             'external_container_database_id': str(dbs.external_container_database_id),
                              'display_name': str(dbs.display_name),
                              'lifecycle_state': str(dbs.lifecycle_state),
                              'lifecycle_details': str(dbs.lifecycle_details),
@@ -7700,6 +7735,8 @@ class ShowOCIService(object):
                              'db_id': str(dbs.db_id),
                              'database_version': str(dbs.database_version),
                              'database_edition': str(dbs.database_edition),
+                             'sum_info': "Database External NonPDB " + ("Managed " + manage_license if manage_license else "Not Managed") + " (Count)",
+                             'sum_size_gb': str("1"),
                              'time_zone': str(dbs.time_zone),
                              'character_set': str(dbs.character_set),
                              'ncharacter_set': str(dbs.ncharacter_set),
