@@ -5,7 +5,7 @@ It covers most of OCI components,
 Authentication by User or Compute using instance principals, 
 Output can be printer friendly, CSV files or JSON file.
 
-**Developed by Adi Zohar, 2018-2020**
+**Developed by Adi Zohar, 2018-2021**
 
 ![](img/screen_xls.png)
 ![](img/screen_scr1.png)
