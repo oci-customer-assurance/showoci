@@ -2854,7 +2854,7 @@ class ShowOCIService(object):
                 try:
                     arrs = oci.pagination.list_call_get_all_results(
                         virtual_network.list_network_security_groups,
-                        compartment['id'],
+                        compartment_id=compartment['id'],
                         lifecycle_state=oci.core.models.NetworkSecurityGroup.LIFECYCLE_STATE_AVAILABLE,
                         retry_strategy=oci.retry.DEFAULT_RETRY_STRATEGY
                     ).data
@@ -6295,23 +6295,23 @@ class ShowOCIService(object):
             print("Database...")
 
             # LoadBalancerClient
-            database_client = oci.database.DatabaseClient(self.config, signer=self.signer, timeout=5)
+            database_client = oci.database.DatabaseClient(self.config, signer=self.signer, timeout=30)
             if self.flags.proxy:
                 database_client.base_client.session.proxies = {'https': self.flags.proxy}
 
-            virtual_network = oci.core.VirtualNetworkClient(self.config, signer=self.signer, timeout=1)
+            virtual_network = oci.core.VirtualNetworkClient(self.config, signer=self.signer, timeout=2)
             if self.flags.proxy:
                 virtual_network.base_client.session.proxies = {'https': self.flags.proxy}
 
-            nosql_client = oci.nosql.NosqlClient(self.config, signer=self.signer, timeout=1)
+            nosql_client = oci.nosql.NosqlClient(self.config, signer=self.signer, timeout=2)
             if self.flags.proxy:
                 nosql_client.base_client.session.proxies = {'https': self.flags.proxy}
 
-            mysql_client = oci.mysql.DbSystemClient(self.config, signer=self.signer, timeout=1)
+            mysql_client = oci.mysql.DbSystemClient(self.config, signer=self.signer, timeout=2)
             if self.flags.proxy:
                 mysql_client.base_client.session.proxies = {'https': self.flags.proxy}
 
-            gg_client = oci.golden_gate.GoldenGateClient(self.config, signer=self.signer, timeout=1)
+            gg_client = oci.golden_gate.GoldenGateClient(self.config, signer=self.signer, timeout=2)
             if self.flags.proxy:
                 gg_client.base_client.session.proxies = {'https': self.flags.proxy}
 
@@ -8547,7 +8547,7 @@ class ShowOCIService(object):
             print("API Gateways...")
 
             # GatewayClient
-            api_gw_client = oci.apigateway.GatewayClient(self.config, signer=self.signer, timeout=1)
+            api_gw_client = oci.apigateway.GatewayClient(self.config, signer=self.signer, timeout=2)
             if self.flags.proxy:
                 api_gw_client.base_client.session.proxies = {'https': self.flags.proxy}
 
@@ -8656,7 +8656,7 @@ class ShowOCIService(object):
             print("Functions...")
 
             # StreamAdminClient
-            function_client = oci.functions.FunctionsManagementClient(self.config, signer=self.signer, timeout=1)
+            function_client = oci.functions.FunctionsManagementClient(self.config, signer=self.signer, timeout=2)
             if self.flags.proxy:
                 function_client.base_client.session.proxies = {'https': self.flags.proxy}
 
@@ -9930,11 +9930,11 @@ class ShowOCIService(object):
             print("Data and AI Services...")
 
             # clients
-            ds_client = oci.data_science.DataScienceClient(self.config, signer=self.signer, timeout=1)
-            dc_client = oci.data_catalog.DataCatalogClient(self.config, signer=self.signer, timeout=1)
-            df_client = oci.data_flow.DataFlowClient(self.config, signer=self.signer, timeout=1)
-            oda_client = oci.oda.OdaClient(self.config, signer=self.signer, timeout=1)
-            bds_client = oci.bds.BdsClient(self.config, signer=self.signer, timeout=1)
+            ds_client = oci.data_science.DataScienceClient(self.config, signer=self.signer, timeout=2)
+            dc_client = oci.data_catalog.DataCatalogClient(self.config, signer=self.signer, timeout=2)
+            df_client = oci.data_flow.DataFlowClient(self.config, signer=self.signer, timeout=2)
+            oda_client = oci.oda.OdaClient(self.config, signer=self.signer, timeout=2)
+            bds_client = oci.bds.BdsClient(self.config, signer=self.signer, timeout=2)
 
             if self.flags.proxy:
                 ds_client.base_client.session.proxies = {'https': self.flags.proxy}
@@ -10362,11 +10362,11 @@ class ShowOCIService(object):
             print("PaaS Native Services...")
 
             # clients
-            oic_client = oci.integration.IntegrationInstanceClient(self.config, signer=self.signer, timeout=1)
-            oac_client = oci.analytics.AnalyticsClient(self.config, signer=self.signer, timeout=(1, 1))
-            oce_client = oci.oce.OceInstanceClient(self.config, signer=self.signer, timeout=(1, 1))
-            ocvs_client = oci.ocvp.SddcClient(self.config, signer=self.signer, timeout=(1, 1))
-            esxi_client = oci.ocvp.EsxiHostClient(self.config, signer=self.signer, timeout=(1, 1))
+            oic_client = oci.integration.IntegrationInstanceClient(self.config, signer=self.signer, timeout=2)
+            oac_client = oci.analytics.AnalyticsClient(self.config, signer=self.signer, timeout=(2, 2))
+            oce_client = oci.oce.OceInstanceClient(self.config, signer=self.signer, timeout=(2, 2))
+            ocvs_client = oci.ocvp.SddcClient(self.config, signer=self.signer, timeout=(3, 3))
+            esxi_client = oci.ocvp.EsxiHostClient(self.config, signer=self.signer, timeout=(3, 3))
             virtual_network = oci.core.VirtualNetworkClient(self.config, signer=self.signer)
 
             if self.flags.proxy:
@@ -11145,8 +11145,8 @@ class ShowOCIService(object):
             print("Security and Logging Services...")
 
             # clients
-            cg_client = oci.cloud_guard.CloudGuardClient(self.config, signer=self.signer, timeout=1)
-            log_client = oci.logging.LoggingManagementClient(self.config, signer=self.signer, timeout=1)
+            cg_client = oci.cloud_guard.CloudGuardClient(self.config, signer=self.signer, timeout=2)
+            log_client = oci.logging.LoggingManagementClient(self.config, signer=self.signer, timeout=2)
 
             if self.flags.proxy:
                 cg_client.base_client.session.proxies = {'https': self.flags.proxy}
@@ -11189,7 +11189,7 @@ class ShowOCIService(object):
             print("Cloud Guard Scores...")
 
             # clients
-            cg_client = oci.cloud_guard.CloudGuardClient(self.config, signer=self.signer, timeout=1)
+            cg_client = oci.cloud_guard.CloudGuardClient(self.config, signer=self.signer, timeout=2)
 
             if self.flags.proxy:
                 cg_client.base_client.session.proxies = {'https': self.flags.proxy}
