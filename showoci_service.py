@@ -6448,19 +6448,19 @@ class ShowOCIService(object):
             if self.flags.proxy:
                 database_client.base_client.session.proxies = {'https': self.flags.proxy}
 
-            virtual_network = oci.core.VirtualNetworkClient(self.config, signer=self.signer, timeout=2)
+            virtual_network = oci.core.VirtualNetworkClient(self.config, signer=self.signer, timeout=15)
             if self.flags.proxy:
                 virtual_network.base_client.session.proxies = {'https': self.flags.proxy}
 
-            nosql_client = oci.nosql.NosqlClient(self.config, signer=self.signer, timeout=2)
+            nosql_client = oci.nosql.NosqlClient(self.config, signer=self.signer, timeout=15)
             if self.flags.proxy:
                 nosql_client.base_client.session.proxies = {'https': self.flags.proxy}
 
-            mysql_client = oci.mysql.DbSystemClient(self.config, signer=self.signer, timeout=2)
+            mysql_client = oci.mysql.DbSystemClient(self.config, signer=self.signer, timeout=15)
             if self.flags.proxy:
                 mysql_client.base_client.session.proxies = {'https': self.flags.proxy}
 
-            gg_client = oci.golden_gate.GoldenGateClient(self.config, signer=self.signer, timeout=2)
+            gg_client = oci.golden_gate.GoldenGateClient(self.config, signer=self.signer, timeout=15)
             if self.flags.proxy:
                 gg_client.base_client.session.proxies = {'https': self.flags.proxy}
 
@@ -7138,11 +7138,20 @@ class ShowOCIService(object):
                          'defined_tags': [] if db.defined_tags is None else db.defined_tags,
                          'freeform_tags': [] if db.freeform_tags is None else db.freeform_tags,
                          'time_created': str(db.time_created),
+                         'last_backup_timestamp': str(db.last_backup_timestamp),
+                         'kms_key_id': str(db.kms_key_id),
+                         'source_database_point_in_time_recovery_timestamp': str(db.source_database_point_in_time_recovery_timestamp),
+                         'database_software_image_id': str(db.database_software_image_id),
+                         'connection_strings_cdb': "",
                          'auto_backup_enabled': False}
 
                 if db.db_backup_config is not None:
                     if db.db_backup_config.auto_backup_enabled:
                         value['auto_backup_enabled'] = True
+
+                if db.connection_strings is not None:
+                    if db.connection_strings.cdb_default:
+                        value['connection_strings_cdb'] = db.connection_strings.cdb_default
 
                 if not self.flags.skip_backups:
                     value['backups'] = self.__load_database_dbsystems_db_backups(database_client, db.id)

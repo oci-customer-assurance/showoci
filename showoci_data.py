@@ -1956,10 +1956,13 @@ class ShowOCIData(object):
             for db in dbs:
 
                 backupstr = (" - AutoBck=N" if db['auto_backup_enabled'] else " - AutoBck=Y")
-                pdb_name = "" if db['pdb_name'] else db['pdb_name'] + " - "
-                value = {'name': (str(db['db_name']) + " - " + str(db['db_unique_name']) + " - " + pdb_name +
+                pdb_name = db['pdb_name'] + " - " if db['pdb_name'] else ""
+                value = {'name': (str(db['db_name']) + " - " + str(db['db_unique_name']) + " - " +
+                                  pdb_name +
                                   str(db['db_workload']) + " - " +
-                                  str(db['character_set']) + " - " + str(db['lifecycle_state']) + backupstr),
+                                  str(db['character_set']) + " - " +
+                                  str(db['ncharacter_set']) + " - " +
+                                  str(db['lifecycle_state']) + backupstr),
                          'backups': self.__get_database_db_backups(db['backups']) if 'backups' in db else [],
                          'time_created': db['time_created'],
                          'defined_tags': db['defined_tags'],
@@ -1969,8 +1972,14 @@ class ShowOCIData(object):
                          'pdb_name': pdb_name,
                          'db_workload': db['db_workload'],
                          'character_set': db['character_set'],
+                         'ncharacter_set': db['ncharacter_set'],
                          'db_unique_name': db['db_unique_name'],
                          'lifecycle_state': db['lifecycle_state'],
+                         'auto_backup_enabled': db['auto_backup_enabled'],
+                         'connection_strings_cdb': db['connection_strings_cdb'],
+                         'source_database_point_in_time_recovery_timestamp': db['source_database_point_in_time_recovery_timestamp'],
+                         'kms_key_id': db['kms_key_id'],
+                         'last_backup_timestamp': db['last_backup_timestamp'],
                          'id': db['id']
                          }
 
@@ -2189,7 +2198,8 @@ class ShowOCIData(object):
             list_db_systems = self.service.search_multi_items(self.service.C_DATABASE, self.service.C_DATABASE_DBSYSTEMS, 'region_name', region_name, 'compartment_id', compartment['id'])
 
             for dbs in list_db_systems:
-                value = {'id': dbs['id'], 'name': dbs['display_name'] + " - " + dbs['shape'] + " - " + dbs['lifecycle_state'],
+                value = {'id': dbs['id'],
+                         'name': dbs['display_name'] + " - " + dbs['shape'] + " - " + dbs['lifecycle_state'],
                          'shape': dbs['shape'],
                          'shape_ocpu': dbs['shape_ocpu'],
                          'shape_memory_gb': dbs['shape_memory_gb'],
@@ -2206,7 +2216,7 @@ class ShowOCIData(object):
                          'availability_domain': dbs['availability_domain'],
                          'cpu_core_count': dbs['cpu_core_count'],
                          'node_count': dbs['node_count'],
-                         'version': dbs['version'] + " - " + dbs['database_edition'] + " - " + dbs['license_model'],
+                         'version': (dbs['version'] + " - ") if dbs['version'] != "None" else "" + ((dbs['database_edition'] + " - ") if dbs['database_edition'] != "None" else "") + dbs['license_model'],
                          'host': dbs['hostname'],
                          'domain': dbs['domain'],
                          'data_subnet': dbs['data_subnet'],
