@@ -1,13 +1,10 @@
 ## showoci - Oracle Cloud Infrastructure Reporting Tool
 
 SHOWOCI is a reporting tool which uses the Python SDK to extract list of resources from your tenant. 
-It covers most of OCI components, 
-Authentication by User or Compute using instance principals, 
+It covers most of OCI components,  Authentication by User or Compute using instance principals, 
 Output can be printer friendly, CSV files or JSON file.
 
-**DISCLAIMER – This is not an official Oracle application**
-
-**It should NOT be used for utilization calculation purposes, and rather OCI's official 
+**DISCLAIMER – This is not an official Oracle application,  It does not supported by Oracle, It should NOT be used for utilization calculation purposes, and rather OCI's official 
 [cost analysis](https://docs.oracle.com/en-us/iaas/Content/Billing/Concepts/costanalysisoverview.htm) 
 and [usage reports](https://docs.oracle.com/en-us/iaas/Content/Billing/Concepts/usagereportsoverview.htm) features should be used instead.**
 
@@ -152,7 +149,7 @@ Download the showoci*.py from this project
 Execute  
 
 ```
-$ ./showoci.py  
+$ python3 showoci.py  
 
 usage: showoci.py [-h] [-a] [-ani] [-an] [-api] [-b] [-c] [-cn] [-d] [-e] [-edge] [-f] [-fun] [-i] [-ic] [-isc] [-l] [-lq] [-m] [-n] [-o] [-paas] [-dataai] [-rm] [-s] [-sec]
                   [-nobackups] [-so] [-mc] [-nr] [-ip] [-dt] [-t PROFILE] [-p PROXY] [-rg REGION] [-cp COMPART] [-cpr COMPART_RECUR] [-cpath COMPARTPATH] [-tenantid TENANTID]

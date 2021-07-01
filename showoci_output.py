@@ -112,6 +112,7 @@ class ShowOCIOutput(object):
         try:
             self.print_header(data['program'], 1)
             print("Author          : " + data['author'])
+            print("Disclaimer      : " + data['disclaimer'])
             print("Machine         : " + data['machine'])
             print("Python Version  : " + data['python'])
             if data['use_instance_principals']:
