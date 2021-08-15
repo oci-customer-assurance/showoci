@@ -2025,8 +2025,11 @@ class ShowOCIData(object):
                     {'name': str(backup['display_name']) + " - " + str(backup['type']) + " - " + str(backup['lifecycle_state']),
                      'time': str(backup['time_started'])[0:16] + " - " + str(backup['time_ended'])[0:16],
                      'size': bsize,
+                     'display_name': backup['display_name'],
+                     'lifecycle_state': backup['lifecycle_state'],
+                     'type': backup['type'],
                      'sum_info': 'Object Storage - DB Backup (GB)',
-                     'sum_size_gb': ssize
+                     'sum_size_gb': ssize,
                      })
             return data
 
@@ -2271,8 +2274,15 @@ class ShowOCIData(object):
             for backup in backups:
                 backup_type = "Automatic Backup, " if backup['is_automatic'] else "Manual Backup   , "
                 data.append(
-                    {'name': backup_type + str(backup['display_name']) + " - " + str(backup['type']) + " - " + str(backup['lifecycle_state']),
-                     'time': str(backup['time_started'])[0:16] + " - " + str(backup['time_ended'])[0:16]})
+                    {
+                        'name': backup_type + str(backup['display_name']) + " - " + str(backup['type']) + " - " + str(backup['lifecycle_state']),
+                        'time': str(backup['time_started'])[0:16] + " - " + str(backup['time_ended'])[0:16],
+                        'display_name': backup['display_name'],
+                        'lifecycle_state': backup['lifecycle_state'],
+                        'type': backup['type'],
+                        'is_automatic': backup['is_automatic']
+                    }
+                )
             return data
 
         except Exception as e:
