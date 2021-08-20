@@ -3874,6 +3874,22 @@ class ShowOCICSV(object):
 
                             self.csv_database.append(data)
 
+                            # database Backups
+                            if 'backups' in db:
+                                for backup in db['backups']:
+                                    data = {
+                                        'region_name': region_name,
+                                        'compartment_name': dbs['compartment_name'],
+                                        'dbs_name': dbs['display_name'],
+                                        'database': db['db_name'],
+                                        'shape': dbs['shape'],
+                                        'backup_name': backup['display_name'],
+                                        'time': backup['time'],
+                                        'size': backup['size'],
+                                        'lifecycle_state': backup['lifecycle_state']
+                                    }
+                                    self.csv_database_backups.append(data)
+
         except Exception as e:
             self.__print_error("__csv_database_db_exadata", e)
 

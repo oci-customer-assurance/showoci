@@ -682,7 +682,7 @@ class ShowOCIService(object):
                 if int(i) < int(rl):
                     print("")
                     print("*********************************************************************")
-                    print("Error, OCI SDK version " + self.oci_compatible_version + " required !")
+                    print("Error, OCI SDK minimum version " + self.oci_compatible_version + " required !")
                     print("OCI SDK Version installed = " + self.get_oci_version())
                     print("Please use below command to upgrade OCI SDK:")
                     print("   python -m pip install --upgrade oci")
