@@ -2299,7 +2299,7 @@ class ShowOCIData(object):
             freesum = "Free " if dbs['is_free_tier'] else ""
             value = {
                 'id': str(dbs['id']),
-                'name': str(dbs['db_name']) + " (" + (str(dbs['display_name']) + ") - " + str(dbs['license_model']) + " - " + str(dbs['lifecycle_state']) + " (" + str(dbs['sum_count']) + " OCPUs" + (" AutoScale" if dbs['is_auto_scaling_enabled'] else "") + ") - " + dbs['db_workload'] + " - " + dbs['db_type'] + freemsg),
+                'name': str(dbs['db_name']) + " (" + (str(dbs['display_name']) + ") - " + str(dbs['license_model']) + " - " + str(dbs['role']) + " - " + str(dbs['lifecycle_state']) + " (" + str(dbs['sum_count']) + " OCPUs" + (" AutoScale" if dbs['is_auto_scaling_enabled'] else "") + ") - " + dbs['db_workload'] + " - " + dbs['db_type'] + freemsg),
                 'display_name': dbs['display_name'],
                 'license_model': dbs['license_model'],
                 'lifecycle_state': dbs['lifecycle_state'],
@@ -2311,13 +2311,13 @@ class ShowOCIData(object):
                 'service_console_url': str(dbs['service_console_url']),
                 'time_created': str(dbs['time_created'])[0:16],
                 'connection_strings': str(dbs['connection_strings']),
+                'connection_urls': str(dbs['connection_urls']),
                 'sum_info': "Autonomous Database " + freesum + str(dbs['db_workload']) + " (OCPUs) - " + dbs['license_model'],
                 'sum_info_stopped': "Stopped Autonomous Database " + freesum + str(dbs['db_workload']) + " (Count) - " + dbs['license_model'],
                 'sum_info_count': "Autonomous Database " + freesum + str(dbs['db_workload']) + " (Count) - " + dbs['license_model'],
                 'sum_count': str(dbs['sum_count']),
                 'sum_info_storage': "Autonomous Database " + freesum + "(TB)",
                 'sum_size_tb': str(dbs['data_storage_size_in_tbs']),
-                'backups': self.__get_database_adb_databases_backups(dbs['backups']),
                 'whitelisted_ips': dbs['whitelisted_ips'],
                 'is_auto_scaling_enabled': dbs['is_auto_scaling_enabled'],
                 'db_workload': dbs['db_workload'],
@@ -2347,7 +2347,17 @@ class ShowOCIData(object):
                 'standby_lag_time_in_seconds': dbs['standby_lag_time_in_seconds'],
                 'standby_lifecycle_state': dbs['standby_lifecycle_state'],
                 'autonomous_container_database_id': dbs['autonomous_container_database_id'],
-                'is_data_guard_enabled': dbs['is_data_guard_enabled']
+                'is_data_guard_enabled': dbs['is_data_guard_enabled'],
+                'peer_db_ids': dbs['peer_db_ids'],
+                'time_data_guard_role_changed': dbs['time_data_guard_role_changed'],
+                'time_local_data_guard_enabled': dbs['time_local_data_guard_enabled'],
+                'dataguard_region_type': dbs['dataguard_region_type'],
+                'customer_contacts': dbs['customer_contacts'],
+                'supported_regions_to_clone_to': dbs['supported_regions_to_clone_to'],
+                'key_store_wallet_name': dbs['key_store_wallet_name'],
+                'key_store_id': dbs['key_store_id'],
+                'role': dbs['role'],
+                'backups': self.__get_database_adb_databases_backups(dbs['backups'])
             }
 
             # subnet
