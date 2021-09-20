@@ -1948,6 +1948,14 @@ class ShowOCIOutput(object):
                     print(self.taba + val['display_name'] + ", (Target = " + val['target_resource_type'] + "), Created: " + val['time_created'][0:16] + " (" + val['lifecycle_state'] + "), Total Recipes : " + val['recipe_count'])
                     print("")
 
+            # bastions
+            if 'bastions' in security:
+                self.print_header("Bastions", 2)
+                for val in security['bastions']:
+                    subnet = "(" + val['target_subnet_name'] + "), " if val['target_subnet_name'] else ""
+                    print(self.taba + val['name'] + ", " + val['bastion_type'] + ", " + subnet + "Created: " + val['time_created'][0:16] + " (" + val['lifecycle_state'] + ")")
+                    print("")
+
             # Logging
             if 'logging' in security:
                 self.print_header("Logging Groups", 2)
@@ -2554,6 +2562,8 @@ class ShowOCISummary(object):
                 self.__summary_core_size(security['cloud_guard'])
             if 'logging' in security:
                 self.__summary_core_size(security['logging'])
+            if 'logging' in security:
+                self.__summary_core_size(security['bastions'])
 
         except Exception as e:
             self.__print_error("__summary_security", e)
