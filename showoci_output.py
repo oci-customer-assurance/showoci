@@ -1888,9 +1888,11 @@ class ShowOCIOutput(object):
                 for val in paas_services['oac']:
                     print(
                         self.taba + val['name'] + ", (" + val['feature_set'] + "), Created: " + val['time_created'][0:16] + " (" + val['lifecycle_state'] + ")")
-                    print(self.tabs + "Desc : " + val['description'])
-                    print(self.tabs + "Email: " + val['email_notification'] + ", License: " + str(val['license_type']) + ", Capacity: " + val['capacity_type'] + ":" + val['capacity_value'] + ", End Point: " + val['network_endpoint_details'])
-                    print(self.tabs + "URL  : " + val['service_url'])
+                    print(self.tabs + "Desc   : " + val['description'])
+                    print(self.tabs + "Email  : " + val['email_notification'] + ", License: " + str(val['license_type']) + ", Capacity: " + val['capacity_type'] + ":" + val['capacity_value'] + ", End Point: " + val['network_endpoint_details'])
+                    print(self.tabs + "URL    : " + val['service_url'])
+                    if val['vanity_url']:
+                        print(self.tabs + "Vanity : " + val['vanity_domain'] + ", " + val['vanity_url'])
                     print("")
 
             # OCE

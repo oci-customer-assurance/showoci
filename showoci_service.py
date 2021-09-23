@@ -10859,6 +10859,7 @@ class ShowOCIService(object):
                                'capacity_value': str(oac.capacity.capacity_value),
                                'email_notification': str(oac.email_notification),
                                'service_url': str(oac.service_url),
+                               'vanity_domain': "",
                                'vanity_url': "",
                                'sum_info': "PaaS OAC Native " + ("BYOL" if 'BRING' in oac.license_type else "INCL"),
                                'sum_size_gb': str(oac.capacity.capacity_value),
@@ -10867,11 +10868,17 @@ class ShowOCIService(object):
                                'compartment_id': str(compartment['id']),
                                'region_name': str(self.config['region'])}
 
-                        # Fetch main OAC object for Vanity URL - TBD once customer create Vanity URL
-                        # try:
-                        #    oac_main = oac_client.get_analytics_instance(oac.id, retry_strategy=oci.retry.DEFAULT_RETRY_STRATEGY).data
-                        # except oci.exceptions.ServiceError as e:
-                        #    pass
+                        # Fetch main OAC object for Vanity URL
+                        try:
+                            oac_main = oac_client.get_analytics_instance(oac.id, retry_strategy=oci.retry.DEFAULT_RETRY_STRATEGY).data
+                            if oac_main.vanity_url_details:
+                                for k, v in oac_main.vanity_url_details.items():
+                                    if v:
+                                        val['vanity_domain'] = str(', '.join(x for x in v.hosts))
+                                        val['vanity_url'] = str(', '.join(x for x in v.urls))
+
+                        except oci.exceptions.ServiceError:
+                            pass
 
                         # add the data
                         cnt += 1
@@ -11755,6 +11762,7 @@ class ShowOCIService(object):
                             'target_vcn_name': self.get_network_vcn(bs.target_vcn_id),
                             'target_subnet_id': str(bs.target_subnet_id),
                             'target_subnet_name': self.get_network_subnet(bs.target_subnet_id),
+
                             'time_created': str(bs.time_created),
                             'time_updated': str(bs.time_updated),
                             'lifecycle_state': str(bs.lifecycle_state),
