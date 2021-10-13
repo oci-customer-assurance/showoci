@@ -595,6 +595,25 @@ class ShowOCIService(object):
         return []
 
     ##########################################################################
+    # return log by resource
+    ##########################################################################
+    def get_logging_log(self, resource_id):
+        data = []
+        try:
+
+            array = self.data[self.C_SECURITY][self.C_SECURITY_LOGGING]
+            for item in array:
+                if 'logs' in item:
+                    for log in item['logs']:
+                        if 'source_resource' in log and 'lifecycle_state' in log:
+                            if log['source_resource'] == resource_id and log['lifecycle_state'] == 'ACTIVE':
+                                data.append(log)
+            return data
+
+        except Exception as e:
+            self.__print_error("get_logging_log", e)
+
+    ##########################################################################
     # return subnet
     ##########################################################################
     def get_network_subnet(self, subnet_id, detailed=False):
@@ -10845,7 +10864,7 @@ class ShowOCIService(object):
 
                 # oac = oci.analytics.models.AnalyticsInstanceSummary
                 for oac in oacs:
-                    if (oac.lifecycle_state == 'ACTIVE' or oac.lifecycle_state == 'UPDATING'):
+                    if (oac.lifecycle_state != 'DELETED'):
 
                         val = {'id': str(oac.id),
                                'name': str(oac.name),
@@ -10861,7 +10880,7 @@ class ShowOCIService(object):
                                'service_url': str(oac.service_url),
                                'vanity_domain': "",
                                'vanity_url': "",
-                               'sum_info': "PaaS OAC Native " + ("BYOL" if 'BRING' in oac.license_type else "INCL"),
+                               'sum_info': "PaaS OAC Native " + str(oac.capacity.capacity_type) + " " + ("BYOL" if 'BRING' in oac.license_type else "INCL"),
                                'sum_size_gb': str(oac.capacity.capacity_value),
                                'network_endpoint_details': str(oac.network_endpoint_details.network_endpoint_type),
                                'compartment_name': str(compartment['name']),
@@ -11655,10 +11674,14 @@ class ShowOCIService(object):
 
                     # log_item = oci.logging.models.LogSummary
                     for log_item in logs:
+                        enabled_str = "Enabled" if log_item.is_enabled else "Not Enabled"
                         log_val = {
+                            'log_group_id': str(item.id),
+                            'log_group_name': str(item.display_name),
                             'id': str(log_item.id),
                             'display_name': str(log_item.display_name),
                             'is_enabled': str(log_item.is_enabled),
+                            'name': str(item.display_name) + " - " + str(log_item.display_name) + " - " + enabled_str,
                             'source_service': "",
                             'source_category': "",
                             'source_sourcetype': "",

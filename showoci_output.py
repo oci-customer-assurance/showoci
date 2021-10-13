@@ -905,6 +905,13 @@ class ShowOCIOutput(object):
                 if 'details' in load_balance_obj:
                     self.__print_load_balancer_details(load_balance_obj['details'])
 
+                # print logs
+                n = 0
+                if 'logs' in load_balance_obj:
+                    for log in load_balance_obj['logs']:
+                        n += 1
+                        print(self.tabs + "Log " + str(n) + "      : " + log['name'])
+
                 if 'backendset' in load_balance_obj:
                     self.__print_load_balancer_backendset(load_balance_obj['backendset'])
 
@@ -4244,6 +4251,7 @@ class ShowOCICSV(object):
                             'shape': lb['shape_name'],
                             'type': ("Private" if lb['is_private'] else "Public"),
                             'ip_addresses': str(', '.join(x for x in lb['ips'])),
+                            'logs': str(', '.join(x['name'] for x in load_balance_obj['logs'])),
                             'subnets': str(', '.join(x for x in lb['subnets'])),
                             'listener_port': "No Listener",
                             'listener_def_bs': "",
@@ -4264,6 +4272,7 @@ class ShowOCICSV(object):
                             'shape': lb['shape_name'],
                             'type': ("Private" if lb['is_private'] else "Public"),
                             'ip_addresses': str(', '.join(x for x in lb['ips'])),
+                            'logs': str(', '.join(x['name'] for x in load_balance_obj['logs'])),
                             'subnets': str(', '.join(x for x in lb['subnets'])),
                             'listener_port': listener['port'],
                             'listener_def_bs': listener['default_backend_set_name'],

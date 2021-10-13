@@ -2947,9 +2947,12 @@ class ShowOCIData(object):
             load_balancers = self.service.search_multi_items(self.service.C_LB, self.service.C_LB_LOAD_BALANCERS, 'region_name', region_name, 'compartment_id', compartment['id'])
 
             for load_balance_obj in load_balancers:
-                dataval = {'sum_info': "Load Balancer " + str(load_balance_obj['shape_name']),
-                           'details': self.__get_load_balancer_details(load_balance_obj),
-                           'backendset': self.__get_load_balancer_backendset(load_balance_obj['id'])}
+                dataval = {
+                    'sum_info': "Load Balancer " + str(load_balance_obj['shape_name']),
+                    'details': self.__get_load_balancer_details(load_balance_obj),
+                    'backendset': self.__get_load_balancer_backendset(load_balance_obj['id']),
+                    'logs': self.service.get_logging_log(load_balance_obj['id'])
+                }
                 data.append(dataval)
 
             return data
