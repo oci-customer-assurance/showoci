@@ -8,6 +8,9 @@ The format is based on `Keep a Changelog <http://keepachangelog.com/>`_.
 21.10.19 - 21.10.19
 =====================
 * Added logs to load balancer
+* Added logs to compute instances
+* Added logs to Object Storage
+* Added additional attributes to object storage
 
 =====================
 21.10.12 - 21.10.12

@@ -906,11 +906,9 @@ class ShowOCIOutput(object):
                     self.__print_load_balancer_details(load_balance_obj['details'])
 
                 # print logs
-                n = 0
                 if 'logs' in load_balance_obj:
-                    for log in load_balance_obj['logs']:
-                        n += 1
-                        print(self.tabs + "Log " + str(n) + "      : " + log['name'])
+                    for index, log in enumerate(load_balance_obj['logs'], start=1):
+                        print(self.tabs + "Log " + str(index) + "      : " + log['name'])
 
                 if 'backendset' in load_balance_obj:
                     self.__print_load_balancer_backendset(load_balance_obj['backendset'])
@@ -2147,6 +2145,10 @@ class ShowOCIOutput(object):
                 if 'agent_is_management_disabled' in instance:
                     print(self.tabs2 + "Agent: Is Management Disabled = " + instance['agent_is_management_disabled'] + ", Is Monitoring Disabled = " + instance['agent_is_monitoring_disabled'])
 
+                # print logs
+                if 'logs' in instance:
+                    for index, log in enumerate(instance['logs'], start=1):
+                        print(self.tabs + "Log " + str(index) + "      : " + log['name'])
                 print("")
 
         except Exception as e:
