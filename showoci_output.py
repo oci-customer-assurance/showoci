@@ -4244,6 +4244,15 @@ class ShowOCICSV(object):
             # listeners
             if 'listeners' in lb:
 
+                # get error and access log:
+                log_errors = ""
+                log_access = ""
+                for log in load_balance_obj['logs']:
+                    if 'error' in log['name']:
+                        log_errors = log['name']
+                    if 'access' in log['name']:
+                        log_access = log['name']
+
                 # if no listener
                 if not lb['listeners']:
                     data = {'region_name': region_name,
@@ -4253,6 +4262,8 @@ class ShowOCICSV(object):
                             'shape': lb['shape_name'],
                             'type': ("Private" if lb['is_private'] else "Public"),
                             'ip_addresses': str(', '.join(x for x in lb['ips'])),
+                            'log_errors': log_errors,
+                            'log_access': log_access,
                             'logs': str(', '.join(x['name'] for x in load_balance_obj['logs'])),
                             'subnets': str(', '.join(x for x in lb['subnets'])),
                             'listener_port': "No Listener",
@@ -4274,6 +4285,8 @@ class ShowOCICSV(object):
                             'shape': lb['shape_name'],
                             'type': ("Private" if lb['is_private'] else "Public"),
                             'ip_addresses': str(', '.join(x for x in lb['ips'])),
+                            'log_errors': log_errors,
+                            'log_access': log_access,
                             'logs': str(', '.join(x['name'] for x in load_balance_obj['logs'])),
                             'subnets': str(', '.join(x for x in lb['subnets'])),
                             'listener_port': listener['port'],
