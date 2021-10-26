@@ -3363,7 +3363,9 @@ class ShowOCICSV(object):
                     'api_keys': "Not Checked",
                     'auth_token': "Not Checked",
                     'secret_key': "Not Checked",
-                    'smtp_cred': "Not Checked"
+                    'smtp_cred': "Not Checked",
+                    'last_successful_login_time': user['last_successful_login_time'],
+                    'previous_successful_login_time': user['previous_successful_login_time']
                 }
 
                 # Check if credential exist
