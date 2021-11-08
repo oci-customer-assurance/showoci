@@ -5,6 +5,11 @@ All notable changes to this project will be documented in this file.
 The format is based on `Keep a Changelog <http://keepachangelog.com/>`_.
 
 =====================
+21.11.16 - 21.11.16
+=====================
+* Added Compute Capacity Reservation
+
+=====================
 21.11.02 - 21.11.02
 =====================
 * Added local user last login to CSV

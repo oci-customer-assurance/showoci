@@ -1724,7 +1724,7 @@ class ShowOCIData(object):
             return data
 
     ##########################################################################
-    # print compute images
+    # Get compute images
     ##########################################################################
     def __get_core_compute_images(self, region_name, compartment):
 
@@ -1734,8 +1734,7 @@ class ShowOCIData(object):
 
             for image in images:
                 value = {'id': image['id'],
-                         'desc': image['display_name'].ljust(24) + " - " + image['operating_system'] + " - " + image[
-                             'size_in_gbs'].rjust(3) + "GB - Base:  " + image['base_image_name'],
+                         'desc': image['display_name'].ljust(24) + " - " + image['operating_system'] + " - " + image['size_in_gbs'].rjust(3) + "GB - Base:  " + image['base_image_name'],
                          'sum_info': 'Object Storage - Images (GB)',
                          'sum_size_gb': image['size_in_gbs'],
                          'sum_count_info': "Compute - Images (Count)",
@@ -1751,6 +1750,40 @@ class ShowOCIData(object):
 
         except Exception as e:
             self.__print_error("__get_core_compute_images", e)
+            return data
+
+    ##########################################################################
+    # Get compute images
+    ##########################################################################
+    def __get_core_compute_capacity_reservation(self, region_name, compartment):
+
+        data = []
+        try:
+            array = self.service.search_multi_items(self.service.C_COMPUTE, self.service.C_COMPUTE_CAPACITY_RESERVATION, 'region_name', region_name, 'compartment_id', compartment['id'])
+
+            for arr in array:
+                value = {'id': arr['id'],
+                         'display_name': arr['display_name'],
+                         'lifecycle_state': arr['lifecycle_state'],
+                         'availability_domain': arr['availability_domain'],
+                         'is_default_reservation': arr['is_default_reservation'],
+                         'time_created': arr['time_created'],
+                         'reserved_instance_count': arr['reserved_instance_count'],
+                         'used_instance_count': arr['used_instance_count'],
+                         'instances': arr['instances'],
+                         'config': arr['config'],
+                         'sum_size_gb': arr['reserved_instance_count'],
+                         'sum_info': "Compute - Capacity Reservation Instances",
+                         'defined_tags': arr['defined_tags'],
+                         'freeform_tags': arr['freeform_tags'],
+                         'compartment_name': arr['compartment_name'],
+                         'compartment_id': arr['compartment_id']
+                         }
+                data.append(value)
+            return data
+
+        except Exception as e:
+            self.__print_error("__get_core_compute_capacity_reservation", e)
             return data
 
     ##########################################################################
@@ -1856,6 +1889,10 @@ class ShowOCIData(object):
             data = self.__get_core_compute_images(region_name, compartment)
             if len(data) > 0:
                 return_data['images'] = data
+
+            data = self.__get_core_compute_capacity_reservation(region_name, compartment)
+            if len(data) > 0:
+                return_data['capacity_reservation'] = data
 
             data = self.__get_core_compute_instance_configuration(region_name, compartment)
             if len(data) > 0:

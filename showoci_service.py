@@ -193,6 +193,7 @@ class ShowOCIService(object):
     C_COMPUTE_VOLUME_ATTACH = 'instance_volume_attach'
     C_COMPUTE_VNIC_ATTACH = 'instance_vnic_attach'
     C_COMPUTE_AUTOSCALING = 'auto_scaling'
+    C_COMPUTE_CAPACITY_RESERVATION = 'capacity_reservation'
 
     # Block Storage Identifiers
     C_BLOCK = 'blockstorage'
@@ -3838,6 +3839,7 @@ class ShowOCIService(object):
             self.__initialize_data_key(self.C_COMPUTE, self.C_COMPUTE_INST_CONFIG)
             self.__initialize_data_key(self.C_COMPUTE, self.C_COMPUTE_INST_POOL)
             self.__initialize_data_key(self.C_COMPUTE, self.C_COMPUTE_AUTOSCALING)
+            self.__initialize_data_key(self.C_COMPUTE, self.C_COMPUTE_CAPACITY_RESERVATION)
 
             self.__initialize_data_key(self.C_BLOCK, self.C_BLOCK_VOLGRP)
             self.__initialize_data_key(self.C_BLOCK, self.C_BLOCK_BOOT)
@@ -3856,11 +3858,9 @@ class ShowOCIService(object):
             compute[self.C_COMPUTE_VOLUME_ATTACH] += self.__load_core_compute_vol_attach(compute_client, compartments)
             compute[self.C_COMPUTE_VNIC_ATTACH] += self.__load_core_compute_vnic_attach(compute_client, virtual_network, compartments)
             compute[self.C_COMPUTE_INST_CONFIG] += self.__load_core_compute_inst_config(compute_client, compute_manage, block_storage, compartments)
+            compute[self.C_COMPUTE_CAPACITY_RESERVATION] += self.__load_core_compute_capacity_reservation(compute_client, compartments)
             compute[self.C_COMPUTE_INST_POOL] += self.__load_core_compute_inst_pool(compute_manage, compartments)
-
-            # Auto scalling is not available on all regions
-            if self.check_if_service_available(str(self.config['region']), self.C_COMPUTE_AUTOSCALING):
-                compute[self.C_COMPUTE_AUTOSCALING] += self.__load_core_compute_autoscaling(auto_scaling, compute_manage, compartments)
+            compute[self.C_COMPUTE_AUTOSCALING] += self.__load_core_compute_autoscaling(auto_scaling, compute_manage, compartments)
 
             print("")
             print("Block Storage...")
@@ -4091,6 +4091,120 @@ class ShowOCIService(object):
             raise
         except Exception as e:
             self.__print_error("__load_core_compute_images", e)
+            return data
+
+    ##########################################################################
+    # load_core_compute_capacity_reservation
+    ##########################################################################
+    def __load_core_compute_capacity_reservation(self, compute_client, compartments):
+
+        data = []
+        cnt = 0
+        start_time = time.time()
+
+        try:
+
+            self.__load_print_status("Capacity Reservation")
+
+            # loop on all compartments
+            for compartment in compartments:
+
+                print(".", end="")
+
+                list_reservations = []
+                try:
+                    list_reservations = oci.pagination.list_call_get_all_results(
+                        compute_client.list_compute_capacity_reservations,
+                        compartment['id'],
+                        retry_strategy=oci.retry.DEFAULT_RETRY_STRATEGY
+                    ).data
+
+                except oci.exceptions.ServiceError as e:
+                    if self.__check_service_error(e.code):
+                        self.__load_print_auth_warning()
+                        continue
+                    raise
+
+                # loop on array
+                for arr in list_reservations:
+                    if (arr.lifecycle_state == 'DELETED' or arr.lifecycle_state == 'DELETING'):
+                        continue
+
+                    values = ({
+                        'id': str(arr.id),
+                        'display_name': str(arr.display_name),
+                        'lifecycle_state': str(arr.lifecycle_state),
+                        'availability_domain': str(arr.availability_domain),
+                        'is_default_reservation': str(arr.is_default_reservation),
+                        'time_created': str(arr.time_created)[0:16],
+                        'reserved_instance_count': arr.reserved_instance_count,
+                        'used_instance_count': arr.used_instance_count,
+                        'instances': [],
+                        'config': [],
+                        'defined_tags': [] if arr.defined_tags is None else arr.defined_tags,
+                        'freeform_tags': [] if arr.freeform_tags is None else arr.freeform_tags,
+                        'compartment_name': str(compartment['name']),
+                        'compartment_id': str(compartment['id']),
+                        'region_name': str(self.config['region'])
+                    })
+
+                    # retrieve the config
+                    try:
+                        reservation = compute_client.get_compute_capacity_reservation(
+                            capacity_reservation_id=arr.id,
+                            retry_strategy=oci.retry.DEFAULT_RETRY_STRATEGY
+                        ).data
+
+                        config_data = []
+                        for res_config in reservation.instance_reservation_configs:
+                            config_data.append({
+                                'fault_domain': str(res_config.fault_domain),
+                                'instance_shape': str(res_config.instance_shape),
+                                'reserved_count': res_config.reserved_count,
+                                'used_count': res_config.used_count,
+                                'ocpus': res_config.instance_shape_config.ocpus,
+                                'memory_in_gbs': res_config.instance_shape_config.memory_in_gbs
+                            })
+                        values['config'] = config_data
+                    except Exception:
+                        print("w", end="")
+
+                    # retrieve the instances
+                    # oci.core.models.CapacityReservationInstanceSummary
+                    try:
+                        list_instances = oci.pagination.list_call_get_all_results(
+                            compute_client.list_compute_capacity_reservation_instances,
+                            capacity_reservation_id=arr.id,
+                            retry_strategy=oci.retry.DEFAULT_RETRY_STRATEGY
+                        ).data
+
+                        instances_data = []
+                        for inst in list_instances:
+                            instances_data.append({
+                                'id': str(inst.id),
+                                'fault_domain': str(inst.fault_domain),
+                                'shape': str(inst.shape),
+                                'memory_in_gbs': inst.shape_config.memory_in_gbs,
+                                'ocpus': inst.shape_config.ocpus
+                            })
+                        values['instances'] = instances_data
+                    except Exception:
+                        print("w", end="")
+
+                    data.append(values)
+                    cnt += 1
+
+            self.__load_print_cnt(cnt, start_time)
+            return data
+
+        except oci.exceptions.RequestException as e:
+
+            if self.__check_request_error(e):
+                return data
+
+            raise
+        except Exception as e:
+            self.__print_error("__load_core_compute_capacity_reservation", e)
             return data
 
     ##########################################################################

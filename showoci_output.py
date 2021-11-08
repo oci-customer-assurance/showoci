@@ -2171,6 +2171,34 @@ class ShowOCIOutput(object):
             self.__print_error("__print_core_compute_images", e)
 
     ##########################################################################
+    # print compute capacity reservation
+    ##########################################################################
+    def __print_core_compute_capacity_reservation(self, reservations):
+
+        try:
+            if len(reservations) == 0:
+                return
+
+            self.print_header("Compute Capacity Reservations", 2)
+            for ct in reservations:
+                lifecycle_state = ct['lifecycle_state']
+                display_name = ct['display_name']
+                value = "Reserved : " + str(ct['reserved_instance_count'])
+                used = "Used : " + str(ct['used_instance_count'])
+                available = "Available : " + str(ct['reserved_instance_count'] - ct['used_instance_count'])
+                availability_domain = ct['availability_domain']
+                shapes = ",".join(x['instance_shape'] + " (R=" + str(x['reserved_count']) + ":U=" + str(x['used_count']) + ")" for x in ct['config'])
+
+                print(self.taba + display_name + " (" + lifecycle_state + ")")
+                print(self.tabs + "Reservation   = " + value + ", " + used + ", " + available)
+                print(self.tabs + "Avail. Domain = " + availability_domain)
+                print(self.tabs + "Config Shapes = " + shapes)
+                print("")
+
+        except Exception as e:
+            self.__print_error("__print_core_compute_capacity_reservation", e)
+
+    ##########################################################################
     # print compute pool
     ##########################################################################
     def __print_core_compute_instance_pool(self, pools):
@@ -2338,6 +2366,9 @@ class ShowOCIOutput(object):
 
             if 'images' in data:
                 self.__print_core_compute_images(data['images'])
+
+            if 'capacity_reservation' in data:
+                self.__print_core_compute_capacity_reservation(data['capacity_reservation'])
 
             if 'boot_not_attached' in data:
                 self.__print_core_compute_boot_vol_not_attached(data['boot_not_attached'])
@@ -2925,6 +2956,9 @@ class ShowOCISummary(object):
                 self.__summary_core_size(data['images'])
                 self.__summary_core_size(data['images'], "sum_count_info", "sum_count_size")
 
+            if 'capacity_reservation' in data:
+                self.__summary_core_size(data['capacity_reservation'])
+
             if 'boot_volume_backup' in data:
                 self.__summary_core_size(data['boot_volume_backup'])
 
@@ -3174,6 +3208,7 @@ class ShowOCICSV(object):
     csv_identity_policies = []
     csv_compute = []
     csv_block_volumes = []
+    csv_compute_reservations = []
     csv_db_system = []
     csv_db_autonomous = []
     csv_database = []
@@ -3226,6 +3261,7 @@ class ShowOCICSV(object):
             self.__export_to_csv_file("identity_policy", self.csv_identity_policies)
             self.__export_to_csv_file("identity_groups", self.csv_identity_groups)
             self.__export_to_csv_file("compute", self.csv_compute)
+            self.__export_to_csv_file("compute_reservations", self.csv_compute_reservations)
             self.__export_to_csv_file("block_boot_volumes", self.csv_block_volumes)
             self.__export_to_csv_file("network_subnet", self.csv_network_subnet)
             self.__export_to_csv_file("network_routes", self.csv_network_routes)
@@ -4186,6 +4222,37 @@ class ShowOCICSV(object):
             self.__print_error("__csv_core_compute_block_volumes", e)
 
     ##########################################################################
+    # csv compute capacity reservation
+    ##########################################################################
+    def __csv_core_compute_capacity_reservation(self, region_name, reservations):
+
+        try:
+            if len(reservations) == 0:
+                return
+
+            for ct in reservations:
+
+                val = {
+                    'region_name': region_name,
+                    'compartment_name': ct['compartment_name'],
+                    'compartment_id': ct['compartment_id'],
+                    'id': ct['id'],
+                    'display_name': ct['display_name'],
+                    'lifecycle_state': ct['lifecycle_state'],
+                    'availability_domain': ct['availability_domain'],
+                    'is_default_reservation': ct['is_default_reservation'],
+                    'time_created': ct['time_created'],
+                    'reserved_instance_count': str(ct['reserved_instance_count']),
+                    'used_instance_count': str(ct['used_instance_count']),
+                    'shapes': ",".join(x['instance_shape'] for x in ct['config'])
+                }
+
+                self.csv_compute_reservations.append(val)
+
+        except Exception as e:
+            self.__print_error("__csv_core_compute_capacity_reservation", e)
+
+    ##########################################################################
     # csv compute block volumes
     ##########################################################################
     def __csv_core_compute_block_not_attached(self, region_name, blocks):
@@ -4229,6 +4296,9 @@ class ShowOCICSV(object):
 
             if 'boot_not_attached' in data:
                 self.__csv_core_compute_block_not_attached(region_name, data['boot_not_attached'])
+
+            if 'capacity_reservation' in data:
+                self.__csv_core_compute_capacity_reservation(region_name, data['capacity_reservation'])
 
             if 'volume_not_attached' in data:
                 self.__csv_core_compute_block_not_attached(region_name, data['volume_not_attached'])
