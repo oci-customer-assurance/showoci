@@ -2945,6 +2945,7 @@ class ShowOCISummary(object):
 
         try:
             for dbs in list_exa:
+
                 for vm in dbs['vm_clusters']:
                     if 'cpu_core_count' in vm:
                         self.summary_global_list.append({'type': 'Total OCPUs - ExaCS Database', 'size': float(vm['cpu_core_count'])})
@@ -2971,6 +2972,9 @@ class ShowOCISummary(object):
 
         try:
             for dbs in list_exa:
+                if dbs['lifecycle_state'] == 'ACTIVE' or dbs['lifecycle_state'] == 'UPDATING':
+                    self.summary_global_list.append({'type': dbs['sum_info'] + " - Count", 'size': 1})
+
                 for vm in dbs['vm_clusters']:
                     if 'cpus_enabled' in vm:
                         self.summary_global_list.append({'type': 'Total OCPUs - ExaCC Database', 'size': float(vm['cpus_enabled'])})
