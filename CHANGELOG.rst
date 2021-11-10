@@ -8,6 +8,7 @@ The format is based on `Keep a Changelog <http://keepachangelog.com/>`_.
 21.11.16 - 21.11.16
 =====================
 * Added Compute Capacity Reservation
+* Added Exadata Cloud at Customer
 
 =====================
 21.11.02 - 21.11.02

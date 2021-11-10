@@ -233,6 +233,7 @@ class ShowOCIService(object):
     C_DATABASE = "database"
     C_DATABASE_DBSYSTEMS = "dbsystems"
     C_DATABASE_EXADATA = "exadata"
+    C_DATABASE_EXACC = "exacc"
     C_DATABASE_ADB_DATABASE = "autonomous"
     C_DATABASE_ADB_D_INFRA = "autonomous_dedicated_infrastructure"
     C_DATABASE_NOSQL = "nosql"
@@ -6624,6 +6625,7 @@ class ShowOCIService(object):
             # add the key if not exists
             self.__initialize_data_key(self.C_DATABASE, self.C_DATABASE_DBSYSTEMS)
             self.__initialize_data_key(self.C_DATABASE, self.C_DATABASE_EXADATA)
+            self.__initialize_data_key(self.C_DATABASE, self.C_DATABASE_EXACC)
             self.__initialize_data_key(self.C_DATABASE, self.C_DATABASE_ADB_DATABASE)
             self.__initialize_data_key(self.C_DATABASE, self.C_DATABASE_ADB_D_INFRA)
             self.__initialize_data_key(self.C_DATABASE, self.C_DATABASE_NOSQL)
@@ -6640,6 +6642,7 @@ class ShowOCIService(object):
 
             # append the data
             db[self.C_DATABASE_EXADATA] += self.__load_database_exadata_infrastructure(database_client, virtual_network, compartments)
+            db[self.C_DATABASE_EXACC] += self.__load_database_exacc_infrastructure(database_client, virtual_network, compartments)
             db[self.C_DATABASE_DBSYSTEMS] += self.__load_database_dbsystems(database_client, virtual_network, compartments)
             db[self.C_DATABASE_ADB_D_INFRA] += self.__load_database_adb_d_infrastructure(database_client, compartments)
             db[self.C_DATABASE_ADB_DATABASE] += self.__load_database_adb_database(database_client, compartments)
@@ -6831,6 +6834,109 @@ class ShowOCIService(object):
             return data
 
     ##########################################################################
+    # __load_database_exacc_infrastructure
+    ##########################################################################
+
+    def __load_database_exacc_infrastructure(self, database_client, virtual_network, compartments):
+
+        data = []
+        cnt = 0
+        start_time = time.time()
+
+        try:
+
+            self.__load_print_status("ExaCC Infrastructure")
+
+            # loop on all compartments
+            for compartment in compartments:
+                # skip managed paas compartment
+                if self.__if_managed_paas_compartment(compartment['name']):
+                    print(".", end="")
+                    continue
+
+                print(".", end="")
+
+                # list db system
+                list_exa = []
+                try:
+                    list_exa = oci.pagination.list_call_get_all_results(
+                        database_client.list_exadata_infrastructures,
+                        compartment['id'],
+                        sort_by="DISPLAYNAME",
+                        retry_strategy=oci.retry.DEFAULT_RETRY_STRATEGY
+                    ).data
+
+                except oci.exceptions.ServiceError as e:
+                    if self.__check_service_error(e.code):
+                        self.__load_print_auth_warning("a", False)
+                        continue
+                    else:
+                        raise
+
+                # loop on the Exadata infrastructure
+                # dbs = oci.database.models.ExadataInfrastructureSummary
+                for dbs in list_exa:
+                    if (dbs.lifecycle_state == 'TERMINATED' or dbs.lifecycle_state == 'TERMINATING' or dbs.lifecycle_state == 'DELETING'):
+                        continue
+
+                    value = {'id': str(dbs.id),
+                             'display_name': str(dbs.display_name),
+                             'shape': str(dbs.shape),
+                             'time_zone': str(dbs.time_zone),
+                             'cpus_enabled': str(dbs.cpus_enabled),
+                             'max_cpu_count': str(dbs.max_cpu_count),
+                             'memory_size_in_gbs': str(dbs.memory_size_in_gbs),
+                             'max_memory_in_gbs': str(dbs.max_memory_in_gbs),
+                             'db_node_storage_size_in_gbs': str(dbs.db_node_storage_size_in_gbs),
+                             'max_db_node_storage_in_g_bs': str(dbs.max_db_node_storage_in_g_bs),
+                             'data_storage_size_in_tbs': str(dbs.data_storage_size_in_tbs),
+                             'max_data_storage_in_t_bs': str(dbs.max_data_storage_in_t_bs),
+                             'storage_count': str(dbs.storage_count),
+                             'additional_storage_count': str(dbs.additional_storage_count),
+                             'activated_storage_count': str(dbs.activated_storage_count),
+                             'compute_count': str(dbs.compute_count),
+                             'cloud_control_plane_server1': str(dbs.cloud_control_plane_server1),
+                             'cloud_control_plane_server2': str(dbs.cloud_control_plane_server2),
+                             'netmask': str(dbs.netmask),
+                             'gateway': str(dbs.gateway),
+                             'admin_network_cidr': str(dbs.admin_network_cidr),
+                             'infini_band_network_cidr': str(dbs.infini_band_network_cidr),
+                             'corporate_proxy': str(dbs.corporate_proxy),
+                             'dns_server': str(dbs.dns_server),
+                             'ntp_server': str(dbs.ntp_server),
+                             'time_created': str(dbs.time_created),
+                             'lifecycle_state': str(dbs.lifecycle_state),
+                             'lifecycle_details': str(dbs.lifecycle_details),
+                             'csi_number': str(dbs.csi_number),
+                             'maintenance_slo_status': str(dbs.maintenance_slo_status),
+                             'maintenance_window': self.__load_database_maintatance_windows(dbs.maintenance_window),
+                             'last_maintenance_run': self.__load_database_maintatance(database_client, dbs.last_maintenance_run_id, str(dbs.display_name) + " - " + str(dbs.shape)),
+                             'next_maintenance_run': self.__load_database_maintatance(database_client, dbs.next_maintenance_run_id, str(dbs.display_name) + " - " + str(dbs.shape)),
+                             'defined_tags': [] if dbs.defined_tags is None else dbs.defined_tags,
+                             'freeform_tags': [] if dbs.freeform_tags is None else dbs.freeform_tags,
+                             'contacts': "" if dbs.contacts is None else str(', '.join(x.name for x in dbs.contacts)),
+                             'compartment_name': str(compartment['name']),
+                             'compartment_id': str(compartment['id']),
+                             'region_name': str(self.config['region']),
+                             'vm_clusters': self.__load_database_exacc_vm_clusters(database_client, virtual_network, dbs.id, compartment)
+                             }
+
+                    # add the data
+                    cnt += 1
+                    data.append(value)
+
+            self.__load_print_cnt(cnt, start_time)
+            return data
+
+        except oci.exceptions.RequestException as e:
+            if self.__check_request_error(e):
+                return data
+            raise
+        except Exception as e:
+            self.__print_error("__load_database_exadata_cc_infrastructure", e)
+            return data
+
+    ##########################################################################
     # __load_database_exadata_vm_clusters
     ##########################################################################
     def __load_database_exadata_vm_clusters(self, database_client, virtual_network, exa_id, compartment):
@@ -6946,6 +7052,79 @@ class ShowOCIService(object):
             raise
         except Exception as e:
             self.__print_error("__load_database_exadata_vm_clusters", e)
+            return data
+
+    ##########################################################################
+    # __load_database_exacc_vm_clusters
+    ##########################################################################
+    def __load_database_exacc_vm_clusters(self, database_client, virtual_network, exa_id, compartment):
+
+        data = []
+        try:
+            vms = database_client.list_vm_clusters(
+                compartment['id'],
+                exadata_infrastructure_id=exa_id,
+                retry_strategy=oci.retry.DEFAULT_RETRY_STRATEGY
+            ).data
+
+            # arr = oci.database.models.VmClusterSummary
+            for arr in vms:
+                if (arr.lifecycle_state == "TERMINATED" or arr.lifecycle_state == "TERMINATING"):
+                    continue
+
+                value = {
+                    'id': str(arr.id),
+                    'last_patch_history_entry_id': str(arr.last_patch_history_entry_id),
+                    'lifecycle_state': str(arr.lifecycle_state),
+                    'display_name': str(arr.display_name),
+                    'time_created': str(arr.time_created),
+                    'lifecycle_details': str(arr.lifecycle_details),
+                    'time_zone': str(arr.time_zone),
+                    'is_local_backup_enabled': str(arr.is_local_backup_enabled),
+                    'exadata_infrastructure_id': str(arr.exadata_infrastructure_id),
+                    'is_sparse_diskgroup_enabled': str(arr.is_sparse_diskgroup_enabled),
+                    'vm_cluster_network_id': str(arr.vm_cluster_network_id),
+                    'cpus_enabled': str(arr.cpus_enabled),
+                    'memory_size_in_gbs': str(arr.memory_size_in_gbs),
+                    'db_node_storage_size_in_gbs': str(arr.db_node_storage_size_in_gbs),
+                    'data_storage_size_in_tbs': str(arr.data_storage_size_in_tbs),
+                    'shape': str(arr.shape),
+                    'gi_version': str(arr.gi_version),
+                    'system_version': str(arr.system_version),
+                    'license_model': str(arr.license_model),
+                    'defined_tags': [] if arr.defined_tags is None else arr.defined_tags,
+                    'freeform_tags': [] if arr.freeform_tags is None else arr.freeform_tags,
+                    'db_homes': self.__load_database_dbsystems_dbhomes(database_client, virtual_network, compartment, arr.id, exa=True),
+                    'db_nodes': self.__load_database_dbsystems_dbnodes(database_client, virtual_network, compartment, arr.id, exa=True),
+                    'patches': [],
+                    'region_name': str(self.config['region'])
+                }
+
+                # license model
+                if arr.license_model == "LICENSE_INCLUDED":
+                    value['license_model'] = "INCL"
+                elif arr.license_model == "BRING_YOUR_OWN_LICENSE":
+                    value['license_model'] = "BYOL"
+                else:
+                    value['license_model'] = str(arr.license_model)
+
+                # add to main data
+                data.append(value)
+
+            return data
+
+        except oci.exceptions.ServiceError as e:
+            if self.__check_service_error(e.code):
+                self.__load_print_auth_warning()
+                return data
+            else:
+                raise
+        except oci.exceptions.RequestException as e:
+            if self.__check_request_error(e):
+                return data
+            raise
+        except Exception as e:
+            self.__print_error("__load_database_exacc_vm_clusters", e)
             return data
 
     ##########################################################################
