@@ -3956,8 +3956,8 @@ class ShowOCIService(object):
                            'shape_networking_bandwidth_in_gbps': 0,
                            'shape_processor_description': "",
                            'console_vnc_connection_string': "",
-                           'image': "Not Found",
-                           'image_os': "Oracle Linux",
+                           'image': "Unknown",
+                           'image_os': "Unknown",
                            'agent_is_management_disabled ': "",
                            'agent_is_monitoring_disabled': "",
                            'metadata': arr.metadata,
@@ -7904,7 +7904,7 @@ class ShowOCIService(object):
                              'sum_count': ("0" if dbs.lifecycle_state == oci.database.models.AutonomousDatabaseSummary.LIFECYCLE_STATE_STOPPED else str(dbs.cpu_core_count)),
                              'db_version': str(dbs.db_version),
                              'service_console_url': str(dbs.service_console_url),
-                             'connection_strings': str(dbs.connection_strings),
+                             'connection_strings': "",
                              'connection_urls': str(dbs.connection_urls),
                              'time_created': str(dbs.time_created),
                              'compartment_name': str(compartment['name']),
@@ -7949,6 +7949,12 @@ class ShowOCIService(object):
                              'available_upgrade_versions': str(dbs.available_upgrade_versions),
                              'role': str(dbs.role)
                              }
+
+                    # connection string
+                    if dbs.connection_strings:
+                        if dbs.connection_strings.all_connection_strings:
+                            dbarr = dbs.connection_strings.all_connection_strings
+                            value['connection_strings'] = str(', '.join(key + "=" + dbarr[key] for key in dbarr.keys()))
 
                     # if standby object exist
                     if dbs.standby_db:

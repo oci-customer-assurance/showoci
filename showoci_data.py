@@ -2358,6 +2358,7 @@ class ShowOCIData(object):
                          'cpu_core_count': dbs['cpu_core_count'],
                          'node_count': dbs['node_count'],
                          'version': (dbs['version'] + " - ") if dbs['version'] != "None" else "" + ((dbs['database_edition'] + " - ") if dbs['database_edition'] != "None" else "") + dbs['license_model'],
+                         'version_only': dbs['version'],
                          'host': dbs['hostname'],
                          'domain': dbs['domain'],
                          'data_subnet': dbs['data_subnet'],
