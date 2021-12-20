@@ -1740,8 +1740,16 @@ class ShowOCIOutput(object):
 
             for ct in apigatways:
                 print(self.taba + ct['display_name'] + ", " + ct['endpoint_type'] + ", Created: " + ct['time_created'][0:16])
-                print(self.tabs2 + "Host  : " + ct['hostname'])
-                print(self.tabs2 + "Subnet: " + ct['subnet_name'])
+                print(self.tabs2 + "Host      : " + ct['hostname'])
+                print(self.tabs2 + "Subnet    : " + ct['subnet_name'])
+                for dp in ct['deployments']:
+                    print(self.tabs2 + "Deployment: " + dp['display_name'] + ", " + dp['endpoint'])
+
+                    # print logs
+                    if 'logs' in dp:
+                        for index, log in enumerate(dp['logs'], start=1):
+                            print(self.tabs2 + "          : Log " + str(index) + " : " + log['name'])
+
                 print("")
 
         except Exception as e:
@@ -3376,6 +3384,7 @@ class ShowOCICSV(object):
     csv_file_storage = []
     csv_load_balancer = []
     csv_load_balancer_bs = []
+    csv_apigw = []
     csv_limits = []
     start_time = ""
     csv_add_date_field = True
@@ -3430,6 +3439,7 @@ class ShowOCICSV(object):
             self.__export_to_csv_file("load_balancer_listeners", self.csv_load_balancer)
             self.__export_to_csv_file("load_balancer_backendset", self.csv_load_balancer_bs)
             self.__export_to_csv_file("file_storage", self.csv_file_storage)
+            self.__export_to_csv_file("api_gateways", self.csv_apigw)
             self.__export_to_csv_file("limits", self.csv_limits)
 
             print("")
@@ -4650,6 +4660,45 @@ class ShowOCICSV(object):
             self.__print_error("__csv_load_balancer_details", e)
 
     ##########################################################################
+    # csv load balancer config
+    ##########################################################################
+    def __csv_apigw(self, region_name, apigw):
+        try:
+            for api in apigw:
+                for dp in api['deployments']:
+
+                    # get error and access log:
+                    log_execution = ""
+                    log_access = ""
+                    for log in dp['logs']:
+                        if 'execution' in log['name']:
+                            log_execution = log['name']
+                        if 'access' in log['name']:
+                            log_access = log['name']
+
+                    data = {'region_name': region_name,
+                            'compartment_name': dp['compartment_name'],
+                            'gw_name': api['display_name'],
+                            'gw_endpoint_type': api['endpoint_type'],
+                            'gw_hostname': api['hostname'],
+                            'gw_subnet_name': api['subnet_name'],
+                            'gw_time_created': api['time_created'],
+                            'dp_display_name': dp['display_name'],
+                            'path_prefix': dp['path_prefix'],
+                            'endpoint': dp['endpoint'],
+                            'time_created': dp['time_created'],
+                            'log_execution': log_execution,
+                            'log_access': log_access,
+                            'logs': str(', '.join(x['name'] for x in dp['logs'])),
+                            'dp_id': dp['id'],
+                            'api_id': api['id'],
+                            }
+                    self.csv_apigw.append(data)
+
+        except Exception as e:
+            self.__print_error("__csv_load_balancer_details", e)
+
+    ##########################################################################
     # csv load balancer backedset
     ##########################################################################
     def __csv_load_balancer_backendset(self, region_name, load_balance_obj):
@@ -4775,6 +4824,8 @@ class ShowOCICSV(object):
                     self.__csv_load_balancer_main(region_name, cdata['load_balancer'])
                 if 'file_storage' in cdata:
                     self.__csv_file_storage_main(region_name, cdata['file_storage'])
+                if 'apigateways' in cdata:
+                    self.__csv_apigw(region_name, cdata['apigateways'])
 
         except Exception as e:
             self.__print_error("__csv_region_data", e)

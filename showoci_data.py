@@ -3401,6 +3401,16 @@ class ShowOCIData(object):
                     if ap['subnet_id']:
                         val['subnet_name'] = self.__get_core_network_subnet_name(ap['subnet_id'])
 
+                    # deployments
+                    apidep = self.service.search_multi_items(self.service.C_API, self.service.C_API_DEPLOYMENT, 'region_name', region_name, 'gateway_id', val['id'])
+                    if apidep:
+                        for apid in apidep:
+                            vald = apid
+                            vald['logs'] = self.service.get_logging_log(vald['id'])
+
+                            # add deployment to apigw
+                            val['deployments'].append(vald)
+
                     data.append(val)
             return data
 
