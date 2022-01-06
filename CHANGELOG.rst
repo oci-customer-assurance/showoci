@@ -5,7 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on `Keep a Changelog <http://keepachangelog.com/>`_.
 
 =====================
-22.01.17 - 22.01.17
+22.01.18 - 22.01.18
+=====================
+* Added database home patch history
+
+=====================
+22.01.11 - 22.01.11
 =====================
 * Fixed database connection for ADB
 * Added database edition and license model to the CSV extract

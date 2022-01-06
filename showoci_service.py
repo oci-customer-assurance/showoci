@@ -6550,7 +6550,7 @@ class ShowOCIService(object):
 
                     # export set
                     try:
-                        exp = file_storage.get_export_set(es.export_set_id).data
+                        exp = file_storage.get_export_set(es.export_set_id, retry_strategy=oci.retry.DEFAULT_RETRY_STRATEGY).data
                         if exp:
                             valexp = {'id': str(exp.id), 'compartment_id': str(exp.compartment_id),
                                       'availability_domain': str(exp.availability_domain),
@@ -7415,7 +7415,8 @@ class ShowOCIService(object):
                      'db_version': str(db_home.db_version),
                      'time_created': str(db_home.time_created),
                      'databases': self.__load_database_dbsystems_dbhomes_databases(database_client, db_home.id, compartment),
-                     'patches': self.__load_database_dbsystems_home_patches(database_client, db_home.id)})
+                     'patches': self.__load_database_dbsystems_home_patches(database_client, db_home.id),
+                     'patches_history': self.__load_database_dbsystems_home_patches_history(database_client, db_home.id)})
 
             # add to main data
             return data
@@ -7543,6 +7544,51 @@ class ShowOCIService(object):
             raise
         except Exception as e:
             self.__print_error("__load_database_dbsystems_home_patches", e)
+            return data
+
+    ##########################################################################
+    # get db system patches history
+    ##########################################################################
+    def __load_database_dbsystems_home_patches_history(self, database_client, dbhome_id):
+
+        data = []
+        try:
+            dbps = oci.pagination.list_call_get_all_results(
+                database_client.list_db_home_patch_history_entries,
+                dbhome_id,
+                retry_strategy=oci.retry.DEFAULT_RETRY_STRATEGY
+            ).data
+
+            for dbp in dbps:
+                patch_description = dbp.patch_id
+
+                # get patch info
+                try:
+                    patch = database_client.get_db_home_patch(dbhome_id, dbp.patch_id, retry_strategy=oci.retry.DEFAULT_RETRY_STRATEGY).data
+                    patch_description = patch.description + " - " + patch.version
+                except Exception:
+                    pass
+
+                # Add data
+                data.append({'id': dbp.id, 'description': str(patch_description), 'action': str(dbp.action), 'lifecycle_state': str(dbp.lifecycle_state),
+                             'time_started': str(dbp.time_started), 'time_ended': str(dbp.time_ended)})
+            return data
+
+        except oci.exceptions.ServiceError as e:
+            if self.__check_service_error(e.code):
+                return data
+            else:
+                # Added in order to avoid internal error which happen often here
+                if 'InternalError' in str(e.code):
+                    print('p', end="")
+                    return data
+                raise
+        except oci.exceptions.RequestException as e:
+            if self.__check_request_error(e):
+                return data
+            raise
+        except Exception as e:
+            self.__print_error("__load_database_dbsystems_home_patches_history", e)
             return data
 
     ##########################################################################

@@ -2045,6 +2045,21 @@ class ShowOCIData(object):
             return data
 
     ##########################################################################
+    # get db system patches history
+    ##########################################################################
+    def __get_database_db_patches_history(self, patches_history):
+
+        data = []
+        try:
+            for dbp in patches_history:
+                data.append(str(dbp['description']) + " - " + str(dbp['lifecycle_state']) + " - " + str(dbp['time_started'])[0:10] + " - " + str(dbp['time_ended'])[0:10] + " - Last Action: " + str(dbp['action']))
+            return data
+
+        except Exception as e:
+            self.__print_error("__get_database_db_patches_history", e)
+            return data
+
+    ##########################################################################
     # print database db backups
     ##########################################################################
     def __get_database_db_backups(self, backups):
@@ -2089,7 +2104,8 @@ class ShowOCIData(object):
                      'home_name': str(db_home['display_name']),
                      'home_version': str(db_home['db_version']),
                      'databases': self.__get_database_db_databases(db_home['databases']),
-                     'patches': self.__get_database_db_patches(db_home['patches'])
+                     'patches': self.__get_database_db_patches(db_home['patches']),
+                     'patches_history': self.__get_database_db_patches_history(db_home['patches_history'])
                      })
 
             # add to main data

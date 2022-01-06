@@ -1363,6 +1363,9 @@ class ShowOCIOutput(object):
                     for p in db_home['patches']:
                         print(self.tabs + self.tabs + " PT : " + p)
 
+                    for p in db_home['patches_history']:
+                        print(self.tabs + self.tabs + " PTH: " + p)
+
                     # databases
                     for db in db_home['databases']:
                         print(self.tabs + self.tabs + " DB : " + db['name'])
