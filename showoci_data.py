@@ -2973,7 +2973,7 @@ class ShowOCIData(object):
                 is_read_only = ", ReadOnly" if value['is_read_only'] == "True" else ""
                 log_enabled = ", Log Enabled" if value['logs'] else ""
                 versioning = ", Versioning" if value['versioning'] == "Enabled" else ""
-                object_lifecycle = value['object_lifecycle'] if value['object_lifecycle'] else ""
+                object_lifecycle = ", LifeCycle: " + value['object_lifecycle'] if value['object_lifecycle'] else ""
                 auto_tiering = ", AutoTier" if value['auto_tiering'] != "Disabled" else ""
 
                 value['desc'] = (

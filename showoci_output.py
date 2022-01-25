@@ -3387,6 +3387,15 @@ class ShowOCICSV(object):
     csv_file_storage = []
     csv_load_balancer = []
     csv_load_balancer_bs = []
+    csv_object_storage_buckets = []
+    csv_security_bastions = []
+    csv_security_logging = []
+    csv_security_cloud_guard = []
+    csv_container = []
+    csv_container_nodepool = []
+    csv_edge_waas_policies = []
+    csv_edge_dns_steering_policies = []
+    csv_edge_healthcheck = []
     csv_apigw = []
     csv_limits = []
     start_time = ""
@@ -3444,6 +3453,15 @@ class ShowOCICSV(object):
             self.__export_to_csv_file("file_storage", self.csv_file_storage)
             self.__export_to_csv_file("api_gateways", self.csv_apigw)
             self.__export_to_csv_file("limits", self.csv_limits)
+            self.__export_to_csv_file("object_storage_buckets", self.csv_object_storage_buckets)
+            self.__export_to_csv_file("security_bastions", self.csv_security_bastions)
+            self.__export_to_csv_file("security_loggings", self.csv_security_logging)
+            self.__export_to_csv_file("security_cloud_guards", self.csv_security_cloud_guard)
+            self.__export_to_csv_file("containers", self.csv_container)
+            self.__export_to_csv_file("containers_nodepools", self.csv_container_nodepool)
+            self.__export_to_csv_file("edge_dns_steering_policies", self.csv_edge_dns_steering_policies)
+            self.__export_to_csv_file("edge_waas_policies", self.csv_edge_waas_policies)
+            self.__export_to_csv_file("edge_healthchecks", self.csv_edge_healthcheck)
 
             print("")
         except Exception as e:
@@ -4808,6 +4826,354 @@ class ShowOCICSV(object):
             self.__print_error("__csv_file_storage_main", e)
 
     ##########################################################################
+    # Object Storage
+    ##########################################################################
+    def __csv_object_storage_main(self, region_name, object_storage):
+        try:
+
+            if len(object_storage) == 0:
+                return
+
+            if object_storage:
+                for ar in object_storage:
+
+                    data = {
+                        'namespace_name': ar['namespace_name'],
+                        'region_name': region_name,
+                        'compartment_name': ar['compartment_name'],
+                        'bucket_name': ar['name'],
+                        'objects': ar['objects'],
+                        'size': ar['size'],
+                        'preauthenticated_requests': ar['preauthenticated_requests'],
+                        'object_lifecycle': ar['object_lifecycle'],
+                        'public_access_type': ar['public_access_type'],
+                        'storage_tier': ar['storage_tier'],
+                        'object_events_enabled': ar['object_events_enabled'],
+                        'replication_enabled': ar['replication_enabled'],
+                        'is_read_only': ar['is_read_only'],
+                        'versioning': ar['versioning'],
+                        'auto_tiering': ar['auto_tiering'],
+                        'kms_key_id': ar['kms_key_id'],
+                        'bucket_id': ar['id'],
+                        'logs': str(', '.join(x['name'] for x in ar['logs']))
+                    }
+
+                    self.csv_object_storage_buckets.append(data)
+
+        except Exception as e:
+            self.__print_error("__csv_object_storage_main", e)
+
+    ##########################################################################
+    # csv Security
+    ##########################################################################
+    def __csv_security_main(self, region_name, data):
+
+        try:
+            if len(data) == 0:
+                return
+
+            if 'bastions' in data:
+                self.__csv_security_bastions(region_name, data['bastions'])
+
+            if 'logging' in data:
+                self.__csv_security_logging(region_name, data['logging'])
+
+            if 'cloud_guard' in data:
+                self.__csv_security_cloud_guard(region_name, data['cloud_guard'])
+
+        except Exception as e:
+            self.__print_error("__csv_security_main", e)
+
+    ##########################################################################
+    # Bastions
+    ##########################################################################
+    def __csv_security_bastions(self, region_name, bastions):
+        try:
+
+            if len(bastions) == 0:
+                return
+
+            if bastions:
+                for ar in bastions:
+
+                    data = {
+                        'region_name': region_name,
+                        'compartment_name': ar['compartment_name'],
+                        'name': ar['name'],
+                        'target_vcn_name': ar['target_vcn_name'],
+                        'target_subnet_name': ar['target_subnet_name'],
+                        'bastion_type': ar['bastion_type'],
+                        'time_created': ar['time_created'][0:16],
+                        'time_updated': ar['time_updated'][0:16],
+                        'lifecycle_state': ar['lifecycle_state'],
+                        'id': ar['id'],
+                        'target_vcn_id': ar['target_vcn_id'],
+                        'target_subnet_id': ar['target_subnet_id']
+                    }
+
+                    self.csv_security_bastions.append(data)
+
+        except Exception as e:
+            self.__print_error("__csv_security_bastions", e)
+
+    ##########################################################################
+    # Cloud Guard
+    ##########################################################################
+    def __csv_security_cloud_guard(self, region_name, cloud_guards):
+        try:
+
+            if len(cloud_guards) == 0:
+                return
+
+            if cloud_guards:
+                for ar in cloud_guards:
+
+                    data = {
+                        'region_name': region_name,
+                        'compartment_name': ar['compartment_name'],
+                        'name': ar['display_name'],
+                        'target_resource_type': ar['target_resource_type'],
+                        'target_resource_id': ar['target_resource_id'],
+                        'recipe_count': ar['recipe_count'],
+                        'time_created': ar['time_created'][0:16],
+                        'time_updated': ar['time_updated'][0:16],
+                        'lifecycle_state': ar['lifecycle_state'],
+                        'id': ar['id']
+                    }
+
+                    self.csv_security_cloud_guard.append(data)
+
+        except Exception as e:
+            self.__print_error("__csv_security_cloud_guard", e)
+
+    ##########################################################################
+    # Bastions
+    ##########################################################################
+    def __csv_security_logging(self, region_name, log_groups):
+        try:
+
+            if len(log_groups) == 0:
+                return
+
+            if log_groups:
+                for ar in log_groups:
+                    for lg in ar['logs']:
+                        data = {
+                            'region_name': region_name,
+                            'compartment_name': ar['compartment_name'],
+                            'log_group': ar['display_name'],
+                            'log_group_description': ar['description'],
+                            'log_group_time_last_modified': ar['time_last_modified'][0:16],
+                            'log_name': lg['display_name'],
+                            'is_enabled': lg['is_enabled'],
+                            'lifecycle_state': lg['lifecycle_state'],
+                            'log_type': lg['log_type'],
+                            'time_created': lg['time_created'][0:16],
+                            'retention_duration': lg['retention_duration'],
+                            'time_last_modified': lg['time_last_modified'][0:16],
+                            'archiving': lg['archiving'],
+                            'source_service': lg['source_service'],
+                            'source_category': lg['source_category'],
+                            'source_sourcetype': lg['source_sourcetype'],
+                            'source_resource': lg['source_resource'],
+                            'source_parameters': lg['source_parameters'],
+                            'log_group_id': ar['id'],
+                            'log_id': lg['id']
+                        }
+
+                        self.csv_security_logging.append(data)
+
+        except Exception as e:
+            self.__print_error("__csv_security_logging", e)
+
+    ##########################################################################
+    # Container
+    ##########################################################################
+    def __csv_container(self, region_name, containers):
+        try:
+
+            if len(containers) == 0:
+                return
+
+            # Containers
+            if containers:
+                for ar in containers:
+
+                    data = {
+                        'region_name': region_name,
+                        'compartment_name': ar['compartment_name'],
+                        'name': ar['name'],
+                        'lifecycle_state': ar['lifecycle_state'],
+                        'kubernetes_version': ar['kubernetes_version'],
+                        'vcn': ar['vcn_name'],
+                        'node_pools': len(ar['node_pools']),
+                        'id': ar['id'],
+                        'vcn_id': ar['vcn_id'],
+                    }
+
+                    self.csv_container.append(data)
+
+            # Containers nodepools
+            if containers:
+                for ar in containers:
+                    for nd in ar['node_pools']:
+                        data = {
+                            'region_name': region_name,
+                            'compartment_name': ar['compartment_name'],
+                            'container_name': ar['name'],
+                            'node_name': nd['name'],
+                            'node_image_name': nd['node_image_name'],
+                            'kubernetes_version': nd['kubernetes_version'],
+                            'node_shape': nd['node_shape'],
+                            'quantity_per_subnet': nd['quantity_per_subnet'],
+                            'vcn': ar['vcn_name'],
+                            'subnets': str(', '.join(x for x in nd['subnets'])),
+                            'container_id': ar['id'],
+                            'node_pool_id': nd['id'],
+                            'vcn_id': ar['vcn_id'],
+                        }
+
+                        self.csv_container_nodepool.append(data)
+
+        except Exception as e:
+            self.__print_error("__csv_container", e)
+
+    ##########################################################################
+    # csv Security
+    ##########################################################################
+    def __csv_edge_main(self, region_name, data):
+
+        try:
+            if len(data) == 0:
+                return
+
+            if 'waas_policies' in data:
+                self.__csv_edge_waas_policies(region_name, data['waas_policies'])
+
+            if 'dns_steering' in data:
+                self.__csv_edge_dns_steering(region_name, data['dns_steering'])
+
+            if 'healthcheck' in data:
+                self.__csv_edge_healthcheck(region_name, data['healthcheck'])
+
+        except Exception as e:
+            self.__print_error("__csv_edge_main", e)
+
+    ##########################################################################
+    # Edge Waas Policies
+    ##########################################################################
+    def __csv_edge_waas_policies(self, region_name, waas_policies):
+        try:
+
+            if len(waas_policies) == 0:
+                return
+
+            # Containers
+            if waas_policies:
+                for ar in waas_policies:
+
+                    data = {
+                        'region_name': region_name,
+                        'compartment_name': ar['compartment_name'],
+                        'name': ar['display_name'],
+                        'domain': ar['domain'],
+                        'lifecycle_state': ar['lifecycle_state'],
+                        'time_created': ar['time_created'][0:16],
+                        'id': ar['id']
+                    }
+
+                    self.csv_edge_waas_policies.append(data)
+
+        except Exception as e:
+            self.__print_error("__csv_edge_waas_policies", e)
+
+    ##########################################################################
+    # Edge DNS Steering
+    ##########################################################################
+    def __csv_edge_dns_steering(self, region_name, steering_policies):
+        try:
+
+            if len(steering_policies) == 0:
+                return
+
+            # Containers
+            if steering_policies:
+                for ar in steering_policies:
+
+                    data = {
+                        'region_name': region_name,
+                        'compartment_name': ar['compartment_name'],
+                        'name': ar['display_name'],
+                        'ttl': ar['ttl'],
+                        'template': ar['template'],
+                        'health_check_monitor_id': ar['health_check_monitor_id'],
+                        'time_created': ar['time_created'][0:16],
+                        'id': ar['id']
+                    }
+
+                    self.csv_edge_dns_steering_policies.append(data)
+
+        except Exception as e:
+            self.__print_error("__csv_edge_dns_steering", e)
+
+    ##########################################################################
+    # Edge Healthchecl
+    ##########################################################################
+    def __csv_edge_healthcheck(self, region_name, healthchecks):
+        try:
+
+            if 'http' in healthchecks:
+                for ar in healthchecks['http']:
+
+                    data = {
+                        'region_name': region_name,
+                        'compartment_name': ar['compartment_name'],
+                        'display_name': ar['display_name'],
+                        'type': 'http',
+                        'results_url': ar['results_url'],
+                        'targets': ar['targets'],
+                        'vantage_point_names': ar['vantage_point_names'],
+                        'port': '',
+                        'timeout_in_seconds': '',
+                        'is_enabled': ar['is_enabled'],
+                        'interval_in_seconds': ar['interval_in_seconds'],
+                        'protocol': ar['protocol'],
+                        'method': ar['method'],
+                        'path': ar['path'],
+                        'headers': ar['headers'],
+                        'id': ar['id']
+                    }
+
+                    self.csv_edge_healthcheck.append(data)
+
+            if 'ping' in healthchecks:
+                for ar in healthchecks['ping']:
+
+                    data = {
+                        'region_name': region_name,
+                        'compartment_name': ar['compartment_name'],
+                        'display_name': ar['display_name'],
+                        'type': 'ping',
+                        'results_url': ar['results_url'],
+                        'targets': ar['targets'],
+                        'vantage_point_names': ar['vantage_point_names'],
+                        'port': ar['port'],
+                        'timeout_in_seconds': ar['timeout_in_seconds'],
+                        'is_enabled': ar['is_enabled'],
+                        'interval_in_seconds': ar['interval_in_seconds'],
+                        'protocol': ar['protocol'],
+                        'method': '',
+                        'path': '',
+                        'headers': '',
+                        'id': ar['id']
+                    }
+
+                    self.csv_edge_healthcheck.append(data)
+
+        except Exception as e:
+            self.__print_error("__csv_edge_healthcheck", e)
+
+    ##########################################################################
     # Print Identity data
     ##########################################################################
     def __csv_region_data(self, region_name, data):
@@ -4829,6 +5195,14 @@ class ShowOCICSV(object):
                     self.__csv_file_storage_main(region_name, cdata['file_storage'])
                 if 'apigateways' in cdata:
                     self.__csv_apigw(region_name, cdata['apigateways'])
+                if 'object_storage' in cdata:
+                    self.__csv_object_storage_main(region_name, cdata['object_storage'])
+                if 'security' in cdata:
+                    self.__csv_security_main(region_name, cdata['security'])
+                if 'containers' in cdata:
+                    self.__csv_container(region_name, cdata['containers'])
+                if 'edge_services' in cdata:
+                    self.__csv_edge_main(region_name, cdata['edge_services'])
 
         except Exception as e:
             self.__print_error("__csv_region_data", e)

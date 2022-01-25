@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on `Keep a Changelog <http://keepachangelog.com/>`_.
 
 =====================
+22.02.01 - 22.02.01
+=====================
+* Added CSV for Object storage buckets
+* Added CSV for Security Bastions
+* Added CSV for Security Logging
+* Added CSV for Security Cloud Guard
+* Added CSV for Containers Kubernetes
+* Added CSV for Edge Waas Policies
+* Added CSV for Edge DNS Steering Policies
+* Added CSV for Edge Healthchecks
+
+=====================
 22.01.18 - 22.01.18
 =====================
 * Added database home patch history

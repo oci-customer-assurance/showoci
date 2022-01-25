@@ -6007,8 +6007,9 @@ class ShowOCIService(object):
 
                     if lp:
                         for lc in lp.items:
-                            val['object_lifecycle'] += ", LifeCycle: " + str(lc.name) + " - " + str(
-                                lc.action) + " - " + str(lc.time_amount) + " " + str(lc.time_unit)
+                            if val['object_lifecycle']:
+                                val['object_lifecycle'] += ", "
+                            val['object_lifecycle'] += str(lc.name) + " - " + str(lc.action) + " - " + str(lc.time_amount) + " " + str(lc.time_unit)
 
                     data.append(val)
                     cnt += 1
@@ -10521,6 +10522,7 @@ class ShowOCIService(object):
                            'display_name': str(arr.display_name),
                            'domain': str(arr.domain),
                            'time_created': str(arr.time_created),
+                           'lifecycle_state': str(arr.lifecycle_state),
                            'compartment_name': str(compartment['name']),
                            'compartment_id': str(compartment['id']),
                            'defined_tags': [] if arr.defined_tags is None else arr.defined_tags,
@@ -11221,7 +11223,6 @@ class ShowOCIService(object):
                             esxis = esxi_client.list_esxi_hosts(
                                 sddc_id=vmware.id,
                                 sort_by="displayName",
-                                lifecycle_state="ACTIVE",
                                 retry_strategy=oci.retry.DEFAULT_RETRY_STRATEGY
                             ).data
 
@@ -11233,21 +11234,22 @@ class ShowOCIService(object):
                         # esxi = classoci.ocvp.models.EsxiHostSummary
                         if esxis:
                             for esxi in esxis.items:
-                                val['esxihosts'].append(
-                                    {
-                                        'id': str(esxi.id),
-                                        'display_name': str(esxi.display_name),
-                                        'compute_instance_id': str(esxi.compute_instance_id),
-                                        'billing_contract_end_date': str(esxi.billing_contract_end_date),
-                                        'current_sku': str(esxi.current_sku),
-                                        'next_sku': str(esxi.next_sku),
-                                        'time_created': str(esxi.time_created),
-                                        'time_updated': str(esxi.time_updated),
-                                        'lifecycle_state': str(esxi.lifecycle_state),
-                                        'defined_tags': [] if esxi.defined_tags is None else esxi.defined_tags,
-                                        'freeform_tags': [] if esxi.freeform_tags is None else esxi.freeform_tags
-                                    }
-                                )
+                                if esxi.lifecycle_state != 'TERMINATED':
+                                    val['esxihosts'].append(
+                                        {
+                                            'id': str(esxi.id),
+                                            'display_name': str(esxi.display_name),
+                                            'compute_instance_id': str(esxi.compute_instance_id),
+                                            'billing_contract_end_date': str(esxi.billing_contract_end_date),
+                                            'current_sku': str(esxi.current_sku),
+                                            'next_sku': str(esxi.next_sku),
+                                            'time_created': str(esxi.time_created),
+                                            'time_updated': str(esxi.time_updated),
+                                            'lifecycle_state': str(esxi.lifecycle_state),
+                                            'defined_tags': [] if esxi.defined_tags is None else esxi.defined_tags,
+                                            'freeform_tags': [] if esxi.freeform_tags is None else esxi.freeform_tags
+                                        }
+                                    )
 
                         # add the data
                         cnt += 1
@@ -12125,6 +12127,7 @@ class ShowOCIService(object):
                             'display_name': str(log_item.display_name),
                             'is_enabled': str(log_item.is_enabled),
                             'name': str(item.display_name) + " - " + str(log_item.display_name) + " - " + enabled_str,
+                            'archiving': "",
                             'source_service': "",
                             'source_category': "",
                             'source_sourcetype': "",
