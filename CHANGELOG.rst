@@ -5,6 +5,11 @@ All notable changes to this project will be documented in this file.
 The format is based on `Keep a Changelog <http://keepachangelog.com/>`_.
 
 =====================
+22.02.08 - 22.02.08
+=====================
+* Added estimate dates for exadata maintenance
+
+=====================
 22.02.01 - 22.02.01
 =====================
 * Added CSV for Object storage buckets
