@@ -14,8 +14,8 @@ import sys
 import pandas as pd
 
 # Get the parameter of the folder
-if sys.argv is None or len(sys.argv) < 1:
-    print("Please specify the csv location and initial name")
+if sys.argv is None or len(sys.argv) < 2:
+    print("Please specify the csv location including initial name")
     sys.exit()
 
 csv_location = sys.argv[1]
