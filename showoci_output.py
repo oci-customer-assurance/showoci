@@ -1087,6 +1087,9 @@ class ShowOCIOutput(object):
                     if 'gi_version' in vm:
                         print(self.tabs + "GI      : " + vm['gi_version'])
 
+                    if 'system_version' in vm:
+                        print(self.tabs + "System  : " + vm['system_version'])
+
                     if 'data_storage_percentage' in vm:
                         print(self.tabs + "Data    : " + vm['data_storage_percentage'] + "%, Sparse: " + vm['is_sparse_diskgroup_enabled'] + ", Local Backup: " + vm['is_local_backup_enabled'])
 
@@ -3952,7 +3955,8 @@ class ShowOCICSV(object):
                         'memory_gb': dbs['shape_memory_gb'],
                         'local_storage_tb': dbs['shape_storage_tb'],
                         'node_count': len(dbs['db_nodes']),
-                        'version': dbs['version_only'],
+                        'gi_version': dbs['version_only'],
+                        'system_version': "",
                         'database_edition': dbs['database_edition_short'],
                         'license_model': dbs['license_model'],
                         'data_subnet': dbs['data_subnet'],
@@ -4062,7 +4066,8 @@ class ShowOCICSV(object):
                             'memory_gb': dbs['shape_memory_gb'],
                             'local_storage_tb': dbs['shape_storage_tb'],
                             'node_count': len(vm['db_nodes']),
-                            'version': vm['gi_version'],
+                            'gi_version': vm['gi_version'],
+                            'system_version': vm['system_version'],
                             'database_edition': 'XP',
                             'license_model': vm['license_model'],
                             'data_subnet': vm['data_subnet'],
@@ -4172,7 +4177,8 @@ class ShowOCICSV(object):
                             'memory_gb': dbs['memory_size_in_gbs'],
                             'local_storage_tb': dbs['data_storage_size_in_tbs'],
                             'node_count': len(vm['db_nodes']),
-                            'version': vm['gi_version'],
+                            'gi_version': vm['gi_version'],
+                            'system_version': vm['system_version'],
                             'database_edition': 'XP',
                             'license_model': vm['license_model'],
                             'data_subnet': "",

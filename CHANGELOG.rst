@@ -8,6 +8,7 @@ The format is based on `Keep a Changelog <http://keepachangelog.com/>`_.
 22.02.08 - 22.02.08
 =====================
 * Added estimate dates for exadata maintenance
+* Added system version to the db system / exadata csv
 
 =====================
 22.02.01 - 22.02.01
