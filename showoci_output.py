@@ -3378,10 +3378,14 @@ class ShowOCICSV(object):
     csv_compute = []
     csv_block_volumes = []
     csv_compute_reservations = []
-    csv_db_system = []
+    csv_db_exacc_vmclusters = []
+    csv_db_exacs_vmclusters = []
+    csv_db_vm_bm = []
+    csv_db_all = []
     csv_db_autonomous = []
     csv_database = []
     csv_database_backups = []
+    csv_network_drg = []
     csv_network_subnet = []
     csv_network_security_list = []
     csv_network_security_group = []
@@ -3443,14 +3447,18 @@ class ShowOCICSV(object):
             self.__export_to_csv_file("compute_reservations", self.csv_compute_reservations)
             self.__export_to_csv_file("block_boot_volumes", self.csv_block_volumes)
             self.__export_to_csv_file("network_subnet", self.csv_network_subnet)
+            self.__export_to_csv_file("network_drgs", self.csv_network_drg)
             self.__export_to_csv_file("network_routes", self.csv_network_routes)
             self.__export_to_csv_file("network_security_list", self.csv_network_security_list)
             self.__export_to_csv_file("network_security_group", self.csv_network_security_group)
             self.__export_to_csv_file("network_dhcp_options", self.csv_network_dhcp_options)
             self.__export_to_csv_file("database", self.csv_database)
-            self.__export_to_csv_file("database_db_system", self.csv_db_system)
-            self.__export_to_csv_file("database_db_backups", self.csv_database_backups)
+            self.__export_to_csv_file("database_backups", self.csv_database_backups)
             self.__export_to_csv_file("database_autonomous", self.csv_db_autonomous)
+            self.__export_to_csv_file("database_db_all", self.csv_db_all)
+            self.__export_to_csv_file("database_db_vm_bm", self.csv_db_vm_bm)
+            self.__export_to_csv_file("database_db_exacs", self.csv_db_exacs_vmclusters)
+            self.__export_to_csv_file("database_db_exacc", self.csv_db_exacc_vmclusters)
             self.__export_to_csv_file("load_balancer_listeners", self.csv_load_balancer)
             self.__export_to_csv_file("load_balancer_backendset", self.csv_load_balancer_bs)
             self.__export_to_csv_file("file_storage", self.csv_file_storage)
@@ -3749,6 +3757,33 @@ class ShowOCICSV(object):
             self.__print_error("__csv_core_network_vcn_security_lists", e)
 
     ##########################################################################
+    # CSV Network drg
+    ##########################################################################
+    def __csv_core_network_drg(self, region_name, drgs):
+        try:
+            if not drgs:
+                return
+
+            for drg in drgs:
+                data = {
+                    'region_name': region_name,
+                    'compartment_name': drg['compartment_name'],
+                    'name': drg['name'],
+                    'redundancy': drg['redundancy'],
+                    'time_created': drg['time_created'][0:16],
+                    'drg_route_tables': str(', '.join(x['display_name'] for x in drg['drg_route_tables'])),
+                    'ip_sec_connections': str(', '.join(x['name'] + " " + x['tunnels_status'] for x in drg['ip_sec_connections'])),
+                    'virtual_circuits': str(', '.join(x['name'] for x in drg['virtual_circuits'])),
+                    'remote_peerings': str(', '.join(x['name'] + " " + x['peering_status'] for x in drg['remote_peerings'])),
+                    'vcns': str(', '.join(x['name'] for x in drg['vcns'])),
+                    'id': drg['id']
+                }
+                self.csv_network_drg.append(data)
+
+        except Exception as e:
+            self.__print_error("__csv_core_network_drg", e)
+
+    ##########################################################################
     # CSV for  Network vcn security group
     ##########################################################################
     def __csv_core_network_vcn_security_groups(self, region_name, nsg, vcn):
@@ -3930,6 +3965,9 @@ class ShowOCICSV(object):
             if 'vcn' in data:
                 self.__csv_core_network_vcn(region_name, data['vcn'])
 
+            if 'drg' in data:
+                self.__csv_core_network_drg(region_name, data['drg'])
+
         except Exception as e:
             self.__print_error("__csv_core_network_main", e)
 
@@ -3970,19 +4008,15 @@ class ShowOCICSV(object):
                         'db_homes': str(', '.join(x['home'] for x in dbs['db_homes'])),
                         'freeform_tags': str(', '.join(key + "=" + dbs['freeform_tags'][key] for key in dbs['freeform_tags'].keys())),
                         'defined_tags': self.__get_defined_tags(dbs['defined_tags']),
-                        'maintenance_window': "",
-                        'last_maintenance_run': "",
-                        'next_maintenance_run': "",
-                        'dbsystem_id': dbs['id']
+                        'maintenance_window': dbs['maintenance_window']['display'] if dbs['maintenance_window'] else "",
+                        'last_maintenance_run': dbs['last_maintenance_run']['maintenance_display'] if dbs['last_maintenance_run'] else "",
+                        'next_maintenance_run': dbs['next_maintenance_run']['maintenance_display'] if dbs['next_maintenance_run'] else "",
+                        'id': dbs['id'],
+                        'infra_id': ''
                         }
-                if dbs['maintenance_window']:
-                    dbsd['maintenance_window'] = dbs['maintenance_window']['display']
-                if dbs['last_maintenance_run']:
-                    dbsd['last_maintenance_run'] = dbs['last_maintenance_run']['maintenance_display']
-                if dbs['next_maintenance_run']:
-                    dbsd['next_maintenance_run'] = dbs['next_maintenance_run']['maintenance_display']
 
-                self.csv_db_system.append(dbsd)
+                self.csv_db_all.append(dbsd)
+                self.csv_db_vm_bm.append(dbsd)
 
                 # Build the database CSV
                 for db_home in dbs['db_homes']:
@@ -4081,20 +4115,15 @@ class ShowOCICSV(object):
                             'db_homes': str(', '.join(x['home'] for x in vm['db_homes'])),
                             'freeform_tags': str(', '.join(key + "=" + vm['freeform_tags'][key] for key in vm['freeform_tags'].keys())),
                             'defined_tags': self.__get_defined_tags(vm['defined_tags']),
-                            'maintenance_window': "",
-                            'last_maintenance_run': "",
-                            'next_maintenance_run': "",
-                            'dbsystem_id': vm['id']
+                            'maintenance_window': dbs['maintenance_window']['display'] if dbs['maintenance_window'] else "",
+                            'last_maintenance_run': dbs['last_maintenance_run']['maintenance_display'] if dbs['last_maintenance_run'] else "",
+                            'next_maintenance_run': dbs['next_maintenance_run']['maintenance_display'] if dbs['next_maintenance_run'] else "",
+                            'id': vm['id'],
+                            'infra_id': dbs['id']
                             }
 
-                    if dbs['maintenance_window']:
-                        dbsd['maintenance_window'] = dbs['maintenance_window']['display']
-                    if dbs['last_maintenance_run']:
-                        dbsd['last_maintenance_run'] = dbs['last_maintenance_run']['maintenance_display']
-                    if dbs['next_maintenance_run']:
-                        dbsd['next_maintenance_run'] = dbs['next_maintenance_run']['maintenance_display']
-
-                    self.csv_db_system.append(dbsd)
+                    self.csv_db_all.append(dbsd)
+                    self.csv_db_exacs_vmclusters.append(dbsd)
 
                     # Build the database CSV
                     for db_home in vm['db_homes']:
@@ -4192,20 +4221,15 @@ class ShowOCICSV(object):
                             'db_homes': str(', '.join(x['home'] for x in vm['db_homes'])),
                             'freeform_tags': str(', '.join(key + "=" + vm['freeform_tags'][key] for key in vm['freeform_tags'].keys())),
                             'defined_tags': self.__get_defined_tags(vm['defined_tags']),
-                            'maintenance_window': "",
-                            'last_maintenance_run': "",
-                            'next_maintenance_run': "",
-                            'dbsystem_id': vm['id']
+                            'maintenance_window': dbs['maintenance_window']['display'] if dbs['maintenance_window'] else "",
+                            'last_maintenance_run': dbs['last_maintenance_run']['maintenance_display'] if dbs['last_maintenance_run'] else "",
+                            'next_maintenance_run': dbs['next_maintenance_run']['maintenance_display'] if dbs['next_maintenance_run'] else "",
+                            'id': vm['id'],
+                            'infra_id': dbs['id'],
                             }
 
-                    if dbs['maintenance_window']:
-                        dbsd['maintenance_window'] = dbs['maintenance_window']['display']
-                    if dbs['last_maintenance_run']:
-                        dbsd['last_maintenance_run'] = dbs['last_maintenance_run']['maintenance_display']
-                    if dbs['next_maintenance_run']:
-                        dbsd['next_maintenance_run'] = dbs['next_maintenance_run']['maintenance_display']
-
-                    self.csv_db_system.append(dbsd)
+                    self.csv_db_all.append(dbsd)
+                    self.csv_db_exacc_vmclusters.append(dbsd)
 
                     # Build the database CSV
                     for db_home in vm['db_homes']:

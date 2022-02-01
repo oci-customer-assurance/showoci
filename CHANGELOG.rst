@@ -9,6 +9,8 @@ The format is based on `Keep a Changelog <http://keepachangelog.com/>`_.
 =====================
 * Added estimate dates for exadata maintenance
 * Added system version to the db system / exadata csv
+* Split database_db_system csv to database_db_all, database_db_vm_bm, database_db_exacs, database_db_exacc
+* Added csv for network drg
 
 =====================
 22.02.01 - 22.02.01
