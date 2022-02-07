@@ -5,6 +5,11 @@ All notable changes to this project will be documented in this file.
 The format is based on `Keep a Changelog <http://keepachangelog.com/>`_.
 
 =====================
+22.02.15 - 22.02.15
+=====================
+* Added Support for ExaCS and ExaCC VMclusters in different compartment
+
+=====================
 22.02.08 - 22.02.08
 =====================
 * Added estimate dates for exadata maintenance

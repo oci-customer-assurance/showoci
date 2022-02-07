@@ -4089,7 +4089,7 @@ class ShowOCICSV(object):
                     # Db Exa CSV
                     dbsd = {'region_name': region_name,
                             'availability_domain': dbs['availability_domain'],
-                            'compartment_name': dbs['compartment_name'],
+                            'compartment_name': vm['compartment_name'],
                             'status': dbs['lifecycle_state'],
                             'type': "ExaCS",
                             'name': dbs['display_name'],
@@ -4195,7 +4195,7 @@ class ShowOCICSV(object):
                     # Db Exa CSV
                     dbsd = {'region_name': region_name,
                             'availability_domain': 'ExaCC',
-                            'compartment_name': dbs['compartment_name'],
+                            'compartment_name': vm['compartment_name'],
                             'status': dbs['lifecycle_state'],
                             'type': "ExaCC",
                             'name': dbs['display_name'],
