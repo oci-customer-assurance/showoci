@@ -352,7 +352,6 @@ class ShowOCIData(object):
                     if value is not None:
                         if len(value) > 0:
                             data['data_ai'] = value
-                            data['data_ai'] = value
                             has_data = True
 
                 if self.service.flags.read_function:

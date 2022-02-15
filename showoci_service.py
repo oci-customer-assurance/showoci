@@ -7657,6 +7657,9 @@ class ShowOCIService(object):
                 if 'InternalError' in str(e.code):
                     print('p', end="")
                     return data
+                if 'Aborted' in str(e.code):
+                    print('p', end="")
+                    return data
                 raise
         except oci.exceptions.RequestException as e:
             if self.__check_request_error(e):

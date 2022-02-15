@@ -3405,6 +3405,15 @@ class ShowOCICSV(object):
     csv_edge_healthcheck = []
     csv_apigw = []
     csv_limits = []
+    csv_paas_oac = []
+    csv_paas_oic = []
+    csv_paas_ocvs = []
+    csv_paas_oce = []
+    csv_data_ai_oda = []
+    csv_data_ai_bds = []
+    csv_data_science = []
+    csv_data_flow = []
+    csv_data_catalog = []
     start_time = ""
     csv_add_date_field = True
 
@@ -3473,6 +3482,15 @@ class ShowOCICSV(object):
             self.__export_to_csv_file("edge_dns_steering_policies", self.csv_edge_dns_steering_policies)
             self.__export_to_csv_file("edge_waas_policies", self.csv_edge_waas_policies)
             self.__export_to_csv_file("edge_healthchecks", self.csv_edge_healthcheck)
+            self.__export_to_csv_file("paas_oac", self.csv_paas_oac)
+            self.__export_to_csv_file("paas_oic", self.csv_paas_oic)
+            self.__export_to_csv_file("paas_ocvs_vmware", self.csv_paas_ocvs)
+            self.__export_to_csv_file("paas_oce", self.csv_paas_oce)
+            self.__export_to_csv_file("data_science", self.csv_data_science)
+            self.__export_to_csv_file("data_flow", self.csv_data_flow)
+            self.__export_to_csv_file("data_catalog", self.csv_data_catalog)
+            self.__export_to_csv_file("digital_assistance", self.csv_data_ai_oda)
+            self.__export_to_csv_file("big_data_service", self.csv_data_ai_bds)
 
             print("")
         except Exception as e:
@@ -5076,7 +5094,7 @@ class ShowOCICSV(object):
             self.__print_error("__csv_container", e)
 
     ##########################################################################
-    # csv Security
+    # csv edge
     ##########################################################################
     def __csv_edge_main(self, region_name, data):
 
@@ -5211,6 +5229,346 @@ class ShowOCICSV(object):
             self.__print_error("__csv_edge_healthcheck", e)
 
     ##########################################################################
+    # Paas OIC
+    ##########################################################################
+    def __csv_paas_oic(self, region_name, services):
+        try:
+
+            if len(services) == 0:
+                return
+
+            if services:
+                for ar in services:
+
+                    data = {
+                        'region_name': region_name,
+                        'compartment_name': ar['compartment_name'],
+                        'name': ar['display_name'],
+                        'time_created': ar['time_created'][0:16],
+                        'lifecycle_state': ar['lifecycle_state'],
+                        'instance_url': ar['instance_url'],
+                        'message_packs': ar['message_packs'],
+                        'is_byol': ar['is_byol'],
+                        'is_file_server_enabled': ar['is_file_server_enabled'],
+                        'consumption_model': ar['consumption_model'],
+                        'id': ar['id']
+                    }
+
+                    self.csv_paas_oic.append(data)
+
+        except Exception as e:
+            self.__print_error("__csv_paas_oic", e)
+
+    ##########################################################################
+    # Paas OAC
+    ##########################################################################
+    def __csv_paas_oac(self, region_name, services):
+        try:
+
+            if len(services) == 0:
+                return
+
+            if services:
+                for ar in services:
+
+                    data = {
+                        'region_name': region_name,
+                        'compartment_name': ar['compartment_name'],
+                        'name': ar['name'],
+                        'time_created': ar['time_created'][0:16],
+                        'lifecycle_state': ar['lifecycle_state'],
+                        'feature_set': ar['feature_set'],
+                        'license_type': ar['license_type'],
+                        'capacity_type': ar['capacity_type'],
+                        'capacity_value': ar['capacity_value'],
+                        'email_notification': ar['email_notification'],
+                        'service_url': ar['service_url'],
+                        'vanity_domain': ar['vanity_domain'],
+                        'vanity_url': ar['vanity_url'],
+                        'network_endpoint_details': ar['network_endpoint_details'],
+                        'id': ar['id']
+                    }
+
+                    self.csv_paas_oac.append(data)
+
+        except Exception as e:
+            self.__print_error("__csv_paas_oac", e)
+
+    ##########################################################################
+    # Paas OCE
+    ##########################################################################
+    def __csv_paas_oce(self, region_name, services):
+        try:
+
+            if len(services) == 0:
+                return
+
+            if services:
+                for ar in services:
+
+                    data = {
+                        'region_name': region_name,
+                        'compartment_name': ar['compartment_name'],
+                        'name': ar['name'],
+                        'description': ar['description'],
+                        'guid': ar['guid'],
+                        'tenancy_name': ar['tenancy_name'],
+                        'idcs_tenancy': ar['idcs_tenancy'],
+                        'object_storage_namespace': ar['object_storage_namespace'],
+                        'admin_email': ar['admin_email'],
+                        'time_created': ar['time_created'][0:16],
+                        'lifecycle_state': ar['lifecycle_state'],
+                        'service': ar['service'],
+                        'id': ar['id']
+                    }
+
+                    self.csv_paas_oce.append(data)
+
+        except Exception as e:
+            self.__print_error("__csv_paas_oce", e)
+
+    ##########################################################################
+    # Paas OCVS
+    ##########################################################################
+    def __csv_paas_ocvs(self, region_name, services):
+        try:
+
+            if len(services) == 0:
+                return
+
+            if services:
+                for ar in services:
+
+                    data = {
+                        'region_name': region_name,
+                        'compartment_name': ar['compartment_name'],
+                        'name': ar['display_name'],
+                        'compute_availability_domain': ar['compute_availability_domain'],
+                        'instance_display_name_prefix': ar['instance_display_name_prefix'],
+                        'vmware_software_version': ar['vmware_software_version'],
+                        'esxi_hosts_count': ar['esxi_hosts_count'],
+                        'nsx_manager_fqdn': ar['nsx_manager_fqdn'],
+                        'nsx_manager_private_ip': ar['nsx_manager_private_ip'],
+                        'vcenter_fqdn': ar['vcenter_fqdn'],
+                        'vcenter_private_ip': ar['vcenter_private_ip'],
+                        'workload_network_cidr': ar['workload_network_cidr'],
+                        'nsx_overlay_segment_name': ar['nsx_overlay_segment_name'],
+                        'nsx_edge_uplink_ip': ar['nsx_edge_uplink_ip'],
+                        'provisioning_subnet': ar['provisioning_subnet'],
+                        'vsphere_vlan': ar['vsphere_vlan'],
+                        'vmotion_vlan': ar['vmotion_vlan'],
+                        'vsan_vlan': ar['vsan_vlan'],
+                        'nsx_v_tep_vlan': ar['nsx_v_tep_vlan'],
+                        'nsx_edge_v_tep_vlan': ar['nsx_edge_v_tep_vlan'],
+                        'nsx_edge_uplink1_vlan': ar['nsx_edge_uplink1_vlan'],
+                        'nsx_edge_uplink2_vlan': ar['nsx_edge_uplink2_vlan'],
+                        'hcx_fqdn': ar['hcx_fqdn'],
+                        'is_hcx_enabled': ar['is_hcx_enabled'],
+                        'time_created': ar['time_created'][0:16],
+                        'exsi_hosts': str(', '.join(x['display_name'] + " - " + x['current_sku'] for x in ar['esxihosts'])),
+                        'lifecycle_state': ar['lifecycle_state'],
+                        'id': ar['id']
+                    }
+
+                    self.csv_paas_ocvs.append(data)
+
+        except Exception as e:
+            self.__print_error("__csv_paas_ocvs", e)
+
+    ##########################################################################
+    # csv paas
+    ##########################################################################
+    def __csv_paas_main(self, region_name, data):
+
+        try:
+            if len(data) == 0:
+                return
+
+            if 'oic' in data:
+                self.__csv_paas_oic(region_name, data['oic'])
+
+            if 'oac' in data:
+                self.__csv_paas_oac(region_name, data['oac'])
+
+            if 'oce' in data:
+                self.__csv_paas_oce(region_name, data['oce'])
+
+            if 'ocvs' in data:
+                self.__csv_paas_ocvs(region_name, data['ocvs'])
+
+        except Exception as e:
+            self.__print_error("__csv_paas_main", e)
+
+    ##########################################################################
+    # csv data_ai
+    ##########################################################################
+    def __csv_data_ai_main(self, region_name, data):
+
+        try:
+            if len(data) == 0:
+                return
+
+            if 'oda' in data:
+                self.__csv_data_ai_oda(region_name, data['oda'])
+
+            if 'bds' in data:
+                self.__csv_data_ai_bds(region_name, data['bds'])
+
+            if 'data_science' in data:
+                self.__csv_data_science(region_name, data['data_science'])
+
+            if 'data_flow' in data:
+                self.__csv_data_flow(region_name, data['data_flow'])
+
+            if 'data_catalog' in data:
+                self.__csv_data_catalog(region_name, data['data_catalog'])
+
+        except Exception as e:
+            self.__print_error("__csv_data_ai_main", e)
+
+    ##########################################################################
+    # Data AI ODA
+    ##########################################################################
+    def __csv_data_ai_oda(self, region_name, services):
+        try:
+
+            if len(services) == 0:
+                return
+
+            if services:
+                for ar in services:
+
+                    data = {
+                        'region_name': region_name,
+                        'compartment_name': ar['compartment_name'],
+                        'name': ar['display_name'],
+                        'description': ar['description'],
+                        'shape_name': ar['shape_name'],
+                        'lifecycle_state': ar['lifecycle_state'],
+                        'time_created': ar['time_created'][0:16],
+                        'id': ar['id']
+                    }
+
+                    self.csv_data_ai_oda.append(data)
+
+        except Exception as e:
+            self.__print_error("__csv_data_ai_oda", e)
+
+    ##########################################################################
+    # Data AI BDS
+    ##########################################################################
+    def __csv_data_ai_bds(self, region_name, services):
+        try:
+
+            if len(services) == 0:
+                return
+
+            if services:
+                for ar in services:
+
+                    data = {
+                        'region_name': region_name,
+                        'compartment_name': ar['compartment_name'],
+                        'name': ar['display_name'],
+                        'number_of_nodes': ar['number_of_nodes'],
+                        'is_high_availability': ar['is_high_availability'],
+                        'cluster_version': ar['cluster_version'],
+                        'is_secure': ar['is_secure'],
+                        'is_cloud_sql_configured': ar['is_cloud_sql_configured'],
+                        'lifecycle_state': ar['lifecycle_state'],
+                        'time_created': ar['time_created'][0:16],
+                        'id': ar['id']
+                    }
+
+                    self.csv_data_ai_bds.append(data)
+
+        except Exception as e:
+            self.__print_error("__csv_data_ai_bds", e)
+
+    ##########################################################################
+    # Data Flow
+    ##########################################################################
+    def __csv_data_flow(self, region_name, services):
+        try:
+
+            if len(services) == 0:
+                return
+
+            if services:
+                for ar in services:
+
+                    data = {
+                        'region_name': region_name,
+                        'compartment_name': ar['compartment_name'],
+                        'name': ar['display_name'],
+                        'language': ar['language'],
+                        'lifecycle_state': ar['lifecycle_state'],
+                        'owner_principal_id': ar['owner_principal_id'],
+                        'owner_user_name': ar['owner_user_name'],
+                        'time_created': ar['time_created'][0:16],
+                        'id': ar['id']
+                    }
+
+                    self.csv_data_flow.append(data)
+
+        except Exception as e:
+            self.__print_error("__csv_data_flow", e)
+
+    ##########################################################################
+    # Data Catalog
+    ##########################################################################
+    def __csv_data_catalog(self, region_name, services):
+        try:
+
+            if len(services) == 0:
+                return
+
+            if services:
+                for ar in services:
+
+                    data = {
+                        'region_name': region_name,
+                        'compartment_name': ar['compartment_name'],
+                        'name': ar['display_name'],
+                        'time_created': ar['time_created'][0:16],
+                        'number_of_objects': ar['number_of_objects'],
+                        'lifecycle_state': ar['lifecycle_state'],
+                        'id': ar['id']
+                    }
+
+                    self.csv_data_catalog.append(data)
+
+        except Exception as e:
+            self.__print_error("__csv_data_catalog", e)
+
+    ##########################################################################
+    # Data Science
+    ##########################################################################
+    def __csv_data_science(self, region_name, services):
+        try:
+
+            if len(services) == 0:
+                return
+
+            if services:
+                for ar in services:
+
+                    data = {
+                        'region_name': region_name,
+                        'compartment_name': ar['compartment_name'],
+                        'name': ar['display_name'],
+                        'description': ar['description'],
+                        'time_created': ar['time_created'][0:16],
+                        'lifecycle_state': ar['lifecycle_state'],
+                        'id': ar['id']
+                    }
+
+                    self.csv_data_science.append(data)
+
+        except Exception as e:
+            self.__print_error("__csv_data_science", e)
+
+    ##########################################################################
     # Print Identity data
     ##########################################################################
     def __csv_region_data(self, region_name, data):
@@ -5240,6 +5598,10 @@ class ShowOCICSV(object):
                     self.__csv_container(region_name, cdata['containers'])
                 if 'edge_services' in cdata:
                     self.__csv_edge_main(region_name, cdata['edge_services'])
+                if 'paas_services' in cdata:
+                    self.__csv_paas_main(region_name, cdata['paas_services'])
+                if 'data_ai' in cdata:
+                    self.__csv_data_ai_main(region_name, cdata['data_ai'])
 
         except Exception as e:
             self.__print_error("__csv_region_data", e)
