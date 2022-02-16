@@ -11216,6 +11216,8 @@ class ShowOCIService(object):
                                'sum_size_gb': str(oic.message_packs),
                                'is_file_server_enabled': str(oic.is_file_server_enabled),
                                'consumption_model': str(oic.consumption_model),
+                               'defined_tags': [],
+                               'freeform_tags': [],
                                'compartment_name': str(compartment['name']),
                                'compartment_id': str(compartment['id']),
                                'region_name': str(self.config['region'])}
@@ -11450,6 +11452,8 @@ class ShowOCIService(object):
                                'sum_info': "PaaS OAC Native " + str(oac.capacity.capacity_type) + " " + ("BYOL" if 'BRING' in oac.license_type else "INCL"),
                                'sum_size_gb': str(oac.capacity.capacity_value),
                                'network_endpoint_details': str(oac.network_endpoint_details.network_endpoint_type),
+                               'defined_tags': [],
+                               'freeform_tags': [],
                                'compartment_name': str(compartment['name']),
                                'compartment_id': str(compartment['id']),
                                'region_name': str(self.config['region'])}

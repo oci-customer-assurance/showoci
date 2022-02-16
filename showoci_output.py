@@ -3574,6 +3574,22 @@ class ShowOCICSV(object):
             self.__print_error("__get_defined_tags", e)
 
     ##########################################################################
+    # extract freeform tags
+    ##########################################################################
+    def __get_freeform_tags(self, freeform_tag):
+
+        try:
+            if not freeform_tag:
+                return ""
+
+            ret_str = str(', '.join(key + "=" + freeform_tag['freeform_tags'][key] for key in freeform_tag['freeform_tags'].keys()))
+
+            return ret_str
+
+        except Exception as e:
+            self.__print_error("__get_freeform_tags", e)
+
+    ##########################################################################
     # check if managed paas compartment
     ##########################################################################
     def __if_managed_paas_compartment(self, name):
@@ -4069,8 +4085,8 @@ class ShowOCICSV(object):
                             'time_created': dbs['time_created'][0:16],
                             'domain': dbs['domain'],
                             'db_nodes': str(', '.join(x['desc'] for x in dbs['db_nodes'])),
-                            'freeform_tags': str(', '.join(key + "=" + dbs['freeform_tags'][key] for key in dbs['freeform_tags'].keys())),
-                            'defined_tags': self.__get_defined_tags(dbs['defined_tags']),
+                            'freeform_tags': str(', '.join(key + "=" + db['freeform_tags'][key] for key in db['freeform_tags'].keys())),
+                            'defined_tags': self.__get_defined_tags(db['defined_tags']),
                             'database_id': db['id'],
                             'dbsystem_id': dbs['id'],
                             'db_home': db_home['home_name'],
@@ -4177,8 +4193,8 @@ class ShowOCICSV(object):
                                     'time_created': vm['time_created'][0:16],
                                     'domain': vm['domain'],
                                     'db_nodes': str(', '.join(x['desc'] for x in vm['db_nodes'])),
-                                    'freeform_tags': str(', '.join(key + "=" + vm['freeform_tags'][key] for key in vm['freeform_tags'].keys())),
-                                    'defined_tags': self.__get_defined_tags(vm['defined_tags']),
+                                    'freeform_tags': str(', '.join(key + "=" + db['freeform_tags'][key] for key in db['freeform_tags'].keys())),
+                                    'defined_tags': self.__get_defined_tags(db['defined_tags']),
                                     'database_id': db['id'],
                                     'dbsystem_id': vm['id'],
                                     'db_home': db_home['home_name'],
@@ -4285,8 +4301,8 @@ class ShowOCICSV(object):
                                     'time_created': vm['time_created'][0:16],
                                     'domain': "",
                                     'db_nodes': str(', '.join(x['desc'] for x in vm['db_nodes'])),
-                                    'freeform_tags': str(', '.join(key + "=" + vm['freeform_tags'][key] for key in vm['freeform_tags'].keys())),
-                                    'defined_tags': self.__get_defined_tags(vm['defined_tags']),
+                                    'freeform_tags': str(', '.join(key + "=" + db['freeform_tags'][key] for key in db['freeform_tags'].keys())),
+                                    'defined_tags': self.__get_defined_tags(db['defined_tags']),
                                     'database_id': db['id'],
                                     'dbsystem_id': vm['id'],
                                     'db_home': db_home['home_name'],
@@ -5251,6 +5267,8 @@ class ShowOCICSV(object):
                         'is_byol': ar['is_byol'],
                         'is_file_server_enabled': ar['is_file_server_enabled'],
                         'consumption_model': ar['consumption_model'],
+                        'freeform_tags': self.__get_freeform_tags(ar['freeform_tags']),
+                        'defined_tags': self.__get_defined_tags(ar['defined_tags']),
                         'id': ar['id']
                     }
 
@@ -5286,6 +5304,8 @@ class ShowOCICSV(object):
                         'vanity_domain': ar['vanity_domain'],
                         'vanity_url': ar['vanity_url'],
                         'network_endpoint_details': ar['network_endpoint_details'],
+                        'freeform_tags': self.__get_freeform_tags(ar['freeform_tags']),
+                        'defined_tags': self.__get_defined_tags(ar['defined_tags']),
                         'id': ar['id']
                     }
 
@@ -5319,6 +5339,8 @@ class ShowOCICSV(object):
                         'time_created': ar['time_created'][0:16],
                         'lifecycle_state': ar['lifecycle_state'],
                         'service': ar['service'],
+                        'freeform_tags': self.__get_freeform_tags(ar['freeform_tags']),
+                        'defined_tags': self.__get_defined_tags(ar['defined_tags']),
                         'id': ar['id']
                     }
 
@@ -5367,6 +5389,8 @@ class ShowOCICSV(object):
                         'time_created': ar['time_created'][0:16],
                         'exsi_hosts': str(', '.join(x['display_name'] + " - " + x['current_sku'] for x in ar['esxihosts'])),
                         'lifecycle_state': ar['lifecycle_state'],
+                        'freeform_tags': self.__get_freeform_tags(ar['freeform_tags']),
+                        'defined_tags': self.__get_defined_tags(ar['defined_tags']),
                         'id': ar['id']
                     }
 
@@ -5446,6 +5470,8 @@ class ShowOCICSV(object):
                         'shape_name': ar['shape_name'],
                         'lifecycle_state': ar['lifecycle_state'],
                         'time_created': ar['time_created'][0:16],
+                        'freeform_tags': self.__get_freeform_tags(ar['freeform_tags']),
+                        'defined_tags': self.__get_defined_tags(ar['defined_tags']),
                         'id': ar['id']
                     }
 
@@ -5477,6 +5503,8 @@ class ShowOCICSV(object):
                         'is_cloud_sql_configured': ar['is_cloud_sql_configured'],
                         'lifecycle_state': ar['lifecycle_state'],
                         'time_created': ar['time_created'][0:16],
+                        'freeform_tags': self.__get_freeform_tags(ar['freeform_tags']),
+                        'defined_tags': self.__get_defined_tags(ar['defined_tags']),
                         'id': ar['id']
                     }
 
@@ -5506,6 +5534,8 @@ class ShowOCICSV(object):
                         'owner_principal_id': ar['owner_principal_id'],
                         'owner_user_name': ar['owner_user_name'],
                         'time_created': ar['time_created'][0:16],
+                        'freeform_tags': self.__get_freeform_tags(ar['freeform_tags']),
+                        'defined_tags': self.__get_defined_tags(ar['defined_tags']),
                         'id': ar['id']
                     }
 
@@ -5533,6 +5563,8 @@ class ShowOCICSV(object):
                         'time_created': ar['time_created'][0:16],
                         'number_of_objects': ar['number_of_objects'],
                         'lifecycle_state': ar['lifecycle_state'],
+                        'freeform_tags': self.__get_freeform_tags(ar['freeform_tags']),
+                        'defined_tags': self.__get_defined_tags(ar['defined_tags']),
                         'id': ar['id']
                     }
 
@@ -5560,6 +5592,8 @@ class ShowOCICSV(object):
                         'description': ar['description'],
                         'time_created': ar['time_created'][0:16],
                         'lifecycle_state': ar['lifecycle_state'],
+                        'freeform_tags': self.__get_freeform_tags(ar['freeform_tags']),
+                        'defined_tags': self.__get_defined_tags(ar['defined_tags']),
                         'id': ar['id']
                     }
 
