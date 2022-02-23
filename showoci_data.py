@@ -1450,9 +1450,18 @@ class ShowOCIData(object):
                 value['type'] = backup['type'][0:4] + ", " + backup['source_type'][0:6] + ", " + backup['time_created'][0:16] + " -> " + backup['expiration_time'][0:16]
                 value['size'] = (str(backup['size_in_gbs']).rjust(3) + "GB " + ", Stored " + str(backup['unique_size_in_gbs']).rjust(3) + "GB")
                 value['sum_info'] = 'Object Storage - BV Backups (GB)'
-                value['sum_size_gb'] = (str(backup['unique_size_in_gbs']))
-                value[volume_name] = str(backup[volume_name])
-                value['id'] = str(backup[volume_name])
+                value['sum_size_gb'] = backup['unique_size_in_gbs']
+                value['volume_type'] = volume_name
+                value['volume_id'] = backup['volume_id']
+                value['source_name'] = backup['backup_name']
+                value['backup_type'] = backup['type']
+                value['schedule_type'] = backup['source_type']
+                value['time_created'] = backup['time_created'][0:16]
+                value['expiration_time'] = backup['expiration_time'][0:16]
+                value['unique_size_in_gbs'] = backup['unique_size_in_gbs']
+                value['size_in_gbs'] = backup['size_in_gbs']
+                value['compartment_name'] = backup['compartment_name']
+                value['id'] = backup['id']
 
                 data.append(value)
 
@@ -1917,13 +1926,17 @@ class ShowOCIData(object):
             if len(data) > 0:
                 return_data['volume_not_attached'] = data
 
-            data = self.__get_core_block_volume_boot_backup(region_name, compartment, 'boot_volume_id', self.service.C_BLOCK_BOOTBACK)
+            data = self.__get_core_block_volume_boot_backup(region_name, compartment, 'boot_volume', self.service.C_BLOCK_BOOTBACK)
             if len(data) > 0:
                 return_data['boot_volume_backup'] = data
 
-            data = self.__get_core_block_volume_boot_backup(region_name, compartment, 'volume_id', self.service.C_BLOCK_VOLBACK)
+            data = self.__get_core_block_volume_boot_backup(region_name, compartment, 'volume', self.service.C_BLOCK_VOLBACK)
             if len(data) > 0:
                 return_data['volume_backup'] = data
+
+            data = self.__get_core_block_volume_boot_backup(region_name, compartment, 'volume_group', self.service.C_BLOCK_VOLGRPBACK)
+            if len(data) > 0:
+                return_data['volume_group_backup'] = data
 
             return return_data
 

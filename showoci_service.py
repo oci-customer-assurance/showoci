@@ -202,6 +202,7 @@ class ShowOCIService(object):
     C_BLOCK_VOL = 'volume'
     C_BLOCK_VOLBACK = 'volume_back'
     C_BLOCK_VOLGRP = 'volume_group'
+    C_BLOCK_VOLGRPBACK = 'volume_group_backup'
 
     # Load Balancer Identifiers
     C_LB = 'loadbalancer'
@@ -820,7 +821,7 @@ class ShowOCIService(object):
     # check service error to warn instead of error
     ##########################################################################
     def __check_service_error(self, code):
-        return 'max retries exceeded' in str(code).lower() or 'auth' in str(code).lower() or 'notfound' in str(code).lower() or code == 'Forbidden' or code == 'TooManyRequests' or code == 'IncorrectState' or code == 'LimitExceeded'
+        return 'Remote end closed' in str(code).lower() or 'max retries exceeded' in str(code).lower() or 'auth' in str(code).lower() or 'aborted' in str(code).lower() or 'notfound' in str(code).lower() or code == 'Forbidden' or code == 'TooManyRequests' or code == 'IncorrectState' or code == 'LimitExceeded'
 
     ##########################################################################
     # check request error if service not exists for region
@@ -3850,6 +3851,7 @@ class ShowOCIService(object):
             self.__initialize_data_key(self.C_BLOCK, self.C_BLOCK_BOOTBACK)
             self.__initialize_data_key(self.C_BLOCK, self.C_BLOCK_VOL)
             self.__initialize_data_key(self.C_BLOCK, self.C_BLOCK_VOLBACK)
+            self.__initialize_data_key(self.C_BLOCK, self.C_BLOCK_VOLGRPBACK)
 
             # reference to compute
             compute = self.data[self.C_COMPUTE]
@@ -3876,6 +3878,7 @@ class ShowOCIService(object):
             if not self.flags.skip_backups:
                 block[self.C_BLOCK_BOOTBACK] += self.__load_core_block_boot_backup(block_storage, compartments)
                 block[self.C_BLOCK_VOLBACK] += self.__load_core_block_volume_backup(block_storage, compartments)
+                block[self.C_BLOCK_VOLGRPBACK] += self.__load_core_block_volume_group_backup(block_storage, compartments)
             print("")
 
         except oci.exceptions.RequestException:
@@ -5021,6 +5024,7 @@ class ShowOCIService(object):
                            'volume_ids': [str(a) for a in arr.volume_ids], 'compartment_name': str(compartment['name']),
                            'defined_tags': [] if arr.defined_tags is None else arr.defined_tags,
                            'freeform_tags': [] if arr.freeform_tags is None else arr.freeform_tags,
+                           'lifecycle_state': arr.lifecycle_state,
                            'compartment_id': str(compartment['id']), 'region_name': str(self.config['region'])}
 
                     # check boot volume backup policy
@@ -5077,15 +5081,23 @@ class ShowOCIService(object):
                 # loop on array
                 # arr = oci.core.models.BootVolumeBackup
                 for arr in boot_volume_backups:
-                    val = {'id': str(arr.id), 'boot_volume_id': str(arr.boot_volume_id), 'type': str(arr.type),
-                           'source_type': str(arr.source_type), 'time_created': str(arr.time_created),
-                           'display_name': str(arr.display_name), 'size_in_gbs': str(arr.size_in_gbs),
+                    val = {'id': str(arr.id),
+                           'volume_id': str(arr.boot_volume_id),
+                           'boot_volume_id': str(arr.boot_volume_id),
+                           'type': str(arr.type),
+                           'source_type': str(arr.source_type),
+                           'time_created': str(arr.time_created),
+                           'display_name': str(arr.display_name),
+                           'size_in_gbs': str(arr.size_in_gbs),
                            'unique_size_in_gbs': str(arr.unique_size_in_gbs),
-                           'compartment_name': str(compartment['name']), 'compartment_id': str(compartment['id']),
+                           'compartment_name': str(compartment['name']),
+                           'compartment_id': str(compartment['id']),
                            'defined_tags': [] if arr.defined_tags is None else arr.defined_tags,
                            'freeform_tags': [] if arr.freeform_tags is None else arr.freeform_tags,
-                           'region_name': str(self.config['region']), 'backup_name': "Not Found",
-                           'backup_lifecycle_state': "", 'expiration_time': str(arr.expiration_time)}
+                           'region_name': str(self.config['region']),
+                           'backup_name': "Not Found",
+                           'backup_lifecycle_state': "",
+                           'expiration_time': str(arr.expiration_time)}
 
                     # add the rest
 
@@ -5153,10 +5165,19 @@ class ShowOCIService(object):
                 for arr in volume_backups:
 
                     # add the rest
-                    val = {'id': str(arr.id), 'volume_id': str(arr.volume_id), 'backup_name': "Not Found", 'type': str(arr.type),
-                           'source_type': str(arr.source_type), 'time_created': str(arr.time_created), 'display_name': str(arr.display_name),
-                           'size_in_gbs': str(arr.size_in_gbs), 'unique_size_in_gbs': str(arr.unique_size_in_gbs), 'compartment_name': str(compartment['name']),
-                           'compartment_id': str(compartment['id']), 'region_name': str(self.config['region']), 'backup_lifecycle_state': "",
+                    val = {'id': str(arr.id),
+                           'volume_id': str(arr.volume_id),
+                           'backup_name': "Not Found",
+                           'type': str(arr.type),
+                           'source_type': str(arr.source_type),
+                           'time_created': str(arr.time_created),
+                           'display_name': str(arr.display_name),
+                           'size_in_gbs': str(arr.size_in_gbs),
+                           'unique_size_in_gbs': str(arr.unique_size_in_gbs),
+                           'compartment_name': str(compartment['name']),
+                           'compartment_id': str(compartment['id']),
+                           'region_name': str(self.config['region']),
+                           'backup_lifecycle_state': "",
                            'defined_tags': [] if arr.defined_tags is None else arr.defined_tags,
                            'freeform_tags': [] if arr.freeform_tags is None else arr.freeform_tags,
                            'expiration_time': "Keep" if arr.expiration_time is None else str(arr.expiration_time)}
@@ -5182,6 +5203,85 @@ class ShowOCIService(object):
             raise
         except Exception as e:
             self.__print_error("__load_core_block_volume_backup", e)
+            return data
+
+    ##########################################################################
+    # data compute read block volume group backups
+    ##########################################################################
+    def __load_core_block_volume_group_backup(self, block_storage, compartments):
+
+        data = []
+        cnt = 0
+        start_time = time.time()
+
+        try:
+
+            self.__load_print_status("Block Volumes Grp Backups")
+
+            # loop on all compartments
+            for compartment in compartments:
+
+                volume_backups = []
+                try:
+                    volume_backups = oci.pagination.list_call_get_all_results(
+                        block_storage.list_volume_group_backups,
+                        compartment['id'],
+                        sort_by="DISPLAYNAME",
+                        retry_strategy=oci.retry.DEFAULT_RETRY_STRATEGY
+                    ).data
+
+                except oci.exceptions.ServiceError as e:
+                    if self.__check_service_error(e.code):
+                        self.__load_print_auth_warning()
+                        continue
+                    raise
+
+                # loop on array
+                # arr = oci.core.models.VolumeBackup
+                for arr in volume_backups:
+
+                    if arr.lifecycle_state == "TERMINATED":
+                        continue
+
+                    # add the rest
+                    val = {'id': str(arr.id),
+                           'volume_id': str(arr.volume_group_id),
+                           'backup_name': "Not Found",
+                           'type': str(arr.type),
+                           'source_type': str(arr.source_type),
+                           'time_created': str(arr.time_created),
+                           'display_name': str(arr.display_name),
+                           'size_in_gbs': str(arr.size_in_gbs),
+                           'unique_size_in_gbs': str(arr.unique_size_in_gbs),
+                           'compartment_name': str(compartment['name']),
+                           'compartment_id': str(compartment['id']),
+                           'region_name': str(self.config['region']),
+                           'backup_lifecycle_state': "",
+                           'defined_tags': [] if arr.defined_tags is None else arr.defined_tags,
+                           'freeform_tags': [] if arr.freeform_tags is None else arr.freeform_tags,
+                           'expiration_time': "Keep" if arr.expiration_time is None else str(arr.expiration_time)}
+
+                    # get the backup name
+                    backup_name_arr = self.search_unique_item(self.C_BLOCK, self.C_BLOCK_VOLGRP, 'id', str(arr.volume_group_id))
+                    if backup_name_arr:
+                        val['backup_name'] = backup_name_arr['display_name']
+                        val['backup_lifecycle_state'] = backup_name_arr['lifecycle_state']
+
+                    # check boot volume backup policy
+                    data.append(val)
+                    cnt += 1
+
+            self.__load_print_cnt(cnt, start_time)
+            return data
+
+        except oci.exceptions.RequestException as e:
+
+            if self.__check_request_error(e):
+                return data
+
+            raise
+        except Exception as e:
+            self.__print_error("__load_core_block_volume_group_backup", e)
             return data
 
     ##########################################################################

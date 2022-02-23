@@ -2527,6 +2527,9 @@ class ShowOCIOutput(object):
             if 'volume_backup' in data:
                 self.__print_core_compute_boot_volume_backup(data['volume_backup'], "Block Volume Backups")
 
+            if 'volume_group_backup' in data:
+                self.__print_core_compute_boot_volume_backup(data['volume_group_backup'], "Block Volume Group Backups")
+
         except Exception as e:
             self.__print_error("__print_core_compute_main", e)
 
@@ -3131,6 +3134,9 @@ class ShowOCISummary(object):
             if 'boot_volume_backup' in data:
                 self.__summary_core_size(data['boot_volume_backup'])
 
+            if 'volume_group_backup' in data:
+                self.__summary_core_size(data['volume_group_backup'])
+
             if 'volume_backup' in data:
                 self.__summary_core_size(data['volume_backup'])
 
@@ -3377,6 +3383,7 @@ class ShowOCICSV(object):
     csv_identity_policies = []
     csv_compute = []
     csv_block_volumes = []
+    csv_block_volumes_backups = []
     csv_compute_reservations = []
     csv_db_exacc_vmclusters = []
     csv_db_exacs_vmclusters = []
@@ -3454,7 +3461,8 @@ class ShowOCICSV(object):
             self.__export_to_csv_file("identity_groups", self.csv_identity_groups)
             self.__export_to_csv_file("compute", self.csv_compute)
             self.__export_to_csv_file("compute_reservations", self.csv_compute_reservations)
-            self.__export_to_csv_file("block_boot_volumes", self.csv_block_volumes)
+            self.__export_to_csv_file("block_volumes", self.csv_block_volumes)
+            self.__export_to_csv_file("block_volumes_backups", self.csv_block_volumes_backups)
             self.__export_to_csv_file("network_subnet", self.csv_network_subnet)
             self.__export_to_csv_file("network_drgs", self.csv_network_drg)
             self.__export_to_csv_file("network_routes", self.csv_network_routes)
@@ -3539,7 +3547,7 @@ class ShowOCICSV(object):
                 for row in result:
                     writer.writerow(row)
 
-            print("CSV: " + file_subject.ljust(22) + " --> " + file_name)
+            print("CSV: " + file_subject.ljust(24) + " --> " + file_name)
 
         except Exception as e:
             raise Exception("Error in __export_to_csv_file: " + str(e.args))
@@ -3582,7 +3590,7 @@ class ShowOCICSV(object):
             if not freeform_tag:
                 return ""
 
-            ret_str = str(', '.join(key + "=" + freeform_tag['freeform_tags'][key] for key in freeform_tag['freeform_tags'].keys()))
+            ret_str = str(', '.join(key + "=" + freeform_tag[key] for key in freeform_tag.keys()))
 
             return ret_str
 
@@ -4659,6 +4667,37 @@ class ShowOCICSV(object):
             self.__print_error("__csv_core_compute_block_volumes", e)
 
     ##########################################################################
+    # csv compute block volumes backups
+    ##########################################################################
+    def __csv_core_compute_block_volume_backups(self, region_name, blocks):
+
+        try:
+            if len(blocks) == 0:
+                return
+
+            for bv in blocks:
+
+                data = {
+                    'region_name': region_name,
+                    'compartment_name': bv['compartment_name'],
+                    'desc': bv['desc'],
+                    'volume_type': bv['volume_type'],
+                    'backup_type': bv['backup_type'],
+                    'schedule_type': bv['schedule_type'],
+                    'source_name': bv['source_name'],
+                    'time_created': bv['time_created'],
+                    'expiration_time': bv['expiration_time'],
+                    'unique_size_in_gbs': bv['unique_size_in_gbs'],
+                    'size_in_gbs': bv['size_in_gbs'],
+                    'backup_id': bv['id'],
+                    'volume_id': bv['volume_id']
+                }
+                self.csv_block_volumes_backups.append(data)
+
+        except Exception as e:
+            self.__print_error("__csv_core_compute_block_volume_backups", e)
+
+    ##########################################################################
     # csv Compute
     ##########################################################################
     def __csv_core_compute_main(self, region_name, data):
@@ -4673,6 +4712,15 @@ class ShowOCICSV(object):
 
             if 'boot_not_attached' in data:
                 self.__csv_core_compute_block_not_attached(region_name, data['boot_not_attached'])
+
+            if 'boot_volume_backup' in data:
+                self.__csv_core_compute_block_volume_backups(region_name, data['boot_volume_backup'])
+
+            if 'volume_backup' in data:
+                self.__csv_core_compute_block_volume_backups(region_name, data['volume_backup'])
+
+            if 'volume_group_backup' in data:
+                self.__csv_core_compute_block_volume_backups(region_name, data['volume_group_backup'])
 
             if 'capacity_reservation' in data:
                 self.__csv_core_compute_capacity_reservation(region_name, data['capacity_reservation'])
