@@ -2015,6 +2015,7 @@ class ShowOCIData(object):
                                   str(db['ncharacter_set']) + " - " +
                                   str(db['lifecycle_state']) + backupstr),
                          'backups': self.__get_database_db_backups(db['backups']) if 'backups' in db else [],
+                         'pdbs': self.__get_database_db_pdbs(db['pdbs']) if 'pdbs' in db else [],
                          'time_created': db['time_created'],
                          'defined_tags': db['defined_tags'],
                          'dataguard': self.__get_database_db_dataguard(db['dataguard']),
@@ -2100,6 +2101,31 @@ class ShowOCIData(object):
 
         except Exception as e:
             self.__print_error("__get_database_db_backups", e)
+            return data
+
+    ##########################################################################
+    # print database db pdbs
+    ##########################################################################
+    def __get_database_db_pdbs(self, pdbs):
+
+        data = []
+        try:
+
+            for pdb in pdbs:
+                data.append(
+                    {
+                        'name': pdb['pdb_name'],
+                        'desc': pdb['pdb_name'] + " " + pdb['open_mode'],
+                        'lifecycle_state': pdb['lifecycle_state'],
+                        'open_mode': pdb['open_mode'],
+                        'is_restricted': pdb['is_restricted'],
+                        'defined_tags': pdb['defined_tags'],
+                        'freeform_tags': pdb['freeform_tags']
+                     })
+            return data
+
+        except Exception as e:
+            self.__print_error("__get_database_db_pdbs", e)
             return data
 
     ##########################################################################

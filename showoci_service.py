@@ -232,6 +232,7 @@ class ShowOCIService(object):
 
     # database
     C_DATABASE = "database"
+    C_DATABASE_HOMES = "dhomes"
     C_DATABASE_DBSYSTEMS = "dbsystems"
     C_DATABASE_EXADATA = "exadata"
     C_DATABASE_EXADATA_VMS = "exadata_vmclusters"
@@ -821,7 +822,17 @@ class ShowOCIService(object):
     # check service error to warn instead of error
     ##########################################################################
     def __check_service_error(self, code):
-        return 'Remote end closed' in str(code).lower() or 'max retries exceeded' in str(code).lower() or 'auth' in str(code).lower() or 'aborted' in str(code).lower() or 'notfound' in str(code).lower() or code == 'Forbidden' or code == 'TooManyRequests' or code == 'IncorrectState' or code == 'LimitExceeded'
+        return ('remote end closed' in str(code).lower() or
+                'max retries exceeded' in str(code).lower() or
+                'auth' in str(code).lower() or
+                'aborted' in str(code).lower() or
+                'notfound' in str(code).lower() or
+                'closed connection' in str(code).lower() or
+                code == 'Forbidden' or
+                code == 'TooManyRequests' or
+                code == 'IncorrectState' or
+                code == 'LimitExceeded'
+                )
 
     ##########################################################################
     # check request error if service not exists for region
@@ -829,7 +840,13 @@ class ShowOCIService(object):
     def __check_request_error(self, e):
 
         # service not yet available
-        if ('Errno 8' in str(e) and 'NewConnectionError' in str(e)) or 'Max retries exceeded' in str(e) or 'HTTPSConnectionPool' in str(e) or 'not currently available' in str(e):
+        if (
+                ('Errno 8' in str(e) and 'NewConnectionError' in str(e)) or
+                'Max retries exceeded' in str(e) or
+                'HTTPSConnectionPool' in str(e) or
+                'not currently available' in str(e) or
+                'closed connection' in str(e)
+        ):
             print("Service Not Accessible or not yet exist")
             return True
         return False
@@ -6727,6 +6744,7 @@ class ShowOCIService(object):
             compartments = self.get_compartment()
 
             # add the key if not exists
+            self.__initialize_data_key(self.C_DATABASE, self.C_DATABASE_HOMES)
             self.__initialize_data_key(self.C_DATABASE, self.C_DATABASE_DBSYSTEMS)
             self.__initialize_data_key(self.C_DATABASE, self.C_DATABASE_EXADATA)
             self.__initialize_data_key(self.C_DATABASE, self.C_DATABASE_EXADATA_VMS)
@@ -6747,6 +6765,7 @@ class ShowOCIService(object):
             db = self.data[self.C_DATABASE]
 
             # append the data
+            db[self.C_DATABASE_HOMES] += self.__load_database_homes(database_client, compartments)
             db[self.C_DATABASE_EXADATA] += self.__load_database_exadata_infrastructure(database_client, virtual_network, compartments)
             db[self.C_DATABASE_EXADATA_VMS] += self.__load_database_exadata_vm_clusters(database_client, virtual_network, compartments)
             db[self.C_DATABASE_EXACC] += self.__load_database_exacc_infrastructure(database_client, virtual_network, compartments)
@@ -7067,7 +7086,7 @@ class ShowOCIService(object):
                         'license_model': str(arr.license_model),
                         'defined_tags': [] if arr.defined_tags is None else arr.defined_tags,
                         'freeform_tags': [] if arr.freeform_tags is None else arr.freeform_tags,
-                        'db_homes': self.__load_database_dbsystems_dbhomes(database_client, virtual_network, compartment, arr.id, exa=True),
+                        'db_homes': self.__load_database_dbsystems_dbhomes(arr.id, exa=True),
                         'db_nodes': self.__load_database_dbsystems_dbnodes(database_client, virtual_network, compartment, arr.id, exa=True),
                         'patches': [],
                         'compartment_name': str(compartment['name']),
@@ -7283,7 +7302,7 @@ class ShowOCIService(object):
                         'defined_tags': [] if arr.defined_tags is None else arr.defined_tags,
                         'freeform_tags': [] if arr.freeform_tags is None else arr.freeform_tags,
                         'patches': [],
-                        'db_homes': self.__load_database_dbsystems_dbhomes(database_client, virtual_network, compartment, arr.id, exa=True),
+                        'db_homes': self.__load_database_dbsystems_dbhomes(arr.id, exa=True),
                         'db_nodes': self.__load_database_dbsystems_dbnodes(database_client, virtual_network, compartment, arr.id, exa=True),
                         'region_name': str(self.config['region']),
                         'scan_ips': [],
@@ -7346,6 +7365,91 @@ class ShowOCIService(object):
             raise
         except Exception as e:
             self.__print_error("__load_database_exadata_vm_clusters", e)
+            return data
+
+    ##########################################################################
+    # __load_database_homes
+    ##########################################################################
+    def __load_database_homes(self, database_client, compartments):
+
+        data = []
+        cnt = 0
+        start_time = time.time()
+
+        try:
+
+            self.__load_print_status("Database Homes")
+
+            # loop on all compartments
+            for compartment in compartments:
+
+                # skip managed paas compartment
+                if self.__if_managed_paas_compartment(compartment['name']):
+                    print(".", end="")
+                    continue
+
+                print(".", end="")
+
+                homes = []
+                try:
+                    homes = database_client.list_db_homes(
+                        compartment['id'],
+                        retry_strategy=oci.retry.DEFAULT_RETRY_STRATEGY
+                    ).data
+
+                except oci.exceptions.ServiceError as e:
+                    if self.__check_service_error(e.code):
+                        self.__load_print_auth_warning("a", False)
+                        continue
+                    else:
+                        raise
+
+                # arr = oci.database.models.DbHomeSummary
+                for db_home in homes:
+                    if (db_home.lifecycle_state == "TERMINATED" or db_home.lifecycle_state == "TERMINATING"):
+                        continue
+
+                    value = {
+                        'id': str(db_home.id),
+                        'display_name': str(db_home.display_name),
+                        'last_patch_history_entry_id': str(db_home.last_patch_history_entry_id),
+                        'lifecycle_state': str(db_home.lifecycle_state),
+                        'db_system_id': str(db_home.db_system_id),
+                        'vm_cluster_id': str(db_home.vm_cluster_id),
+                        'db_version': str(db_home.db_version),
+                        'db_home_location': str(db_home.db_home_location),
+                        'kms_key_id': str(db_home.kms_key_id),
+                        'one_off_patches': db_home.one_off_patches,
+                        'database_software_image_id': db_home.database_software_image_id,
+                        'time_created': str(db_home.time_created),
+                        'compartment_id': str(db_home.compartment_id),
+                        'compartment_name': str(compartment['name']),
+                        'defined_tags': [] if db_home.defined_tags is None else db_home.defined_tags,
+                        'freeform_tags': [] if db_home.freeform_tags is None else db_home.freeform_tags,
+                        'databases': self.__load_database_dbsystems_dbhomes_databases(database_client, db_home.id, compartment),
+                        'patches': self.__load_database_dbsystems_home_patches(database_client, db_home.id),
+                        'patches_history': self.__load_database_dbsystems_home_patches_history(database_client, db_home.id)
+                    }
+
+                    # add to main data
+                    cnt += 1
+                    data.append(value)
+
+            self.__load_print_cnt(cnt, start_time)
+            return data
+
+        except oci.exceptions.ServiceError as e:
+            if self.__check_service_error(e.code):
+                self.__load_print_auth_warning()
+                return data
+            else:
+                raise
+        except oci.exceptions.RequestException as e:
+            if self.__check_request_error(e):
+                return data
+            raise
+        except Exception as e:
+            self.__print_error("__load_database_db_homes", e)
             return data
 
     ##########################################################################
@@ -7463,7 +7567,7 @@ class ShowOCIService(object):
                              'freeform_tags': [] if dbs.freeform_tags is None else dbs.freeform_tags,
                              'patches': self.__load_database_dbsystems_patches(database_client, dbs.id),
                              'db_nodes': self.__load_database_dbsystems_dbnodes(database_client, virtual_network, compartment, dbs.id),
-                             'db_homes': self.__load_database_dbsystems_dbhomes(database_client, virtual_network, compartment, dbs.id),
+                             'db_homes': self.__load_database_dbsystems_dbhomes(dbs.id),
                              'scan_dns_name': "" if dbs.scan_dns_name is None else str(dbs.scan_dns_name),
                              'zone_id': str(dbs.zone_id),
                              }
@@ -7599,64 +7703,12 @@ class ShowOCIService(object):
     ##########################################################################
     # __load_database_dbsystems_dbhomes
     ##########################################################################
-    def __load_database_dbsystems_dbhomes(self, database_client, virtual_network, compartment, dbs_id, exa=False):
+    def __load_database_dbsystems_dbhomes(self, dbs_id, exa=False):
 
-        data = []
-        db_homes = []
-        api_call = ""
-        try:
-            if not exa:
-                api_call = "database_client.list_db_homes with db_system_id"
-                db_homes = oci.pagination.list_call_get_all_results(
-                    database_client.list_db_homes,
-                    compartment['id'],
-                    db_system_id=dbs_id,
-                    retry_strategy=oci.retry.DEFAULT_RETRY_STRATEGY
-                ).data
-            else:
-                api_call = "database_client.list_db_homes with vm_cluster_id"
-                db_homes = oci.pagination.list_call_get_all_results(
-                    database_client.list_db_homes,
-                    compartment['id'],
-                    vm_cluster_id=dbs_id,
-                    retry_strategy=oci.retry.DEFAULT_RETRY_STRATEGY
-                ).data
-
-            # db_home = oci.database.models.DbHomeSummary
-            for db_home in db_homes:
-                data.append(
-                    {'id': str(db_home.id),
-                     'display_name': str(db_home.display_name),
-                     'compartment_id': str(db_home.compartment_id),
-                     'last_patch_history_entry_id': str(db_home.last_patch_history_entry_id),
-                     'lifecycle_state': str(db_home.lifecycle_state),
-                     'db_system_id': str(db_home.db_system_id),
-                     'vm_cluster_id': str(db_home.vm_cluster_id),
-                     'db_version': str(db_home.db_version),
-                     'time_created': str(db_home.time_created),
-                     'databases': self.__load_database_dbsystems_dbhomes_databases(database_client, db_home.id, compartment),
-                     'patches': self.__load_database_dbsystems_home_patches(database_client, db_home.id),
-                     'patches_history': self.__load_database_dbsystems_home_patches_history(database_client, db_home.id)})
-
-            # add to main data
-            return data
-
-        except oci.exceptions.ServiceError as e:
-            if self.__check_service_error(e.code):
-                self.__load_print_auth_warning("h")
-                return data
-            else:
-                print("Error at API " + api_call)
-                raise
-        except oci.exceptions.RequestException as e:
-            if self.__check_request_error(e):
-                return data
-            else:
-                print("Error at API " + api_call)
-                raise
-        except Exception as e:
-            self.__print_error("__load_database_dbsystems_dbhomess, API=" + api_call, e)
-            return data
+        if not exa:
+            return self.search_multi_items(self.C_DATABASE, self.C_DATABASE_HOMES, 'db_system_id', dbs_id)
+        else:
+            return self.search_multi_items(self.C_DATABASE, self.C_DATABASE_HOMES, 'vm_cluster_id', dbs_id)
 
     ##########################################################################
     # __load_database_dbsystems_dbhomes_databases
@@ -7679,26 +7731,33 @@ class ShowOCIService(object):
                 if db.lifecycle_state == oci.database.models.DatabaseSummary.LIFECYCLE_STATE_TERMINATED:
                     continue
 
-                value = {'id': str(db.id),
-                         'compartment_id': str(db.compartment_id),
-                         'character_set': str(db.character_set),
-                         'ncharacter_set': str(db.ncharacter_set),
-                         'db_home_id': str(db.db_home_id),
-                         'db_name': str(db.db_name),
-                         'pdb_name': "" if db.pdb_name is None else str(db.pdb_name),
-                         'db_workload': str(db.db_workload),
-                         'db_unique_name': str(db.db_unique_name),
-                         'lifecycle_details': str(db.lifecycle_details),
-                         'lifecycle_state': str(db.lifecycle_state),
-                         'defined_tags': [] if db.defined_tags is None else db.defined_tags,
-                         'freeform_tags': [] if db.freeform_tags is None else db.freeform_tags,
-                         'time_created': str(db.time_created),
-                         'last_backup_timestamp': str(db.last_backup_timestamp),
-                         'kms_key_id': str(db.kms_key_id),
-                         'source_database_point_in_time_recovery_timestamp': str(db.source_database_point_in_time_recovery_timestamp),
-                         'database_software_image_id': str(db.database_software_image_id),
-                         'connection_strings_cdb': "",
-                         'auto_backup_enabled': False}
+                value = {
+                    'id': str(db.id),
+                    'compartment_id': str(db.compartment_id),
+                    'character_set': str(db.character_set),
+                    'ncharacter_set': str(db.ncharacter_set),
+                    'db_home_id': str(db.db_home_id),
+                    'db_name': str(db.db_name),
+                    'pdb_name': "" if db.pdb_name is None else str(db.pdb_name),
+                    'db_workload': str(db.db_workload),
+                    'db_unique_name': str(db.db_unique_name),
+                    'lifecycle_details': str(db.lifecycle_details),
+                    'lifecycle_state': str(db.lifecycle_state),
+                    'defined_tags': [] if db.defined_tags is None else db.defined_tags,
+                    'freeform_tags': [] if db.freeform_tags is None else db.freeform_tags,
+                    'time_created': str(db.time_created),
+                    'last_backup_timestamp': str(db.last_backup_timestamp),
+                    'kms_key_id': str(db.kms_key_id),
+                    'source_database_point_in_time_recovery_timestamp': str(db.source_database_point_in_time_recovery_timestamp),
+                    'database_software_image_id': str(db.database_software_image_id),
+                    'is_cdb': str(db.is_cdb),
+                    'sid_prefix': str(db.sid_prefix),
+                    'connection_strings_cdb': "",
+                    'auto_backup_enabled': False,
+                    'dataguard': self.__load_database_dbsystems_db_dg(database_client, db.id),
+                    'backups': [] if self.flags.skip_backups else self.__load_database_dbsystems_db_backups(database_client, db.id),
+                    'pdbs': self.__load_database_dbsystems_dbhomes_databases_pdbs(database_client, db.id)
+                }
 
                 if db.db_backup_config is not None:
                     if db.db_backup_config.auto_backup_enabled:
@@ -7708,10 +7767,6 @@ class ShowOCIService(object):
                     if db.connection_strings.cdb_default:
                         value['connection_strings_cdb'] = db.connection_strings.cdb_default
 
-                if not self.flags.skip_backups:
-                    value['backups'] = self.__load_database_dbsystems_db_backups(database_client, db.id)
-
-                value['dataguard'] = self.__load_database_dbsystems_db_dg(database_client, db.id)
                 data.append(value)
 
             # add to main data
@@ -7729,6 +7784,51 @@ class ShowOCIService(object):
             raise
         except Exception as e:
             self.__print_error("__load_database_dbsystems_dbhomes_databases", e)
+            return data
+
+    ##########################################################################
+    # __load_database_dbsystems_dbhomes_databases_pdbs
+    ##########################################################################
+
+    def __load_database_dbsystems_dbhomes_databases_pdbs(self, database_client, dbid):
+
+        data = []
+        try:
+            dbs = oci.pagination.list_call_get_all_results(
+                database_client.list_pluggable_databases,
+                database_id=dbid,
+                retry_strategy=oci.retry.DEFAULT_RETRY_STRATEGY
+            ).data
+
+            # db = oci.database.models.PluggableDatabaseSummary
+            for db in dbs:
+                if db.lifecycle_state == "TERMINATED":
+                    continue
+
+                value = {
+                    'id': str(db.id),
+                    'pdb_name': str(db.pdb_name),
+                    'container_database_id': str(db.container_database_id),
+                    'lifecycle_details': str(db.lifecycle_details),
+                    'lifecycle_state': str(db.lifecycle_state),
+                    'compartment_id': str(db.compartment_id),
+                    'connection_strings': "",
+                    'open_mode': str(db.open_mode),
+                    'is_restricted': str(db.is_restricted),
+                    'defined_tags': [] if db.defined_tags is None else db.defined_tags,
+                    'freeform_tags': [] if db.freeform_tags is None else db.freeform_tags
+                }
+
+                if db.connection_strings is not None:
+                    if db.connection_strings.pdb_default:
+                        value['connection_strings'] = db.connection_strings.pdb_default
+
+                data.append(value)
+
+            return data
+
+        # OCI pluggable database management is supported only for Oracle Database 19.0 or higher
+        except Exception:
             return data
 
     ##########################################################################

@@ -1118,7 +1118,8 @@ class ShowOCIOutput(object):
 
                         # databases
                         for db in db_home['databases']:
-                            print(self.tabs + self.tabs + " DB : " + db['name'])
+                            pdbs = ", PDBS: " + str(', '.join(x['name'] for x in db['pdbs'])) if db['pdbs'] else ""
+                            print(self.tabs + self.tabs + " DB : " + db['name'] + pdbs)
 
                             # print data guard
                             for dg in db['dataguard']:
@@ -1241,7 +1242,8 @@ class ShowOCIOutput(object):
 
                         # databases
                         for db in db_home['databases']:
-                            print(self.tabs + self.tabs + "        DB : " + db['name'])
+                            pdbs = ", PDBS: " + str(', '.join(x['name'] for x in db['pdbs'])) if db['pdbs'] else ""
+                            print(self.tabs + self.tabs + "        DB : " + db['name'] + pdbs)
 
                             # print data guard
                             for dg in db['dataguard']:
@@ -1371,7 +1373,8 @@ class ShowOCIOutput(object):
 
                     # databases
                     for db in db_home['databases']:
-                        print(self.tabs + self.tabs + " DB : " + db['name'])
+                        pdbs = ", PDBS: " + str(', '.join(x['name'] for x in db['pdbs'])) if db['pdbs'] else ""
+                        print(self.tabs + self.tabs + " DB : " + db['name'] + pdbs)
 
                         # print data guard
                         for dg in db['dataguard']:
@@ -4088,6 +4091,7 @@ class ShowOCICSV(object):
                             'backup_subnet': dbs['backup_subnet'],
                             'scan_ips': str(', '.join(x for x in dbs['scan_ips'])),
                             'vip_ips': str(', '.join(x for x in dbs['vip_ips'])),
+                            'pdbs': str(', '.join(x['name'] for x in db['pdbs'])),
                             'cluster_name': dbs['cluster_name'],
                             'vm_name': dbs['display_name'],
                             'time_created': dbs['time_created'][0:16],
@@ -4196,6 +4200,7 @@ class ShowOCICSV(object):
                                     'backup_subnet': vm['backup_subnet'],
                                     'scan_ips': str(', '.join(x for x in vm['scan_ips'])),
                                     'vip_ips': str(', '.join(x for x in vm['vip_ips'])),
+                                    'pdbs': str(', '.join(x['name'] for x in db['pdbs'])),
                                     'cluster_name': vm['cluster_name'],
                                     'vm_name': vm['display_name'],
                                     'time_created': vm['time_created'][0:16],
@@ -4304,6 +4309,7 @@ class ShowOCICSV(object):
                                     'backup_subnet': "",
                                     'scan_ips': "",
                                     'vip_ips': "",
+                                    'pdbs': str(', '.join(x['name'] for x in db['pdbs'])),
                                     'cluster_name': vm['display_name'],
                                     'vm_name': vm['display_name'],
                                     'time_created': vm['time_created'][0:16],
@@ -4364,6 +4370,7 @@ class ShowOCICSV(object):
                         'backup_subnet': "",
                         'scan_ips': "",
                         'vip_ips': "",
+                        'pdbs': "",
                         'vm_name': "",
                         'cluster_name': "",
                         'time_created': dbs['time_created'],

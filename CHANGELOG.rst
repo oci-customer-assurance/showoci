@@ -9,6 +9,7 @@ The format is based on `Keep a Changelog <http://keepachangelog.com/>`_.
 =====================
 * Added CSV for Block Volume Backups and Boot Volumes Backups
 * Added Volume Group Backup
+* Added Database PDBs
 
 =====================
 22.02.22 - 22.02.22
