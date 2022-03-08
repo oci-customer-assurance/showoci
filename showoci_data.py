@@ -3672,6 +3672,11 @@ class ShowOCIData(object):
             if log:
                 security_services['logging'] = log
 
+            # kms_vaults
+            vaults = self.service.search_multi_items(self.service.C_SECURITY, self.service.C_SECURITY_VAULTS, 'region_name', region_name, 'compartment_id', compartment['id'])
+            if vaults:
+                security_services['kms_vaults'] = vaults
+
             return security_services
 
         except Exception as e:
@@ -3709,6 +3714,11 @@ class ShowOCIData(object):
             dc = self.service.search_multi_items(self.service.C_DATA_AI, self.service.C_DATA_AI_CATALOG, 'region_name', region_name, 'compartment_id', compartment['id'])
             if dc:
                 data_ai['data_catalog'] = dc
+
+            # Data Integration
+            di = self.service.search_multi_items(self.service.C_DATA_AI, self.service.C_DATA_AI_DI, 'region_name', region_name, 'compartment_id', compartment['id'])
+            if di:
+                data_ai['data_integration'] = di
 
             return data_ai
 

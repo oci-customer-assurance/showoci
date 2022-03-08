@@ -2108,6 +2108,19 @@ class ShowOCIOutput(object):
                     print(self.taba + val['name'] + ", " + val['bastion_type'] + ", " + subnet + "Created: " + val['time_created'][0:16] + " (" + val['lifecycle_state'] + ")")
                     print("")
 
+            # kms_vaults
+            if 'kms_vaults' in security:
+                self.print_header("KMS Vaults", 2)
+                for val in security['kms_vaults']:
+                    print(self.taba + val['name'] + ", " + val['vault_type'] + ", Created: " + val['time_created'][0:16] + " (" + val['lifecycle_state'] + ")")
+                    print(self.tabs2 + "Keys          : " + val['key_count'] + ", Versions: " + val['key_version_count'])
+                    print(self.tabs2 + "Software Keys : " + val['software_key_count'] + ", Versions: " + val['software_key_version_count'])
+                    print(self.tabs2 + "Management URL: " + val['management_endpoint'])
+                    print(self.tabs2 + "Crypto URL    : " + val['crypto_endpoint'])
+                    for rep in val['replicas']:
+                        print(self.tabs2 + "Replicas      : " + val['status'] + ", " + val['region'] + ", " + val['crypto_endpoint'])
+                    print("")
+
             # Logging
             if 'logging' in security:
                 self.print_header("Logging Groups", 2)
@@ -2171,6 +2184,14 @@ class ShowOCIOutput(object):
                 for val in data_ai['bds']:
                     print(self.taba + val['display_name'] + ", (" + val['cluster_version'] + "), Created: " + val['time_created'][0:16] + " (" + val['lifecycle_state'])
                     print(self.tabs + "Nodes: " + val['number_of_nodes'] + ", is_high_availability: " + val['is_high_availability'] + ", is_secure: " + val['is_secure'] + ", is_cloud_sql_configured: " + val['is_cloud_sql_configured'])
+                print("")
+
+            # DI
+            if 'data_integration' in data_ai:
+                self.print_header("Data Integration", 2)
+                for val in data_ai['data_integration']:
+                    description = (" (" + val['description'] + ")") if val['description'] != "None" else ""
+                    print(self.taba + val['display_name'] + description + ", Created: " + val['time_created'][0:16] + " (" + val['lifecycle_state'] + ")")
                 print("")
 
         except Exception as e:
@@ -2754,6 +2775,8 @@ class ShowOCISummary(object):
                 self.__summary_core_size(security['logging'])
             if 'bastions' in security:
                 self.__summary_core_size(security['bastions'])
+            if 'kms_vaults' in security:
+                self.__summary_core_size(security['kms_vaults'])
 
         except Exception as e:
             self.__print_error("__summary_security", e)
@@ -2778,6 +2801,8 @@ class ShowOCISummary(object):
                 self.__summary_core_size(data_ai['oda'])
             if 'bds' in data_ai:
                 self.__summary_core_size(data_ai['bds'])
+            if 'data_integration' in data_ai:
+                self.__summary_core_size(data_ai['data_integration'])
 
         except Exception as e:
             self.__print_error("__summary_data_ai_main", e)
@@ -3407,6 +3432,7 @@ class ShowOCICSV(object):
     csv_object_storage_buckets = []
     csv_security_bastions = []
     csv_security_logging = []
+    csv_security_kms_vault = []
     csv_security_cloud_guard = []
     csv_container = []
     csv_container_nodepool = []
@@ -3424,6 +3450,7 @@ class ShowOCICSV(object):
     csv_data_science = []
     csv_data_flow = []
     csv_data_catalog = []
+    csv_data_integration = []
     start_time = ""
     csv_add_date_field = True
 
@@ -3488,6 +3515,7 @@ class ShowOCICSV(object):
             self.__export_to_csv_file("security_bastions", self.csv_security_bastions)
             self.__export_to_csv_file("security_loggings", self.csv_security_logging)
             self.__export_to_csv_file("security_cloud_guards", self.csv_security_cloud_guard)
+            self.__export_to_csv_file("security_kms_vaults", self.csv_security_kms_vault)
             self.__export_to_csv_file("containers", self.csv_container)
             self.__export_to_csv_file("containers_nodepools", self.csv_container_nodepool)
             self.__export_to_csv_file("edge_dns_steering_policies", self.csv_edge_dns_steering_policies)
@@ -3500,6 +3528,7 @@ class ShowOCICSV(object):
             self.__export_to_csv_file("data_science", self.csv_data_science)
             self.__export_to_csv_file("data_flow", self.csv_data_flow)
             self.__export_to_csv_file("data_catalog", self.csv_data_catalog)
+            self.__export_to_csv_file("data_integration", self.csv_data_integration)
             self.__export_to_csv_file("digital_assistance", self.csv_data_ai_oda)
             self.__export_to_csv_file("big_data_service", self.csv_data_ai_bds)
 
@@ -5007,6 +5036,9 @@ class ShowOCICSV(object):
             if 'cloud_guard' in data:
                 self.__csv_security_cloud_guard(region_name, data['cloud_guard'])
 
+            if 'kms_vaults' in data:
+                self.__csv_security_kms_vaults(region_name, data['kms_vaults'])
+
         except Exception as e:
             self.__print_error("__csv_security_main", e)
 
@@ -5071,6 +5103,41 @@ class ShowOCICSV(object):
 
         except Exception as e:
             self.__print_error("__csv_security_cloud_guard", e)
+
+    ##########################################################################
+    # KMS Vaults
+    ##########################################################################
+    def __csv_security_kms_vaults(self, region_name, kms_vaults):
+        try:
+
+            if len(kms_vaults) == 0:
+                return
+
+            if kms_vaults:
+                for ar in kms_vaults:
+
+                    data = {
+                        'region_name': region_name,
+                        'compartment_name': ar['compartment_name'],
+                        'name': ar['name'],
+                        'crypto_endpoint': ar['crypto_endpoint'],
+                        'management_endpoint': ar['management_endpoint'],
+                        'vault_type': ar['vault_type'],
+                        'key_count': ar['key_count'],
+                        'key_version_count': ar['key_version_count'],
+                        'software_key_count': ar['software_key_count'],
+                        'software_key_version_count': ar['software_key_version_count'],
+                        'time_created': ar['time_created'][0:16],
+                        'lifecycle_state': ar['lifecycle_state'],
+                        'id': ar['id'],
+                        'freeform_tags': self.__get_freeform_tags(ar['freeform_tags']),
+                        'defined_tags': self.__get_defined_tags(ar['defined_tags'])
+                    }
+
+                    self.csv_security_kms_vault.append(data)
+
+        except Exception as e:
+            self.__print_error("__csv_security_kms_vaults", e)
 
     ##########################################################################
     # Bastions
@@ -5502,6 +5569,9 @@ class ShowOCICSV(object):
             if 'data_catalog' in data:
                 self.__csv_data_catalog(region_name, data['data_catalog'])
 
+            if 'data_integration' in data:
+                self.__csv_data_integration(region_name, data['data_integration'])
+
         except Exception as e:
             self.__print_error("__csv_data_ai_main", e)
 
@@ -5627,6 +5697,34 @@ class ShowOCICSV(object):
 
         except Exception as e:
             self.__print_error("__csv_data_catalog", e)
+
+    ##########################################################################
+    # Data Integration
+    ##########################################################################
+    def __csv_data_integration(self, region_name, services):
+        try:
+
+            if len(services) == 0:
+                return
+
+            if services:
+                for ar in services:
+
+                    data = {
+                        'region_name': region_name,
+                        'compartment_name': ar['compartment_name'],
+                        'name': ar['display_name'],
+                        'description': ar['description'],
+                        'time_created': ar['time_created'][0:16],
+                        'freeform_tags': self.__get_freeform_tags(ar['freeform_tags']),
+                        'defined_tags': self.__get_defined_tags(ar['defined_tags']),
+                        'id': ar['id']
+                    }
+
+                    self.csv_data_integration.append(data)
+
+        except Exception as e:
+            self.__print_error("__csv_data_integration", e)
 
     ##########################################################################
     # Data Science

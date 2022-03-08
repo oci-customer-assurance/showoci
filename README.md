@@ -8,7 +8,7 @@ Output can be printer friendly, CSV files or JSON file.
 [cost analysis](https://docs.oracle.com/en-us/iaas/Content/Billing/Concepts/costanalysisoverview.htm) 
 and [usage reports](https://docs.oracle.com/en-us/iaas/Content/Billing/Concepts/usagereportsoverview.htm) features should be used instead.**
 
-**Developed by Adi Zohar, 2018-2021**
+**Developed by Adi Zohar, 2018-2022**
 
 ![](img/screen_xls.png)
 ![](img/screen_scr1.png)
@@ -58,7 +58,8 @@ and [usage reports](https://docs.oracle.com/en-us/iaas/Content/Billing/Concepts/
 - oci.management_agent.ManagementAgentClient
 - oci.database_management.DbManagementClient
 - oci.bastion.BastionClient
-
+- oci.key_management.KmsVaultClient
+- oci.data_integration.DataIntegrationClient
 
 ## Executing using Cloud Shell:
 ```

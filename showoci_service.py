@@ -134,7 +134,7 @@ class ShowOCIFlags(object):
 # class ShowOCIService
 ##########################################################################
 class ShowOCIService(object):
-    oci_compatible_version = "2.45.1"
+    oci_compatible_version = "2.54.0"
 
     ##########################################################################
     # Global Constants
@@ -312,12 +312,14 @@ class ShowOCIService(object):
     C_DATA_AI_SCIENCE = "data_science"
     C_DATA_AI_CATALOG = "data_catalog"
     C_DATA_AI_FLOW = "data_flow"
+    C_DATA_AI_DI = "data_integration"
     C_DATA_AI_ODA = "oda"
     C_DATA_AI_BDS = "bds"
 
     # Security and Logging
     C_SECURITY = "security"
     C_SECURITY_CLOUD_GUARD = "cloud_guard"
+    C_SECURITY_VAULTS = "vaults"
     C_SECURITY_BASTION = "bastion"
     C_SECURITY_LOGGING = "logging"
 
@@ -10890,6 +10892,7 @@ class ShowOCIService(object):
             df_client = oci.data_flow.DataFlowClient(self.config, signer=self.signer, timeout=2)
             oda_client = oci.oda.OdaClient(self.config, signer=self.signer, timeout=2)
             bds_client = oci.bds.BdsClient(self.config, signer=self.signer, timeout=2)
+            di_client = oci.data_integration.DataIntegrationClient(self.config, signer=self.signer, timeout=2)
 
             if self.flags.proxy:
                 ds_client.base_client.session.proxies = {'https': self.flags.proxy}
@@ -10897,6 +10900,7 @@ class ShowOCIService(object):
                 df_client.base_client.session.proxies = {'https': self.flags.proxy}
                 oda_client.base_client.session.proxies = {'https': self.flags.proxy}
                 bds_client.base_client.session.proxies = {'https': self.flags.proxy}
+                di_client.base_client.session.proxies = {'https': self.flags.proxy}
 
             # reference to compartments
             compartments = self.get_compartment()
@@ -10906,6 +10910,7 @@ class ShowOCIService(object):
             self.__initialize_data_key(self.C_DATA_AI, self.C_DATA_AI_FLOW)
             self.__initialize_data_key(self.C_DATA_AI, self.C_DATA_AI_SCIENCE)
             self.__initialize_data_key(self.C_DATA_AI, self.C_DATA_AI_ODA)
+            self.__initialize_data_key(self.C_DATA_AI, self.C_DATA_AI_DI)
             self.__initialize_data_key(self.C_DATA_AI, self.C_DATA_AI_BDS)
 
             # reference to data_ai
@@ -10917,6 +10922,7 @@ class ShowOCIService(object):
             data_ai[self.C_DATA_AI_SCIENCE] += self.__load_data_ai_science(ds_client, compartments)
             data_ai[self.C_DATA_AI_ODA] += self.__load_data_ai_oda(oda_client, compartments)
             data_ai[self.C_DATA_AI_BDS] += self.__load_data_ai_bds(bds_client, compartments)
+            data_ai[self.C_DATA_AI_DI] += self.__load_data_ai_data_integration(di_client, compartments)
             print("")
 
         except oci.exceptions.RequestException:
@@ -11298,6 +11304,77 @@ class ShowOCIService(object):
             raise
         except Exception as e:
             self.__print_error("__load_data_ai_bds", e)
+            return data
+
+    ##########################################################################
+    # __load_data_ai_data_integration
+    ##########################################################################
+    def __load_data_ai_data_integration(self, di_client, compartments):
+
+        data = []
+        cnt = 0
+        start_time = time.time()
+
+        try:
+            self.__load_print_status("Data Integrations")
+
+            # loop on all compartments
+            for compartment in compartments:
+
+                # skip managed paas compartment
+                if self.__if_managed_paas_compartment(compartment['name']):
+                    print(".", end="")
+                    continue
+
+                dis = []
+                try:
+                    dis = oci.pagination.list_call_get_all_results(
+                        di_client.list_workspaces,
+                        compartment['id'],
+                        retry_strategy=oci.retry.DEFAULT_RETRY_STRATEGY
+                    ).data
+
+                except oci.exceptions.ServiceError as e:
+                    if self.__check_service_error(e.code):
+                        self.__load_print_auth_warning("a", False)
+                        continue
+                    raise
+                except oci.exceptions.ConnectTimeout:
+                    self.__load_print_auth_warning("a", False)
+                    continue
+
+                print(".", end="")
+
+                # di = oci.data_integration.models.WorkspaceSummary
+                for di in dis:
+                    if (di.lifecycle_state == 'ACTIVE' or di.lifecycle_state == 'UPDATING' or di.lifecycle_state == 'RESUMING'):
+                        val = {'id': str(di.id),
+                               'description': str(di.description),
+                               'display_name': str(di.display_name),
+                               'lifecycle_state': str(di.lifecycle_state),
+                               'time_created': str(di.time_created),
+                               'time_updated': str(di.time_updated),
+                               'compartment_name': str(compartment['name']),
+                               'compartment_id': str(compartment['id']),
+                               'sum_info': "Data Integration (Workspaces)",
+                               'sum_size_gb': str(1),
+                               'defined_tags': [] if di.defined_tags is None else di.defined_tags,
+                               'freeform_tags': [] if di.freeform_tags is None else di.freeform_tags,
+                               'region_name': str(self.config['region'])}
+
+                        # add the data
+                        cnt += 1
+                        data.append(val)
+
+            self.__load_print_cnt(cnt, start_time)
+            return data
+
+        except oci.exceptions.RequestException as e:
+            if self.__check_request_error(e):
+                return data
+            raise
+        except Exception as e:
+            self.__print_error("__load_data_ai_data_integration", e)
             return data
 
     ##########################################################################
@@ -12118,11 +12195,13 @@ class ShowOCIService(object):
             bs_client = oci.bastion.BastionClient(self.config, signer=self.signer, timeout=2)
             cg_client = oci.cloud_guard.CloudGuardClient(self.config, signer=self.signer, timeout=2)
             log_client = oci.logging.LoggingManagementClient(self.config, signer=self.signer, timeout=2)
+            kms_client = oci.key_management.KmsVaultClient(self.config, signer=self.signer, timeout=2)
 
             if self.flags.proxy:
                 cg_client.base_client.session.proxies = {'https': self.flags.proxy}
                 log_client.base_client.session.proxies = {'https': self.flags.proxy}
                 bs_client.base_client.session.proxies = {'https': self.flags.proxy}
+                kms_client.base_client.session.proxies = {'https': self.flags.proxy}
 
             # reference to compartments
             compartments = self.get_compartment()
@@ -12131,6 +12210,7 @@ class ShowOCIService(object):
             self.__initialize_data_key(self.C_SECURITY, self.C_SECURITY_BASTION)
             self.__initialize_data_key(self.C_SECURITY, self.C_SECURITY_CLOUD_GUARD)
             self.__initialize_data_key(self.C_SECURITY, self.C_SECURITY_LOGGING)
+            self.__initialize_data_key(self.C_SECURITY, self.C_SECURITY_VAULTS)
 
             # reference to paas
             sec = self.data[self.C_SECURITY]
@@ -12139,6 +12219,7 @@ class ShowOCIService(object):
             sec[self.C_SECURITY_BASTION] += self.__load_security_bastions(bs_client, compartments)
             sec[self.C_SECURITY_CLOUD_GUARD] += self.__load_security_cloud_guard(cg_client, compartments)
             sec[self.C_SECURITY_LOGGING] += self.__load_security_log_groups(log_client, compartments)
+            sec[self.C_SECURITY_VAULTS] += self.__load_security_kms_vaults(kms_client, compartments)
 
             print("")
 
@@ -12266,6 +12347,114 @@ class ShowOCIService(object):
             raise
         except Exception as e:
             self.__print_error("__load_security_cloud_guard", e)
+            return data
+
+    ##########################################################################
+    # __load_security_kms_vaults
+    ##########################################################################
+    def __load_security_kms_vaults(self, kms_client, compartments):
+
+        data = []
+        cnt = 0
+        start_time = time.time()
+
+        try:
+            self.__load_print_status("Key Vaults")
+
+            # loop on all compartments
+            for compartment in compartments:
+
+                # skip managed paas compartment
+                if self.__if_managed_paas_compartment(compartment['name']):
+                    print(".", end="")
+                    continue
+
+                array = []
+                try:
+                    array = oci.pagination.list_call_get_all_results(
+                        kms_client.list_vaults,
+                        compartment['id'],
+                        sort_by="DISPLAYNAME",
+                        retry_strategy=oci.retry.DEFAULT_RETRY_STRATEGY
+                    ).data
+
+                except oci.exceptions.ServiceError as e:
+                    if self.__check_service_error(e.code):
+                        self.__load_print_auth_warning()
+                        continue
+                    raise
+                except oci.exceptions.ConnectTimeout:
+                    self.__load_print_auth_warning()
+                    continue
+
+                print(".", end="")
+
+                # item = oci.key_management.models.VaultSummary
+                for item in array:
+                    if (item.lifecycle_state == 'ACTIVE' or item.lifecycle_state == 'UPDATING'):
+
+                        val = {'id': str(item.id),
+                               'name': str(item.display_name),
+                               'crypto_endpoint': str(item.crypto_endpoint),
+                               'management_endpoint': str(item.management_endpoint),
+                               'vault_type': str(item.vault_type),
+                               'time_created': str(item.time_created),
+                               'lifecycle_state': str(item.lifecycle_state),
+                               'sum_info': "Key Vault",
+                               'sum_size_gb': str(1),
+                               'defined_tags': [] if item.defined_tags is None else item.defined_tags,
+                               'freeform_tags': [] if item.freeform_tags is None else item.freeform_tags,
+                               'compartment_name': str(compartment['name']),
+                               'key_count': "",
+                               'key_version_count': "",
+                               'software_key_count': "",
+                               'software_key_version_count': "",
+                               'replicas': [],
+                               'compartment_id': str(compartment['id']),
+                               'region_name': str(self.config['region'])}
+
+                        # get vault usage
+                        # oci.key_management.models.VaultUsage
+                        try:
+                            usage = kms_client.get_vault_usage(item.id).data
+                            val['key_count'] = str(usage.key_count)
+                            val['key_version_count'] = str(usage.key_version_count)
+                            val['software_key_count'] = str(usage.software_key_count)
+                            val['software_key_version_count'] = str(usage.software_key_version_count)
+
+                        except Exception:
+                            pass
+
+                        # get vault replicas
+                        # oci.key_management.models.VaultReplicaSummary
+                        try:
+                            replicas = kms_client.list_vault_replicas(item.id).data
+                            repval = []
+                            for rep in replicas:
+                                repval.append({
+                                    'crypto_endpoint': str(rep.crypto_endpoint),
+                                    'management_endpoint': str(rep.management_endpoint),
+                                    'region': str(rep.region),
+                                    'status': str(rep.status)
+                                })
+                            val['replicas'] = repval
+
+                        except Exception:
+                            pass
+
+                        # add the data
+                        cnt += 1
+                        data.append(val)
+
+            self.__load_print_cnt(cnt, start_time)
+            return data
+
+        except oci.exceptions.RequestException as e:
+            if self.__check_request_error(e):
+                return data
+            raise
+        except Exception as e:
+            self.__print_error("__load_security_kms_vaults", e)
             return data
 
     ##########################################################################
