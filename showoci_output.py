@@ -2777,6 +2777,8 @@ class ShowOCISummary(object):
                 self.__summary_core_size(security['bastions'])
             if 'kms_vaults' in security:
                 self.__summary_core_size(security['kms_vaults'])
+                self.__summary_core_size(security['kms_vaults'], "sum_info_hsm", 'key_count')
+                self.__summary_core_size(security['kms_vaults'], "sum_info_soft", 'software_key_count')
 
         except Exception as e:
             self.__print_error("__summary_security", e)
@@ -3121,7 +3123,8 @@ class ShowOCISummary(object):
             for obj in objects:
                 if sum_info in obj and sum_size in obj:
                     if obj[sum_size] != '':
-                        self.summary_global_list.append({'type': obj[sum_info], 'size': float(obj[sum_size])})
+                        if float(obj[sum_size]) > 0:
+                            self.summary_global_list.append({'type': obj[sum_info], 'size': float(obj[sum_size])})
 
         except Exception as e:
             self.__print_error("__summary_core_size", e)

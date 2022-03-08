@@ -12400,15 +12400,17 @@ class ShowOCIService(object):
                                'vault_type': str(item.vault_type),
                                'time_created': str(item.time_created),
                                'lifecycle_state': str(item.lifecycle_state),
-                               'sum_info': "Key Vault",
+                               'sum_info': "KMS Vaults",
+                               'sum_info_hsm': "KMS HSM Keys",
+                               'sum_info_soft': "KMS Soft Keys",
                                'sum_size_gb': str(1),
                                'defined_tags': [] if item.defined_tags is None else item.defined_tags,
                                'freeform_tags': [] if item.freeform_tags is None else item.freeform_tags,
                                'compartment_name': str(compartment['name']),
-                               'key_count': "",
-                               'key_version_count': "",
-                               'software_key_count': "",
-                               'software_key_version_count': "",
+                               'key_count': "0",
+                               'key_version_count': "0",
+                               'software_key_count': "0",
+                               'software_key_version_count': "0",
                                'replicas': [],
                                'compartment_id': str(compartment['id']),
                                'region_name': str(self.config['region'])}
@@ -12416,7 +12418,7 @@ class ShowOCIService(object):
                         # get vault usage
                         # oci.key_management.models.VaultUsage
                         try:
-                            usage = kms_client.get_vault_usage(item.id).data
+                            usage = kms_client.get_vault_usage(item.id, retry_strategy=oci.retry.DEFAULT_RETRY_STRATEGY).data
                             val['key_count'] = str(usage.key_count)
                             val['key_version_count'] = str(usage.key_version_count)
                             val['software_key_count'] = str(usage.software_key_count)
@@ -12428,7 +12430,7 @@ class ShowOCIService(object):
                         # get vault replicas
                         # oci.key_management.models.VaultReplicaSummary
                         try:
-                            replicas = kms_client.list_vault_replicas(item.id).data
+                            replicas = kms_client.list_vault_replicas(item.id, retry_strategy=oci.retry.DEFAULT_RETRY_STRATEGY).data
                             repval = []
                             for rep in replicas:
                                 repval.append({
