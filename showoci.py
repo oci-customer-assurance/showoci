@@ -83,6 +83,16 @@
 # - oci.os_management.OsManagementClient
 # - oci.log_analytics.LogAnalyticsClient
 # - oci.tenant_manager_control_plane.LinkClient
+# - oci.ai_anomaly_detection.AnomalyDetectionClient
+# - oci.ai_language.AIServiceLanguageClient
+# - oci.ai_vision.AIServiceVisionClient
+# - oci.apm_control_plane.ApmDomainClient
+# - oci.certificates.CertificatesClient
+# - oci.data_labeling_service.DataLabelingManagementClient
+# - oci.data_safe.DataSafeClient
+# - oci.devops.DevopsClient
+# - oci.jms.JavaManagementServiceClient
+# - oci.visual_builder.VbInstanceClient
 
 ##########################################################################
 from __future__ import print_function

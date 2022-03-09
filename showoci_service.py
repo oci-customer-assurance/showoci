@@ -403,6 +403,40 @@ class ShowOCIService(object):
     ]
 
     ##########################################################################
+    # Database Version Date
+    ##########################################################################
+    database_version_array = [
+        {'date': '2021-01', 'version': '19.6'},
+        {'date': '2021-04', 'version': '19.7'},
+        {'date': '2021-07', 'version': '19.8'},
+        {'date': '2020-10', 'version': '19.9'},
+        {'date': '2021-01', 'version': '19.10'},
+        {'date': '2021-04', 'version': '19.11'},
+        {'date': '2021-07', 'version': '19.12'},
+        {'date': '2021-10', 'version': '19.13'},
+        {'date': '2022-01', 'version': '19.14'},
+        {'date': '2022-04', 'version': '19.15'},
+        {'date': '2022-07', 'version': '19.16'},
+        {'date': '2022-10', 'version': '19.17'},
+        {'date': '2023-01', 'version': '19.18'},
+        {'date': '2023-04', 'version': '19.19'},
+        {'date': '2023-07', 'version': '19.20'},
+        {'date': '2023-10', 'version': '19.21'},
+        {'date': '2020-12', 'version': '21.1'},
+        {'date': '2021-04', 'version': '21.2'},
+        {'date': '2021-07', 'version': '21.3'},
+        {'date': '2021-10', 'version': '21.4'},
+        {'date': '2022-01', 'version': '21.5'},
+        {'date': '2022-04', 'version': '21.6'},
+        {'date': '2022-07', 'version': '21.7'},
+        {'date': '2022-10', 'version': '21.8'},
+        {'date': '2023-01', 'version': '21.9'},
+        {'date': '2023-04', 'version': '21.10'},
+        {'date': '2023-07', 'version': '21.11'},
+        {'date': '2023-10', 'version': '21.12'},
+    ]
+
+    ##########################################################################
     # Local Variables
     # data - hold the data data
     # flags - hold the extract flags
@@ -702,6 +736,40 @@ class ShowOCIService(object):
             if array['shape'] == shape_name:
                 return array
         return {}
+
+    ##########################################################################
+    # find database version date
+    ##########################################################################
+    def get_database_gi_version_date(self, gi_version):
+        if not gi_version:
+            return ""
+
+        # split gi to array
+        valarr = gi_version.split(".")
+        if len(valarr) < 2:
+            return ""
+
+        # get onlh 2 left positions
+        val = valarr[0] + "." + valarr[1]
+
+        for array in self.database_version_array:
+            if array['version'] == val:
+                return array['date']
+
+        return ""
+
+    ##########################################################################
+    # find database system date
+    ##########################################################################
+    def get_database_system_version_date(self, system_version):
+        if not system_version:
+            return ""
+
+        # split gi to array
+        for val in system_version.split("."):
+            if len(val) == 6:
+                return "20" + val[0:2] + "-" + val[2:4]
+        return ""
 
     ##########################################################################
     # check oci version
@@ -7084,7 +7152,9 @@ class ShowOCIService(object):
                         'data_storage_size_in_tbs': str(arr.data_storage_size_in_tbs),
                         'shape': str(arr.shape),
                         'gi_version': str(arr.gi_version),
+                        'gi_version_date': self.get_database_gi_version_date(str(arr.gi_version)),
                         'system_version': str(arr.system_version),
+                        'system_version_date': self.get_database_system_version_date(str(arr.system_version)),
                         'license_model': str(arr.license_model),
                         'defined_tags': [] if arr.defined_tags is None else arr.defined_tags,
                         'freeform_tags': [] if arr.freeform_tags is None else arr.freeform_tags,
@@ -7294,7 +7364,9 @@ class ShowOCIService(object):
                         'is_local_backup_enabled': str(arr.is_local_backup_enabled),
                         'is_sparse_diskgroup_enabled': str(arr.is_sparse_diskgroup_enabled),
                         'gi_version': str(arr.gi_version),
+                        'gi_version_date': self.get_database_gi_version_date(str(arr.gi_version)),
                         'system_version': str(arr.system_version),
+                        'system_version_date': self.get_database_system_version_date(str(arr.system_version)),
                         'ssh_public_keys': str(arr.ssh_public_keys),
                         'license_model': str(arr.license_model),
                         'disk_redundancy': str(arr.disk_redundancy),
@@ -7544,6 +7616,7 @@ class ShowOCIService(object):
                              'cpu_core_count': str(dbs.cpu_core_count),
                              'node_count': ("" if dbs.node_count is None else str(dbs.node_count)),
                              'version': str(dbs.version),
+                             'version_date': self.get_database_gi_version_date(str(dbs.version)),
                              'hostname': str(dbs.hostname),
                              'domain': str(dbs.domain),
                              'data_storage_percentage': str(dbs.data_storage_percentage),
@@ -10732,7 +10805,7 @@ class ShowOCIService(object):
                 for arrsummary in array:
 
                     # get the resolver model
-                    arr = dns_client.get_resolver(arrsummary.id, scope="PRIVATE").data
+                    arr = dns_client.get_resolver(arrsummary.id, scope="PRIVATE", retry_strategy=oci.retry.DEFAULT_RETRY_STRATEGY).data
 
                     val = {'id': str(arr.id),
                            'display_name': str(arr.display_name),

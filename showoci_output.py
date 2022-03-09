@@ -1085,10 +1085,12 @@ class ShowOCIOutput(object):
                         print(self.tabs + "Port    : " + vm['listener_port'])
 
                     if 'gi_version' in vm:
-                        print(self.tabs + "GI      : " + vm['gi_version'])
+                        if vm['gi_version']:
+                            print(self.tabs + "Grid Ver       : " + vm['gi_version'] + "  " + vm['gi_version_date'])
 
                     if 'system_version' in vm:
-                        print(self.tabs + "System  : " + vm['system_version'])
+                        if vm['system_version']:
+                            print(self.tabs + "Sys Ver        : " + vm['system_version'] + "  " + vm['system_version_date'])
 
                     if 'data_storage_percentage' in vm:
                         print(self.tabs + "Data    : " + vm['data_storage_percentage'] + "%, Sparse: " + vm['is_sparse_diskgroup_enabled'] + ", Local Backup: " + vm['is_local_backup_enabled'])
@@ -1204,11 +1206,11 @@ class ShowOCIOutput(object):
 
                     if 'gi_version' in vm:
                         if vm['gi_version']:
-                            print(self.tabs + "Grid Ver       : " + vm['gi_version'])
+                            print(self.tabs + "Grid Ver       : " + vm['gi_version'] + "  " + vm['gi_version_date'])
 
                     if 'system_version' in vm:
                         if vm['system_version']:
-                            print(self.tabs + "Sys Ver        : " + vm['system_version'])
+                            print(self.tabs + "Sys Ver        : " + vm['system_version'] + "  " + vm['system_version_date'])
 
                     if 'license_model' in vm:
                         if vm['license_model']:
@@ -1264,7 +1266,7 @@ class ShowOCIOutput(object):
 
     def __print_database_db_system_details(self, dbs):
         try:
-            print(self.taba + "DBaaS   : " + dbs['name'] + " - " + dbs['version'])
+            print(self.taba + "DBaaS   : " + dbs['name'] + " - " + dbs['version'] + " " + dbs['version_date'])
             print(self.tabs + "Created : " + dbs['time_created'][0:16])
             print(self.tabs + "AD      : " + dbs['availability_domain'])
 
@@ -4072,7 +4074,9 @@ class ShowOCICSV(object):
                         'local_storage_tb': dbs['shape_storage_tb'],
                         'node_count': len(dbs['db_nodes']),
                         'gi_version': dbs['version_only'],
+                        'gi_version_date': dbs['version_date'],
                         'system_version': "",
+                        'system_version_date': "",
                         'database_edition': dbs['database_edition_short'],
                         'license_model': dbs['license_model'],
                         'data_subnet': dbs['data_subnet'],
@@ -4182,7 +4186,9 @@ class ShowOCICSV(object):
                             'local_storage_tb': dbs['shape_storage_tb'],
                             'node_count': len(vm['db_nodes']),
                             'gi_version': vm['gi_version'],
+                            'gi_version_date': vm['gi_version_date'],
                             'system_version': vm['system_version'],
+                            'system_version_date': vm['system_version_date'],
                             'database_edition': 'XP',
                             'license_model': vm['license_model'],
                             'data_subnet': vm['data_subnet'],
@@ -4291,7 +4297,9 @@ class ShowOCICSV(object):
                             'local_storage_tb': dbs['data_storage_size_in_tbs'],
                             'node_count': len(vm['db_nodes']),
                             'gi_version': vm['gi_version'],
+                            'gi_version_date': vm['gi_version_date'],
                             'system_version': vm['system_version'],
+                            'system_version_date': vm['system_version_date'],
                             'database_edition': 'XP',
                             'license_model': vm['license_model'],
                             'data_subnet': "",

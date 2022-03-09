@@ -9,6 +9,7 @@ The format is based on `Keep a Changelog <http://keepachangelog.com/>`_.
 =====================
 * Added KMS Vaults
 * Added Data Integration Workspaces
+* Added gi_version_date and system_version_date based on gi and system versions
 
 =====================
 22.03.08 - 22.03.08
