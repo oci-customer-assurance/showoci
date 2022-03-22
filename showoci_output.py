@@ -3433,6 +3433,8 @@ class ShowOCICSV(object):
     csv_database = []
     csv_database_backups = []
     csv_network_drg = []
+    csv_network_drg_ipsec_tunnels = []
+    csv_network_drg_virtual_circuits = []
     csv_network_subnet = []
     csv_network_security_list = []
     csv_network_security_group = []
@@ -3507,6 +3509,8 @@ class ShowOCICSV(object):
             self.__export_to_csv_file("block_volumes_backups", self.csv_block_volumes_backups)
             self.__export_to_csv_file("network_subnet", self.csv_network_subnet)
             self.__export_to_csv_file("network_drgs", self.csv_network_drg)
+            self.__export_to_csv_file("network_drg_ipsec_tunnels", self.csv_network_drg_ipsec_tunnels)
+            self.__export_to_csv_file("network_drg_virtual_circuits", self.csv_network_drg_virtual_circuits)
             self.__export_to_csv_file("network_routes", self.csv_network_routes)
             self.__export_to_csv_file("network_security_list", self.csv_network_security_list)
             self.__export_to_csv_file("network_security_group", self.csv_network_security_group)
@@ -3870,6 +3874,81 @@ class ShowOCICSV(object):
             self.__print_error("__csv_core_network_drg", e)
 
     ##########################################################################
+    # CSV Network ipsec
+    ##########################################################################
+    def __csv_core_network_ipsec_tunnels(self, region_name, ipsecs):
+        try:
+            if not ipsecs:
+                return
+
+            for arr in ipsecs:
+                for tun in arr['tunnels']:
+                    data = {
+                        'region_name': region_name,
+                        'compartment_name': arr['compartment_name'],
+                        'tunnel_name': tun['display_name'],
+                        'status': tun['status'],
+                        'routing': tun['routing'],
+                        'time_created': tun['time_created'][0:16],
+                        'bgp_info': tun['bgp_info'],
+                        'ipsec_name': arr['name'],
+                        'drg': arr['drg'],
+                        'drg_route_table': arr['drg_route_table'],
+                        'cpe': arr['cpe'],
+                        'cpe_local_identifier': arr['cpe_local_identifier'],
+                        'cpe_time_created': arr['time_created'][0:16],
+                        'routes': str(', '.join(x for x in arr['routes'])),
+                        'drg_id': arr['drg_id'],
+                        'cpe_id': arr['cpe_id'],
+                        'ipsec_id': arr['id'],
+                        'id': tun['id'],
+                        'freeform_tags': self.__get_freeform_tags(arr['freeform_tags']),
+                        'defined_tags': self.__get_defined_tags(arr['defined_tags'])
+                    }
+                    self.csv_network_drg_ipsec_tunnels.append(data)
+
+        except Exception as e:
+            self.__print_error("__csv_core_network_ipsec_tunnels", e)
+
+    ##########################################################################
+    # CSV Network virtual circuits
+    ##########################################################################
+    def __csv_core_network_virtual_circuit(self, region_name, vcs):
+        try:
+            if not vcs:
+                return
+
+            for arr in vcs:
+                data = {
+                    'region_name': region_name,
+                    'compartment_name': arr['compartment_name'],
+                    'name': arr['name'],
+                    'bandwidth_shape_name': arr['bandwidth_shape_name'],
+                    'bgp_management': arr['bgp_management'],
+                    'bgp_session_state': arr['bgp_session_state'],
+                    'customer_bgp_asn': arr['customer_bgp_asn'],
+                    'drg': arr['drg'],
+                    'lifecycle_state': arr['lifecycle_state'],
+                    'oracle_bgp_asn': arr['oracle_bgp_asn'],
+                    'provider_name': arr['provider_name'],
+                    'provider_service_name': arr['provider_service_name'],
+                    'provider_state': arr['provider_state'],
+                    'reference_comment': arr['reference_comment'],
+                    'service_type': arr['service_type'],
+                    'time_created': arr['time_created'],
+                    'cross_connect_mappings': arr['cross_connect_mappings'],
+                    'type': arr['type'],
+                    'drg_route_table': arr['drg_route_table'],
+                    'drg_id': arr['drg_id'],
+                    'drg_route_table_id': arr['drg_route_table_id'],
+                    'id': arr['id']
+                }
+                self.csv_network_drg_virtual_circuits.append(data)
+
+        except Exception as e:
+            self.__print_error("__csv_core_network_virtual_circuit", e)
+
+    ##########################################################################
     # CSV for  Network vcn security group
     ##########################################################################
     def __csv_core_network_vcn_security_groups(self, region_name, nsg, vcn):
@@ -4053,6 +4132,12 @@ class ShowOCICSV(object):
 
             if 'drg' in data:
                 self.__csv_core_network_drg(region_name, data['drg'])
+
+            if 'ipsec' in data:
+                self.__csv_core_network_ipsec_tunnels(region_name, data['ipsec'])
+
+            if 'virtual_circuit' in data:
+                self.__csv_core_network_virtual_circuit(region_name, data['virtual_circuit'])
 
         except Exception as e:
             self.__print_error("__csv_core_network_main", e)

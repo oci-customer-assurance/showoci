@@ -3872,7 +3872,7 @@ class ShowOCIService(object):
                         # ipss = oci.core.models.IPSecConnectionTunnel
                         data_tun = []
                         try:
-                            tunnels = virtual_network.list_ip_sec_connection_tunnels(arr.id).data
+                            tunnels = virtual_network.list_ip_sec_connection_tunnels(arr.id, retry_strategy=oci.retry.DEFAULT_RETRY_STRATEGY).data
                             tunnels_status = ""
                             for tunnel in tunnels:
                                 tun_val = {'id': str(tunnel.id),
@@ -3883,6 +3883,11 @@ class ShowOCIService(object):
                                            'routing': str(tunnel.routing),
                                            'cpe_ip': str(tunnel.cpe_ip),
                                            'vpn_ip': str(tunnel.vpn_ip),
+                                           'time_created': str(tunnel.time_created),
+                                           'oracle_can_initiate': str(tunnel.oracle_can_initiate),
+                                           'nat_translation_enabled': str(tunnel.nat_translation_enabled),
+                                           'dpd_mode': str(tunnel.dpd_mode),
+                                           'dpd_timeout_in_sec': str(tunnel.dpd_timeout_in_sec),
                                            'bgp_info': ""
                                            }
                                 if tunnels_status:
@@ -3901,6 +3906,8 @@ class ShowOCIService(object):
                                'name': str(arr.display_name),
                                'drg_id': str(arr.drg_id),
                                'tunnels_status': tunnels_status,
+                               'cpe_local_identifier': str(arr.cpe_local_identifier),
+                               'cpe_local_identifier_type': str(arr.cpe_local_identifier_type),
                                'cpe_id': str(arr.cpe_id), 'time_created': str(arr.time_created),
                                'compartment_name': str(compartment['name']), 'compartment_id': str(compartment['id']),
                                'defined_tags': [] if arr.defined_tags is None else arr.defined_tags,

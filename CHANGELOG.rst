@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on `Keep a Changelog <http://keepachangelog.com/>`_.
 
 =====================
+22.03.29 - 22.03.29
+=====================
+* Added CSV of IPSEC Tunnels
+* Added CSV of Virtual Circuits
+
+=====================
 22.03.22 - 22.03.22
 =====================
 * Added Security Token with -is

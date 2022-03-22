@@ -1175,6 +1175,8 @@ class ShowOCIData(object):
                     'drg_id': ips['drg_id'],
                     'cpe': cpe,
                     'cpe_id': ips['cpe_id'],
+                    'cpe_local_identifier': ips['cpe_local_identifier'],
+                    'cpe_local_identifier_type': ips['cpe_local_identifier_type'],
                     'routes': ips['static_routes'],
                     'tunnels': ips['tunnels'],
                     'defined_tags': ips['defined_tags'],
@@ -1959,7 +1961,7 @@ class ShowOCIData(object):
                 nsg_ids = ""
                 if 'vnic_details' in db_node:
                     if 'dbdesc' in db_node['vnic_details']:
-                        vnic_desc = ", " + db_node['vnic_details']['dbdesc']
+                        vnic_desc = " - " + db_node['vnic_details']['dbdesc']
 
                     if 'nsg_names' in db_node['vnic_details']:
                         nsg_names = db_node['vnic_details']['nsg_names']
@@ -2143,8 +2145,7 @@ class ShowOCIData(object):
                         'open_mode': pdb['open_mode'],
                         'is_restricted': pdb['is_restricted'],
                         'defined_tags': pdb['defined_tags'],
-                        'freeform_tags': pdb['freeform_tags']
-                     })
+                        'freeform_tags': pdb['freeform_tags']})
             return data
 
         except Exception as e:
