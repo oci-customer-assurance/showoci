@@ -104,8 +104,10 @@ import json
 import sys
 import argparse
 import datetime
+import contextlib
+import os
 
-version = "22.03.29"
+version = "22.05.10"
 
 ##########################################################################
 # check OCI version
@@ -280,7 +282,7 @@ def return_error_message(service_error, service_warning, data_error, output_erro
 ##########################################################################
 # set parser
 ##########################################################################
-def set_parser_arguments():
+def set_parser_arguments(argsList=[]):
     parser = argparse.ArgumentParser(formatter_class=lambda prog: argparse.HelpFormatter(prog, max_help_position=80, width=130))
     parser.add_argument('-a', action='store_true', default=False, dest='all', help='Print All Resources')
     parser.add_argument('-ani', action='store_true', default=False, dest='allnoiam', help='Print All Resources but identity')
@@ -331,6 +333,16 @@ def set_parser_arguments():
     parser.add_argument('-cachef', type=argparse.FileType('w'), dest='servicefile', help="Output Cache to file   (JSON format)")
     parser.add_argument('-caches', action='store_true', default=False, dest='servicescr', help="Output Cache to screen (JSON format)")
     parser.add_argument('--version', action='version', version='%(prog)s ' + version)
+
+    if not argsList:
+        result = parser.parse_args()
+    else:
+        with contextlib.redirect_stdout(os.devnull):
+            try:
+                result = parser.parse_args(args=argsList)
+                return result
+            except Exception:
+                return False
 
     result = parser.parse_args()
 
@@ -489,4 +501,5 @@ def print_to_json_file(output, file_name, data, header):
 ##########################################################################
 # Main
 ##########################################################################
-execute_extract()
+if __name__ == "__main__":
+    execute_extract()
