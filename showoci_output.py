@@ -4857,7 +4857,8 @@ class ShowOCICSV(object):
                     'time_created': ct['time_created'],
                     'reserved_instance_count': str(ct['reserved_instance_count']),
                     'used_instance_count': str(ct['used_instance_count']),
-                    'shapes': ",".join(x['instance_shape'] for x in ct['config'])
+                    'shapes': ",".join(x['instance_shape'] for x in ct['config']),
+                    'shapes_capacity': ",".join(x['instance_shape'] + ":Shape OCPUs=" + str(x['ocpus']) + ":Shape Mem=" + str(x['memory_in_gbs']) + " (Reserve=" + str(x['reserved_count']) + ":Use=" + str(x['used_count']) + ")" for x in ct['config'])
                 }
 
                 self.csv_compute_reservations.append(val)

@@ -5,6 +5,11 @@ All notable changes to this project will be documented in this file.
 The format is based on `Keep a Changelog <http://keepachangelog.com/>`_.
 
 =====================
+22.05.24 - 22.05.24
+=====================
+* Added Shape Capacity to Reservation CSV
+
+=====================
 22.05.10 - 22.05.10
 =====================
 * Added CSV of Exa Infrastructure
