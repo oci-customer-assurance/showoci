@@ -8,6 +8,7 @@ The format is based on `Keep a Changelog <http://keepachangelog.com/>`_.
 22.05.31 - 22.05.31
 =====================
 * Added Compartment Path to every api and csv
+* Added Visual Builder
 
 =====================
 22.05.24 - 22.05.24

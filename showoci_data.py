@@ -3718,6 +3718,11 @@ class ShowOCIData(object):
             if oce:
                 paas_services['oce'] = oce
 
+            # oce
+            vb = self.service.search_multi_items(self.service.C_PAAS_NATIVE, self.service.C_PAAS_NATIVE_VB, 'region_name', region_name, 'compartment_id', compartment['id'])
+            if vb:
+                paas_services['vb'] = vb
+
             # ocvs
             ocvs = self.service.search_multi_items(self.service.C_PAAS_NATIVE, self.service.C_PAAS_NATIVE_OCVS, 'region_name', region_name, 'compartment_id', compartment['id'])
             if ocvs:

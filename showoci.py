@@ -74,6 +74,7 @@
 # - oci.bastion.BastionClient
 # - oci.key_management.KmsVaultClient
 # - oci.data_integration.DataIntegrationClient
+# - oci.visual_builder.VbInstanceClient
 #
 # Modules Not Yet Covered:
 # - oci.blockchain.BlockchainPlatformClient
@@ -92,7 +93,6 @@
 # - oci.data_safe.DataSafeClient
 # - oci.devops.DevopsClient
 # - oci.jms.JavaManagementServiceClient
-# - oci.visual_builder.VbInstanceClient
 
 ##########################################################################
 from __future__ import print_function

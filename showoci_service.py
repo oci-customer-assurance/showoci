@@ -135,7 +135,7 @@ class ShowOCIFlags(object):
 # class ShowOCIService
 ##########################################################################
 class ShowOCIService(object):
-    oci_compatible_version = "2.54.0"
+    oci_compatible_version = "2.69.0"
 
     ##########################################################################
     # Global Constants
@@ -299,6 +299,7 @@ class ShowOCIService(object):
     C_PAAS_NATIVE_OAC = "oac"
     C_PAAS_NATIVE_OCE = "oce"
     C_PAAS_NATIVE_OCVS = "ocvs"
+    C_PAAS_NATIVE_VB = "vb"
 
     # function
     C_FUNCTION = "functions"
@@ -11686,6 +11687,7 @@ class ShowOCIService(object):
             oce_client = oci.oce.OceInstanceClient(self.config, signer=self.signer, timeout=(2, 2))
             ocvs_client = oci.ocvp.SddcClient(self.config, signer=self.signer, timeout=(3, 3))
             esxi_client = oci.ocvp.EsxiHostClient(self.config, signer=self.signer, timeout=(3, 3))
+            vb_client = oci.visual_builder.VbInstanceClient(self.config, signer=self.signer, timeout=(3, 3))
             virtual_network = oci.core.VirtualNetworkClient(self.config, signer=self.signer)
 
             if self.flags.proxy:
@@ -11693,6 +11695,7 @@ class ShowOCIService(object):
                 oac_client.base_client.session.proxies = {'https': self.flags.proxy}
                 oce_client.base_client.session.proxies = {'https': self.flags.proxy}
                 ocvs_client.base_client.session.proxies = {'https': self.flags.proxy}
+                vb_client.base_client.session.proxies = {'https': self.flags.proxy}
                 esxi_client.base_client.session.proxies = {'https': self.flags.proxy}
                 virtual_network.base_client.session.proxies = {'https': self.flags.proxy}
 
@@ -11704,6 +11707,7 @@ class ShowOCIService(object):
             self.__initialize_data_key(self.C_PAAS_NATIVE, self.C_PAAS_NATIVE_OIC)
             self.__initialize_data_key(self.C_PAAS_NATIVE, self.C_PAAS_NATIVE_OCE)
             self.__initialize_data_key(self.C_PAAS_NATIVE, self.C_PAAS_NATIVE_OCVS)
+            self.__initialize_data_key(self.C_PAAS_NATIVE, self.C_PAAS_NATIVE_VB)
 
             # reference to paas
             paas = self.data[self.C_PAAS_NATIVE]
@@ -11713,6 +11717,7 @@ class ShowOCIService(object):
             paas[self.C_PAAS_NATIVE_OIC] += self.__load_paas_oic(oic_client, compartments)
             paas[self.C_PAAS_NATIVE_OCE] += self.__load_paas_oce(oce_client, compartments)
             paas[self.C_PAAS_NATIVE_OAC] += self.__load_paas_oac(oac_client, compartments)
+            paas[self.C_PAAS_NATIVE_VB] += self.__load_paas_visualbuilder(vb_client, compartments)
             print("")
 
         except oci.exceptions.RequestException:
@@ -12130,6 +12135,86 @@ class ShowOCIService(object):
             raise
         except Exception as e:
             self.__print_error("__load_paas_oce", e)
+            return data
+
+    ##########################################################################
+    # __load_paas_visualbuilder
+    ##########################################################################
+    def __load_paas_visualbuilder(self, vb_client, compartments):
+
+        data = []
+        cnt = 0
+        start_time = time.time()
+
+        try:
+            self.__load_print_status("Visual Builder")
+
+            # loop on all compartments
+            for compartment in compartments:
+
+                # skip managed paas compartment
+                if self.__if_managed_paas_compartment(compartment['name']):
+                    print(".", end="")
+                    continue
+
+                vbs = []
+                try:
+                    vbs = oci.pagination.list_call_get_all_results(
+                        vb_client.list_vb_instances,
+                        compartment['id'],
+                        sort_by="displayName",
+                        retry_strategy=oci.retry.DEFAULT_RETRY_STRATEGY
+                    ).data
+
+                except oci.exceptions.ServiceError as e:
+                    if self.__check_service_error(e.code):
+                        self.__load_print_auth_warning()
+                        continue
+                    raise
+                except oci.exceptions.ConnectTimeout:
+                    self.__load_print_auth_warning()
+                    continue
+
+                print(".", end="")
+
+                # vbs = oci.visual_builder.models.VbInstanceSummary
+                for vb in vbs:
+                    if vb.lifecycle_state == 'ACTIVE' or vb.lifecycle_state == 'UPDATING':
+                        val = {'id': str(vb.id),
+                               'display_name': str(vb.display_name),
+                               'time_created': str(vb.time_created),
+                               'time_updated': str(vb.time_updated),
+                               'lifecycle_state': str(vb.lifecycle_state),
+                               'state_message': str(vb.state_message),
+                               'instance_url': str(vb.instance_url),
+                               'node_count': str(vb.node_count),
+                               'is_visual_builder_enabled': str(vb.is_visual_builder_enabled),
+                               'custom_endpoint': str(vb.custom_endpoint.hostname) if vb.custom_endpoint else "",
+                               'alternate_custom_endpoints': str(vb.alternate_custom_endpoints.hostname) if vb.alternate_custom_endpoints else "",
+                               'consumption_model': str(vb.consumption_model),
+                               'sum_info': "PaaS Visual Builder",
+                               'sum_size_gb': str(vb.node_count),
+                               'compartment_name': str(compartment['name']),
+                               'compartment_path': str(compartment['path']),
+                               'compartment_id': str(compartment['id']),
+                               'defined_tags': [] if vb.defined_tags is None else vb.defined_tags,
+                               'system_tags': [] if vb.system_tags is None else vb.system_tags,
+                               'freeform_tags': [] if vb.freeform_tags is None else vb.freeform_tags,
+                               'region_name': str(self.config['region'])}
+
+                        # add the data
+                        cnt += 1
+                        data.append(val)
+
+            self.__load_print_cnt(cnt, start_time)
+            return data
+
+        except oci.exceptions.RequestException as e:
+            if self.__check_request_error(e):
+                return data
+            raise
+        except Exception as e:
+            self.__print_error("__load_paas_visualbuilder", e)
             return data
 
     ##########################################################################

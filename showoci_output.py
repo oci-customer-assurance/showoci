@@ -2065,6 +2065,18 @@ class ShowOCIOutput(object):
                         print(self.tabs + "Pod: " + str(pod['name']) + " (" + str(pod['version']) + ") ")
                     print("")
 
+            # VB
+            if 'vb' in paas_services:
+                self.print_header("Visual Builder", 2)
+                for val in paas_services['vb']:
+                    print(self.taba + val['display_name'] + ", Created: " + val['time_created'][0:16] + " (" + val['lifecycle_state'] + "), " + val['consumption_model'] + ", Enabled = " + val['is_visual_builder_enabled'] + ", Nodes = " + val['node_count'])
+                    print(self.tabs + "URL: " + val['instance_url'])
+                    if val['custom_endpoint']:
+                        print(self.tabs + "   : Custom Endpoint: " + str(pod['custom_endpoint']))
+                    if val['alternate_custom_endpoints']:
+                        print(self.tabs + "   : Alt    Endpoint: " + str(pod['alternate_custom_endpoints']))
+                    print("")
+
             # OCVS
             if 'ocvs' in paas_services:
                 self.print_header("OCVS VMWare", 2)
@@ -2771,6 +2783,8 @@ class ShowOCISummary(object):
                 self.__summary_core_size(paas_services['oce'])
             if 'ocvs' in paas_services:
                 self.__summary_core_size(paas_services['ocvs'])
+            if 'vb' in paas_services:
+                self.__summary_core_size(paas_services['vb'])
 
         except Exception as e:
             self.__print_error("__summary_paas_services_main", e)
@@ -3466,6 +3480,7 @@ class ShowOCICSV(object):
     csv_paas_oic = []
     csv_paas_ocvs = []
     csv_paas_oce = []
+    csv_paas_vb = []
     csv_data_ai_oda = []
     csv_data_ai_bds = []
     csv_data_science = []
@@ -3549,6 +3564,7 @@ class ShowOCICSV(object):
             self.__export_to_csv_file("paas_oic", self.csv_paas_oic)
             self.__export_to_csv_file("paas_ocvs_vmware", self.csv_paas_ocvs)
             self.__export_to_csv_file("paas_oce", self.csv_paas_oce)
+            self.__export_to_csv_file("paas_visualbuilder", self.csv_paas_vb)
             self.__export_to_csv_file("data_science", self.csv_data_science)
             self.__export_to_csv_file("data_flow", self.csv_data_flow)
             self.__export_to_csv_file("data_catalog", self.csv_data_catalog)
@@ -5723,6 +5739,43 @@ class ShowOCICSV(object):
             self.__print_error("__csv_paas_oce", e)
 
     ##########################################################################
+    # Paas VB
+    ##########################################################################
+    def __csv_paas_visualbuilder(self, region_name, services):
+        try:
+
+            if len(services) == 0:
+                return
+
+            if services:
+                for ar in services:
+
+                    data = {
+                        'region_name': region_name,
+                        'compartment_name': ar['compartment_name'],
+                        'compartment_path': ar['compartment_path'],
+                        'display_name': ar['display_name'],
+                        'time_created': ar['time_created'][0:16],
+                        'time_updated': ar['time_updated'][0:16],
+                        'lifecycle_state': ar['lifecycle_state'],
+                        'state_message': ar['state_message'],
+                        'instance_url': ar['instance_url'],
+                        'node_count': ar['node_count'],
+                        'is_visual_builder_enabled': ar['is_visual_builder_enabled'],
+                        'custom_endpoint': ar['custom_endpoint'],
+                        'alternate_custom_endpoints': ar['alternate_custom_endpoints'],
+                        'consumption_model': ar['consumption_model'],
+                        'freeform_tags': self.__get_freeform_tags(ar['freeform_tags']),
+                        'defined_tags': self.__get_defined_tags(ar['defined_tags']),
+                        'id': ar['id']
+                    }
+
+                    self.csv_paas_vb.append(data)
+
+        except Exception as e:
+            self.__print_error("__csv_paas_visualbuilder", e)
+
+    ##########################################################################
     # Paas OCVS
     ##########################################################################
     def __csv_paas_ocvs(self, region_name, services):
@@ -5790,6 +5843,9 @@ class ShowOCICSV(object):
 
             if 'oce' in data:
                 self.__csv_paas_oce(region_name, data['oce'])
+
+            if 'vb' in data:
+                self.__csv_paas_visualbuilder(region_name, data['vb'])
 
             if 'ocvs' in data:
                 self.__csv_paas_ocvs(region_name, data['ocvs'])
