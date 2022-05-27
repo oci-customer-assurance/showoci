@@ -11011,8 +11011,14 @@ class ShowOCIService(object):
                 # arr = oci.dns.models.ResolverSummary
                 for arrsummary in array:
 
-                    # get the resolver model
-                    arr = dns_client.get_resolver(arrsummary.id, scope="PRIVATE", retry_strategy=oci.retry.DEFAULT_RETRY_STRATEGY).data
+                    arr = []
+                    try:
+                        # get the resolver model
+                        arr = dns_client.get_resolver(arrsummary.id, scope="PRIVATE", retry_strategy=oci.retry.DEFAULT_RETRY_STRATEGY).data
+                    except oci.exceptions.ServiceError as e:
+                        if self.__check_service_error(e.code):
+                            self.__load_print_auth_warning()
+                        continue
 
                     val = {'id': str(arr.id),
                            'display_name': str(arr.display_name),

@@ -9,6 +9,7 @@ The format is based on `Keep a Changelog <http://keepachangelog.com/>`_.
 =====================
 * Added Compartment Path to every api and csv
 * Added Visual Builder
+* Added csvcol to extract defined tag to csv columns
 
 =====================
 22.05.24 - 22.05.24

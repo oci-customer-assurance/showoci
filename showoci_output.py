@@ -3489,6 +3489,7 @@ class ShowOCICSV(object):
     csv_data_integration = []
     start_time = ""
     csv_add_date_field = True
+    csv_columns = []
 
     ############################################
     # Init
@@ -3500,9 +3501,10 @@ class ShowOCICSV(object):
     ##########################################################################
     # generate_csv
     ##########################################################################
-    def generate_csv(self, data, csv_file_header, add_date_field=True):
+    def generate_csv(self, data, csv_file_header, add_date_field=True, csv_columns=""):
         self.csv_add_date_field = add_date_field
         self.csv_file_header = csv_file_header
+        self.csv_columns = str(csv_columns).split(",")
         try:
             for d in data:
                 if 'type' in d:
@@ -3652,6 +3654,29 @@ class ShowOCICSV(object):
 
         except Exception as e:
             self.__print_error("__get_defined_tags", e)
+
+    ##########################################################################
+    # extract defined tags value
+    ##########################################################################
+    def __get_defined_tags_key_value(self, defined_tags, namespace_and_key):
+
+        try:
+            if not defined_tags or '.' not in namespace_and_key:
+                return ""
+
+            namespace = namespace_and_key.split(".")[0]
+            key = namespace_and_key.split(".")[1]
+
+            if namespace not in defined_tags.keys():
+                return ""
+
+            if key not in defined_tags[namespace].keys():
+                return ""
+
+            return defined_tags[namespace][key]
+
+        except Exception as e:
+            self.__print_error("__get_defined_tags_key_value", e)
 
     ##########################################################################
     # extract freeform tags
@@ -4800,6 +4825,10 @@ class ShowOCICSV(object):
                         'defined_tags': self.__get_defined_tags(instance['defined_tags']),
                         'instance_id': instance['id']
                         }
+
+                # add columns for csvcol parameter
+                for csvcol in self.csv_columns:
+                    data[csvcol] = self.__get_defined_tags_key_value(instance['defined_tags'], csvcol)
 
                 # go over the vnics
                 if 'vnic' in instance:
