@@ -5582,12 +5582,17 @@ class ShowOCIService(object):
                            'defined_tags': [] if arr.defined_tags is None else arr.defined_tags,
                            'freeform_tags': [] if arr.freeform_tags is None else arr.freeform_tags,
                            'region_name': str(self.config['region']),
-                           'subnet_ids': []}
+                           'subnet_ids': [],
+                           'certificates': ''}
 
                     # Flexible Shapes
                     if arr.shape_details:
                         val['shape_min_mbps'] = str(arr.shape_details.minimum_bandwidth_in_mbps)
                         val['shape_max_mbps'] = str(arr.shape_details.maximum_bandwidth_in_mbps)
+
+                    # certificates
+                    if arr.certificates:
+                        val['certificates'] = str(', '.join(key for key in arr.certificates.keys()))
 
                     # subnets
                     if arr.subnet_ids:
