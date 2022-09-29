@@ -417,6 +417,11 @@ class ShowOCIOutput(object):
                 for s in subnet['security_list']:
                     print(self.tabs + self.tabs + "Sec List: " + s)
 
+                # print logs
+                if 'logs' in subnet:
+                    for index, log in enumerate(subnet['logs'], start=1):
+                        print(self.tabs + self.tabs + "Log " + str(index) + "   : " + log['name'] + " - " + log['source_service'])
+
         except Exception as e:
             self.__print_error("__print_core_network_vcn_subnet", e)
 
@@ -3846,6 +3851,7 @@ class ShowOCICSV(object):
                         'route': subnet['route'],
                         'security_list': str(', '.join(x for x in subnet['security_list'])),
                         'dns': subnet['dns'],
+                        'logs': str(', '.join(x['name'] for x in subnet['logs'])),
                         'vcn_id': vcn['id'],
                         'subnet_id': subnet['id']}
                 self.csv_network_subnet.append(data)

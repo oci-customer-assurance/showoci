@@ -8,6 +8,7 @@ The format is based on `Keep a Changelog <http://keepachangelog.com/>`_.
 22.10.11 - 22.10.11
 =====================
 * Added boot and volume intransit encryption
+* Added logs for subnets
 
 =====================
 22.10.04 - 22.10.04

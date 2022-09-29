@@ -635,7 +635,8 @@ class ShowOCIData(object):
                     'route_table_id': subnet['route_table_id'],
                     'time_created': subnet['time_created'],
                     'defined_tags': subnet['defined_tags'],
-                    'freeform_tags': subnet['freeform_tags']
+                    'freeform_tags': subnet['freeform_tags'],
+                    'logs': self.service.get_logging_log(subnet['id'])
                 })
                 data.append(val)
             return data
