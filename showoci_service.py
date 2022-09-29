@@ -4719,9 +4719,14 @@ class ShowOCIService(object):
                     # arr = oci.core.models.BootVolumeAttachment
                     for arr in arrs:
                         val = {'id': str(arr.id), 'display_name': str(arr.display_name),
-                               'boot_volume_id': str(arr.boot_volume_id), 'instance_id': str(arr.instance_id),
-                               'lifecycle_state': str(arr.lifecycle_state), 'time_created': str(arr.time_created),
-                               'compartment_name': str(compartment['name']), 'compartment_id': str(compartment['id']),
+                               'boot_volume_id': str(arr.boot_volume_id),
+                               'instance_id': str(arr.instance_id),
+                               'lifecycle_state': str(arr.lifecycle_state),
+                               'time_created': str(arr.time_created),
+                               'is_pv_encryption_in_transit_enabled': str(arr.is_pv_encryption_in_transit_enabled),
+                               'encryption_in_transit_type': str(arr.encryption_in_transit_type),
+                               'compartment_name': str(compartment['name']),
+                               'compartment_id': str(compartment['id']),
                                'compartment_path': str(compartment['path']),
                                'region_name': str(self.config['region'])}
                         data.append(val)
@@ -4774,10 +4779,21 @@ class ShowOCIService(object):
                 # loop on array
                 # arr = oci.core.models.VolumeAttachment
                 for arr in arrs:
-                    val = {'id': str(arr.id), 'display_name': str(arr.display_name), 'volume_id': str(arr.volume_id),
-                           'instance_id': str(arr.instance_id), 'lifecycle_state': str(arr.lifecycle_state),
-                           'time_created': str(arr.time_created), 'attachment_type': str(arr.attachment_type),
-                           'compartment_name': str(compartment['name']), 'compartment_id': str(compartment['id']),
+                    val = {'id': str(arr.id),
+                           'display_name': str(arr.display_name),
+                           'volume_id': str(arr.volume_id),
+                           'instance_id': str(arr.instance_id),
+                           'lifecycle_state': str(arr.lifecycle_state),
+                           'time_created': str(arr.time_created),
+                           'attachment_type': str(arr.attachment_type),
+                           'device': str(arr.device),
+                           'is_read_only': str(arr.is_read_only),
+                           'is_shareable': str(arr.is_shareable),
+                           'is_pv_encryption_in_transit_enabled': str(arr.is_pv_encryption_in_transit_enabled),
+                           'is_multipath': str(arr.is_multipath),
+                           'iscsi_login_state': str(arr.iscsi_login_state),
+                           'compartment_name': str(compartment['name']),
+                           'compartment_id': str(compartment['id']),
                            'compartment_path': str(compartment['path']),
                            'region_name': str(self.config['region'])}
                     data.append(val)

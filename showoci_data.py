@@ -1370,14 +1370,15 @@ class ShowOCIData(object):
     # get Core Block boot volume
     ##########################################################################
 
-    def __get_core_block_volume_boot(self, boot_volume_id, compartment_name):
+    def __get_core_block_volume_boot(self, bva, compartment_name):
         try:
             value = {}
             comp_text = ""
             volume_group = ""
+            encrypted = ""
 
             # get block volume
-            bv = self.service.search_unique_item(self.service.C_BLOCK, self.service.C_BLOCK_BOOT, 'id', boot_volume_id)
+            bv = self.service.search_unique_item(self.service.C_BLOCK, self.service.C_BLOCK_BOOT, 'id', bva['boot_volume_id'])
             if bv:
 
                 # check if different compartment
@@ -1387,18 +1388,23 @@ class ShowOCIData(object):
                 if bv['volume_group_name']:
                     volume_group = " - Group " + bv['volume_group_name']
 
+                if bva['is_pv_encryption_in_transit_enabled']:
+                    encrypted = " - TransitEncrypted=" + bva['is_pv_encryption_in_transit_enabled']
+
                 value = {
                     'id': bv['id'],
                     'sum_info': 'Compute - Block Storage (GB)',
                     'sum_size_gb': bv['size_in_gbs'],
                     'size': bv['size_in_gbs'],
-                    'desc': (str(bv['size_in_gbs']) + "GB - " + str(bv['display_name']) + " (" + bv['vpus_per_gb'] + " vpus) " + bv['backup_policy'] + volume_group + comp_text),
+                    'desc': (str(bv['size_in_gbs']) + "GB - " + str(bv['display_name']) + " (" + bv['vpus_per_gb'] + " vpus) " + bv['backup_policy'] + volume_group + comp_text + encrypted),
                     'backup_policy': "None" if bv['backup_policy'] == "" else bv['backup_policy'],
                     'vpus_per_gb': bv['vpus_per_gb'],
                     'volume_group_name': bv['volume_group_name'],
                     'compartment_name': bv['compartment_name'],
                     'compartment_path': bv['compartment_path'],
                     'is_hydrated': bv['is_hydrated'],
+                    'encryption_in_transit_type': bva['encryption_in_transit_type'],
+                    'is_pv_encryption_in_transit_enabled': bva['is_pv_encryption_in_transit_enabled'],
                     'time_created': bv['time_created'],
                     'display_name': bv['display_name'],
                     'defined_tags': bv['defined_tags'],
@@ -1413,14 +1419,15 @@ class ShowOCIData(object):
     # get Core Block boot volume
     ##########################################################################
 
-    def __get_core_block_volume(self, volume_id, compartment_name):
+    def __get_core_block_volume(self, bva, compartment_name):
         try:
             value = {}
             comp_text = ""
             volume_group = ""
+            encrypted = ""
 
             # get block volume
-            bv = self.service.search_unique_item(self.service.C_BLOCK, self.service.C_BLOCK_VOL, 'id', volume_id)
+            bv = self.service.search_unique_item(self.service.C_BLOCK, self.service.C_BLOCK_VOL, 'id', bva['volume_id'])
             if bv:
 
                 # check if different compartment
@@ -1430,11 +1437,14 @@ class ShowOCIData(object):
                 if bv['volume_group_name']:
                     volume_group = " - Group " + bv['volume_group_name']
 
+                if bva['is_pv_encryption_in_transit_enabled']:
+                    encrypted = " - TransitEncrypted=" + bva['is_pv_encryption_in_transit_enabled']
+
                 value = {
                     'id': bv['id'],
                     'sum_info': 'Compute - Block Storage (GB)',
                     'sum_size_gb': bv['size_in_gbs'],
-                    'desc': (str(bv['size_in_gbs']) + "GB - " + str(bv['display_name']) + " (" + bv['vpus_per_gb'] + " vpus) " + bv['backup_policy'] + volume_group + comp_text),
+                    'desc': (str(bv['size_in_gbs']) + "GB - " + str(bv['display_name']) + " (" + bv['vpus_per_gb'] + " vpus) " + bv['backup_policy'] + volume_group + comp_text + encrypted),
                     'time_created': bv['time_created'],
                     'compartment_name': bv['compartment_name'],
                     'compartment_path': bv['compartment_path'],
@@ -1445,6 +1455,11 @@ class ShowOCIData(object):
                     'volume_group_name': bv['volume_group_name'],
                     'is_hydrated': bv['is_hydrated'],
                     'size': str(bv['size_in_gbs']),
+                    'is_read_only': str(bva['is_read_only']),
+                    'is_shareable': str(bva['is_shareable']),
+                    'is_pv_encryption_in_transit_enabled': str(bva['is_pv_encryption_in_transit_enabled']),
+                    'is_multipath': str(bva['is_multipath']),
+                    'iscsi_login_state': str(bva['iscsi_login_state']),
                     'defined_tags': bv['defined_tags'],
                     'freeform_tags': bv['freeform_tags']
                 }
@@ -1710,8 +1725,7 @@ class ShowOCIData(object):
 
                 bv = []
                 for bva in boot_vol_attachement:
-                    bvval = {'id': bva['boot_volume_id']}
-                    bvval = self.__get_core_block_volume_boot(bva['boot_volume_id'], instance['compartment_name'])
+                    bvval = self.__get_core_block_volume_boot(bva, instance['compartment_name'])
                     if 'display_name' in bvval:
                         bv.append(bvval)
 
@@ -1723,8 +1737,7 @@ class ShowOCIData(object):
                 bvol = []
                 for bvola in block_vol_attaches:
                     if bvola['lifecycle_state'] == "ATTACHED":
-                        bvval = {'id': bvola['volume_id']}
-                        bvval = self.__get_core_block_volume(bvola['volume_id'], instance['compartment_name'])
+                        bvval = self.__get_core_block_volume(bvola, instance['compartment_name'])
                         if 'display_name' in bvval:
                             bvol.append(bvval)
 

@@ -4821,6 +4821,7 @@ class ShowOCICSV(object):
                         'boot_volume': "",
                         'boot_volume_size_gb': "",
                         'boot_volume_b_policy': "",
+                        'boot_volume_encryption': "",
                         'block_volumes': "",
                         'block_volumes_total_gb': "",
                         'block_volumes_size_gb': "",
@@ -4851,6 +4852,7 @@ class ShowOCICSV(object):
                         data['boot_volume'] = bv['display_name']
                         data['boot_volume_size_gb'] = bv['sum_size_gb']
                         data['boot_volume_b_policy'] = bv['backup_policy']
+                        data['boot_volume_encryption'] = bv['is_pv_encryption_in_transit_enabled']
 
                 if 'block_volume' in instance:
                     data['block_volumes'] = str(', '.join(x['display_name'] for x in instance['block_volume']))
