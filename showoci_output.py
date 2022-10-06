@@ -6315,7 +6315,7 @@ class ShowOCICSV(object):
                             'id': sr['id']
                         }
 
-                    self.csv_notifications.append(data)
+                        self.csv_notifications.append(data)
 
         except Exception as e:
             self.__print_error("__csv_notifications", e)
