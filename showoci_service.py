@@ -476,6 +476,9 @@ class ShowOCIService(object):
     ##########################################################################
     def __init__(self, flags):
 
+        # Initiate data everytime class is instantiated
+        self.data = {}
+
         if not isinstance(flags, ShowOCIFlags):
             raise TypeError("flags must be ShowOCIFlags class")
 

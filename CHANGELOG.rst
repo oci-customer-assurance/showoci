@@ -5,6 +5,11 @@ All notable changes to this project will be documented in this file.
 The format is based on `Keep a Changelog <http://keepachangelog.com/>`_.
 
 =====================
+22.10.18 - 22.10.18
+=====================
+* Added csv for Monitoring: agents, events, alarm, db management and Notifications
+
+=====================
 22.10.11 - 22.10.11
 =====================
 * Added boot and volume intransit encryption
