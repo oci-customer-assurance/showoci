@@ -1872,6 +1872,8 @@ class ShowOCIOutput(object):
                     for event in events:
                         print(self.taba + event['display_name'] + " (" + event['description'] + "), Enabled = " + str(event['is_enabled']))
                         print(self.tabs + "Condition : " + event['condition'])
+                        for act in event['actions']:
+                            print(self.tabs + "Action    : " + act['action_type'] + ", Enabled = " + act['is_enabled'] + ", " + act['lifecycle_state'] + ", Dest: " + act['dest_name'])
                         print("")
 
             # if agents
@@ -6205,6 +6207,7 @@ class ShowOCICSV(object):
                         'description': ar['description'],
                         'condition': ar['condition'],
                         'is_enabled': ar['is_enabled'],
+                        'actions': str(ar['actions']),
                         'time_created': ar['time_created'][0:16],
                         'freeform_tags': self.__get_freeform_tags(ar['freeform_tags']),
                         'defined_tags': self.__get_defined_tags(ar['defined_tags']),

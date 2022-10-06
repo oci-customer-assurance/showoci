@@ -3590,7 +3590,16 @@ class ShowOCIData(object):
             data = {}
             # if events add it
             if events:
-                data['events'] = events
+                data['events'] = []
+                for event in events:
+                    for action in event['actions']:
+                        if action['action_type'] == 'ONS':
+                            action['dest_name'] = self.__get_notification_topic_name(action['dest_id'])
+                        if action['action_type'] == 'OSS':
+                            action['dest_name'] = self.__get_streaming_stream_name(action['stream_id'])
+                        if action['action_type'] == 'FAAS':
+                            action['dest_name'] = self.__get_function_name(action['function_id'])
+                    data['events'].append(event)
 
             # if agents add it
             if agents:
@@ -3609,15 +3618,56 @@ class ShowOCIData(object):
 
                     # find the topics
                     for dest in alarm['destinations']:
-                        topic = self.service.search_unique_item(self.service.C_NOTIFICATIONS, self.service.C_NOTIFICATIONS_TOPICS, 'topic_id', dest)
-                        if topic:
-                            val['destinations_names'].append(topic['name'] + " - " + topic['description'])
+                        if dest:
+                            val['destinations_names'].append(self.__get_notification_topic_name(dest))
 
                     data['alarms'].append(val)
             return data
 
         except Exception as e:
             self.__print_error("__get_monitoring_main", e)
+            pass
+
+    ##########################################################################
+    # get topic name
+    ##########################################################################
+    def __get_notification_topic_name(self, topic_id):
+        try:
+            topic = self.service.search_unique_item(self.service.C_NOTIFICATIONS, self.service.C_NOTIFICATIONS_TOPICS, 'topic_id', topic_id)
+            if topic:
+                if topic['description'] != 'None':
+                    return topic['name'] + " - " + topic['description']
+                else:
+                    return topic['name']
+            return ""
+        except Exception as e:
+            self.__print_error("__get_notification_topic_name", e)
+            pass
+
+    ##########################################################################
+    # get stream name
+    ##########################################################################
+    def __get_streaming_stream_name(self, stream_id):
+        try:
+            stream = self.service.search_unique_item(self.service.C_STREAMS, self.service.C_STREAMS_STREAMS, 'id', stream_id)
+            if stream:
+                return stream['name']
+            return ""
+        except Exception as e:
+            self.__print_error("__get_streaming_stream_name", e)
+            pass
+
+    ##########################################################################
+    # get function name
+    ##########################################################################
+    def __get_function_name(self, function_id):
+        try:
+            function = self.service.search_unique_item(self.service.C_FUNCTION, self.service.C_FUNCTION_APPLICATIONS, 'id', function_id)
+            if function:
+                return function['display_name']
+            return ""
+        except Exception as e:
+            self.__print_error("__get_function_name", e)
             pass
 
     ##########################################################################

@@ -10178,9 +10178,9 @@ class ShowOCIService(object):
                     print(".", end="")
                     continue
 
-                events = []
+                rules = []
                 try:
-                    events = oci.pagination.list_call_get_all_results(
+                    rules = oci.pagination.list_call_get_all_results(
                         event_client.list_rules,
                         compartment['id'],
                         sort_by="DISPLAY_NAME",
@@ -10197,19 +10197,46 @@ class ShowOCIService(object):
                 print(".", end="")
 
                 # event = oci.events.models.RuleSummary
-                for event in events:
-                    val = {'id': str(event.id),
-                           'display_name': str(event.display_name),
-                           'description': str(event.description),
-                           'condition': str(event.condition),
-                           'is_enabled': str(event.is_enabled),
-                           'time_created': str(event.time_created),
+                for rule in rules:
+                    val = {'id': str(rule.id),
+                           'display_name': str(rule.display_name),
+                           'description': str(rule.description),
+                           'condition': str(rule.condition),
+                           'is_enabled': str(rule.is_enabled),
+                           'time_created': str(rule.time_created),
                            'compartment_name': str(compartment['name']),
                            'compartment_path': str(compartment['path']),
                            'compartment_id': str(compartment['id']),
-                           'defined_tags': [] if event.defined_tags is None else event.defined_tags,
-                           'freeform_tags': [] if event.freeform_tags is None else event.freeform_tags,
+                           'actions': [],
+                           'defined_tags': [] if rule.defined_tags is None else rule.defined_tags,
+                           'freeform_tags': [] if rule.freeform_tags is None else rule.freeform_tags,
                            'region_name': str(self.config['region'])}
+
+                    # get actions using the get_rule
+                    try:
+                        rule_info = event_client.get_rule(rule.id).data
+                        if rule_info:
+                            if rule_info.actions:
+                                for act in rule_info.actions.actions:
+                                    action = {
+                                        'id': act.id,
+                                        'action_type': str(act.action_type),
+                                        'lifecycle_state': str(act.lifecycle_state),
+                                        'is_enabled': str(act.is_enabled),
+                                        'description': str(act.description),
+                                        'dest_id': '',
+                                        'dest_name': ''}
+
+                                    if act.action_type == 'ONS':
+                                        action['dest_id'] = str(act.topic_id)
+                                    if act.action_type == 'OSS':
+                                        action['dest_id'] = str(act.stream_id)
+                                    if act.action_type == 'FAAS':
+                                        action['dest_id'] = str(act.function_id)
+                                    val['actions'].append(action)
+
+                    except oci.exceptions.ServiceError:
+                        print("w", end="")
 
                     # add the data
                     cnt += 1
