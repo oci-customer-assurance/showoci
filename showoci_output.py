@@ -1744,6 +1744,8 @@ class ShowOCIOutput(object):
                 if ct['subnets']:
                     for sub in ct['subnets']:
                         print(self.tabs + self.tabs + "Subnet: " + sub)
+                for fun in ct['functions']:
+                    print(self.tabs + self.tabs + "FN    : " + fun['display_name'] + " - " + fun['image'])
 
                 print("")
 

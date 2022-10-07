@@ -304,6 +304,7 @@ class ShowOCIService(object):
     # function
     C_FUNCTION = "functions"
     C_FUNCTION_APPLICATIONS = "applications"
+    C_FUNCTION_FUNCTIONS = "app_functions"
 
     # API gateways
     C_API = "apis"
@@ -9889,12 +9890,15 @@ class ShowOCIService(object):
 
             # add the key if not exists
             self.__initialize_data_key(self.C_FUNCTION, self.C_FUNCTION_APPLICATIONS)
+            self.__initialize_data_key(self.C_FUNCTION, self.C_FUNCTION_FUNCTIONS)
 
             # reference to function
             fn = self.data[self.C_FUNCTION]
 
             # append the data
-            fn[self.C_FUNCTION_APPLICATIONS] += self.__load_functions_applications(function_client, compartments)
+            applications = self.__load_functions_applications(function_client, compartments)
+            fn[self.C_FUNCTION_APPLICATIONS] += applications
+            fn[self.C_FUNCTION_FUNCTIONS] += self.__load_functions_functions(function_client, applications)
             print("")
 
         except oci.exceptions.RequestException:
@@ -9905,7 +9909,7 @@ class ShowOCIService(object):
             self.__print_error("__load_functions_main", e)
 
     ##########################################################################
-    # __load_functions_functions
+    # __load_functions_applications
     ##########################################################################
     def __load_functions_applications(self, function_client, compartments):
 
@@ -9948,6 +9952,7 @@ class ShowOCIService(object):
                            'subnet_ids': app.subnet_ids, 'time_created': str(app.time_created),
                            'compartment_name': str(compartment['name']), 'compartment_id': str(compartment['id']),
                            'compartment_path': str(compartment['path']),
+                           'functions': [],
                            'defined_tags': [] if app.defined_tags is None else app.defined_tags,
                            'freeform_tags': [] if app.freeform_tags is None else app.freeform_tags,
                            'region_name': str(self.config['region'])}
@@ -9966,6 +9971,79 @@ class ShowOCIService(object):
             raise
         except Exception as e:
             self.__print_error("__load_functions_applications", e)
+            return data
+
+    ##########################################################################
+    # __load_functions_functions
+    ##########################################################################
+    def __load_functions_functions(self, function_client, applications):
+
+        data = []
+        cnt = 0
+        start_time = time.time()
+
+        try:
+            self.__load_print_status("Functions")
+
+            # loop on all applications
+            for app in applications:
+                funs = []
+                try:
+                    funs = oci.pagination.list_call_get_all_results(
+                        function_client.list_functions, application_id=app['id'],
+                        sort_by="displayName",
+                        retry_strategy=oci.retry.DEFAULT_RETRY_STRATEGY
+                    ).data
+
+                except oci.exceptions.ServiceError as e:
+                    if self.__check_request_error(e):
+                        return data
+
+                    if self.__check_service_error(e.code):
+                        self.__load_print_auth_warning()
+                        continue
+                    raise
+
+                print("f", end="")
+
+                # fns = oci.functions.models.ApplicationSummary
+                for fun in funs:
+                    if fun.lifecycle_state == 'TERMINATED':
+                        continue
+
+                    val = {
+                        'id': str(fun.id),
+                        'display_name': str(fun.display_name),
+                        'lifecycle_state': str(fun.lifecycle_state),
+                        'image': str(fun.image),
+                        'image_digest': str(fun.image_digest),
+                        'memory_in_mbs': str(fun.memory_in_mbs),
+                        'timeout_in_seconds': str(fun.timeout_in_seconds),
+                        'invoke_endpoint': str(fun.invoke_endpoint),
+                        'time_created': str(fun.time_created),
+                        'time_updated': str(fun.time_updated),
+                        'compartment_name': str(app['compartment_name']),
+                        'compartment_id': str(fun.compartment_id),
+                        'compartment_path': str(app['compartment_path']),
+                        'defined_tags': [] if fun.defined_tags is None else fun.defined_tags,
+                        'freeform_tags': [] if fun.freeform_tags is None else fun.freeform_tags,
+                        'region_name': str(self.config['region'])}
+
+                    # add the data
+                    cnt += 1
+                    data.append(val)
+                    app['functions'].append(val)
+
+            self.__load_print_cnt(cnt, start_time)
+            return data
+
+        except oci.exceptions.RequestException as e:
+            if self.__check_request_error(e):
+                return data
+
+            raise
+        except Exception as e:
+            self.__print_error("__load_functions_functions", e)
             return data
 
     ##########################################################################

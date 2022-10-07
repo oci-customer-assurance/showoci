@@ -3527,6 +3527,7 @@ class ShowOCIData(object):
                            'time_created': fn['time_created'],
                            'defined_tags': fn['defined_tags'],
                            'freeform_tags': fn['freeform_tags'],
+                           'functions': fn['functions'],
                            'compartment_name': fn['compartment_name'],
                            'compartment_path': fn['compartment_path'],
                            'compartment_id': fn['compartment_id'],
@@ -3662,7 +3663,7 @@ class ShowOCIData(object):
     ##########################################################################
     def __get_function_name(self, function_id):
         try:
-            function = self.service.search_unique_item(self.service.C_FUNCTION, self.service.C_FUNCTION_APPLICATIONS, 'id', function_id)
+            function = self.service.search_unique_item(self.service.C_FUNCTION, self.service.C_FUNCTION_FUNCTIONS, 'id', function_id)
             if function:
                 return function['display_name']
             return function_id
