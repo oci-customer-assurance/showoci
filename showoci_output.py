@@ -2092,9 +2092,9 @@ class ShowOCIOutput(object):
                 for val in paas_services['ocvs']:
                     print(self.taba + val['display_name'] + ", (" + val['compute_availability_domain'] + "), Created: " + val['time_created'][0:16] + " (" + val['lifecycle_state'] + ")")
                     print(self.tabs + "Version  : " + val['vmware_software_version'] + ", esxi hosts: " + val['esxi_hosts_count'])
-                    print(self.tabs + "HCX      : " + val['is_hcx_enabled'] + ", URL: " + val['hcx_fqdn'] + ", OnPremKey: " + val['hcx_on_prem_key'] + ", TempPass: " + val['hcx_initial_password'])
-                    print(self.tabs + "VCENTER  : " + val['vcenter_fqdn'] + " - " + val['vcenter_private_ip'] + ", User: " + val['vcenter_username'] + ", TempPass: " + val['vcenter_initial_password'])
-                    print(self.tabs + "NSX      : " + val['nsx_manager_fqdn'] + " - " + val['nsx_manager_private_ip'] + ", User: " + val['nsx_manager_username'] + ", TempPass: " + val['nsx_manager_initial_password'])
+                    print(self.tabs + "HCX      : " + val['is_hcx_enabled'] + ", URL: " + val['hcx_fqdn'] + ", OnPremKey: " + val['hcx_on_prem_key'] + ", initial: " + val['hcx_initial_password'])
+                    print(self.tabs + "VCENTER  : " + val['vcenter_fqdn'] + " - " + val['vcenter_private_ip'] + ", User: " + val['vcenter_username'] + ", initial: " + val['vcenter_initial_password'])
+                    print(self.tabs + "NSX      : " + val['nsx_manager_fqdn'] + " - " + val['nsx_manager_private_ip'] + ", User: " + val['nsx_manager_username'] + ", initial: " + val['nsx_manager_initial_password'])
                     print(self.tabs + "NSX GW   : " + val['nsx_edge_uplink_ip'])
                     print(self.tabs + "Subnet   : " + val['provisioning_subnet'])
                     print(self.tabs + "Vlans    : " + val['vsphere_vlan'])
