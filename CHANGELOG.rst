@@ -10,6 +10,7 @@ The format is based on `Keep a Changelog <http://keepachangelog.com/>`_.
 * Added csv for Monitoring: agents, events, alarm, db management and Notifications
 * Added Event Actions
 * Added application functions
+* Added auto backup flag in database.csv
 
 =====================
 22.10.11 - 22.10.11
