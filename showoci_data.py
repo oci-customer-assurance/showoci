@@ -3596,9 +3596,9 @@ class ShowOCIData(object):
                         if action['action_type'] == 'ONS':
                             action['dest_name'] = self.__get_notification_topic_name(action['dest_id'])
                         if action['action_type'] == 'OSS':
-                            action['dest_name'] = self.__get_streaming_stream_name(action['stream_id'])
+                            action['dest_name'] = self.__get_streaming_stream_name(action['dest_id'])
                         if action['action_type'] == 'FAAS':
-                            action['dest_name'] = self.__get_function_name(action['function_id'])
+                            action['dest_name'] = self.__get_function_name(action['dest_id'])
                     data['events'].append(event)
 
             # if agents add it
@@ -3639,7 +3639,7 @@ class ShowOCIData(object):
                     return topic['name'] + " - " + topic['description']
                 else:
                     return topic['name']
-            return ""
+            return topic_id
         except Exception as e:
             self.__print_error("__get_notification_topic_name", e)
             pass
@@ -3652,7 +3652,7 @@ class ShowOCIData(object):
             stream = self.service.search_unique_item(self.service.C_STREAMS, self.service.C_STREAMS_STREAMS, 'id', stream_id)
             if stream:
                 return stream['name']
-            return ""
+            return stream_id
         except Exception as e:
             self.__print_error("__get_streaming_stream_name", e)
             pass
@@ -3665,7 +3665,7 @@ class ShowOCIData(object):
             function = self.service.search_unique_item(self.service.C_FUNCTION, self.service.C_FUNCTION_APPLICATIONS, 'id', function_id)
             if function:
                 return function['display_name']
-            return ""
+            return function_id
         except Exception as e:
             self.__print_error("__get_function_name", e)
             pass
