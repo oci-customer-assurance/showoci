@@ -3190,7 +3190,7 @@ class ShowOCIService(object):
 
         try:
 
-            self.__load_print_status("Sunet Private IPs")
+            self.__load_print_status("Subnet Private IPs")
 
             # loop on all subnets
             for subnet in subnets:
