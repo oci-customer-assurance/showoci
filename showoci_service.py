@@ -316,6 +316,7 @@ class ShowOCIService(object):
     C_DATA_AI = "data_ai"
     C_DATA_AI_SCIENCE = "data_science"
     C_DATA_AI_CATALOG = "data_catalog"
+    C_DATA_AI_DCREGISTRY = "data_connectivity_registry"
     C_DATA_AI_FLOW = "data_flow"
     C_DATA_AI_DI = "data_integration"
     C_DATA_AI_ODA = "oda"
@@ -11356,6 +11357,7 @@ class ShowOCIService(object):
     #
     # OCI Classes used:
     #
+    # oci.data_connectivity.DataConnectivityManagementClient
     # oci.data_catalog.DataCatalogClient
     # oci.data_science.DataScienceClient
     # oci.data_flow.DataFlowClient
@@ -11368,6 +11370,7 @@ class ShowOCIService(object):
             print("Data and AI Services...")
 
             # clients
+            dcmr_client = oci.data_connectivity.DataConnectivityManagementClient(self.config, signer=self.signer, timeout=2)
             ds_client = oci.data_science.DataScienceClient(self.config, signer=self.signer, timeout=2)
             dc_client = oci.data_catalog.DataCatalogClient(self.config, signer=self.signer, timeout=2)
             df_client = oci.data_flow.DataFlowClient(self.config, signer=self.signer, timeout=2)
@@ -11382,12 +11385,14 @@ class ShowOCIService(object):
                 oda_client.base_client.session.proxies = {'https': self.flags.proxy}
                 bds_client.base_client.session.proxies = {'https': self.flags.proxy}
                 di_client.base_client.session.proxies = {'https': self.flags.proxy}
+                dcmr_client.base_client.session.proxies = {'https': self.flags.proxy}
 
             # reference to compartments
             compartments = self.get_compartment()
 
             # add the key if not exists
             self.__initialize_data_key(self.C_DATA_AI, self.C_DATA_AI_CATALOG)
+            self.__initialize_data_key(self.C_DATA_AI, self.C_DATA_AI_DCREGISTRY)
             self.__initialize_data_key(self.C_DATA_AI, self.C_DATA_AI_FLOW)
             self.__initialize_data_key(self.C_DATA_AI, self.C_DATA_AI_SCIENCE)
             self.__initialize_data_key(self.C_DATA_AI, self.C_DATA_AI_ODA)
@@ -11398,6 +11403,7 @@ class ShowOCIService(object):
             data_ai = self.data[self.C_DATA_AI]
 
             # append the data
+            data_ai[self.C_DATA_AI_DCREGISTRY] += self.__load_data_ai_dcregistry(dcmr_client, compartments)
             data_ai[self.C_DATA_AI_CATALOG] += self.__load_data_ai_catalog(dc_client, compartments)
             data_ai[self.C_DATA_AI_FLOW] += self.__load_data_ai_flow(df_client, compartments)
             data_ai[self.C_DATA_AI_SCIENCE] += self.__load_data_ai_science(ds_client, compartments)
@@ -11412,6 +11418,82 @@ class ShowOCIService(object):
             raise
         except Exception as e:
             self.__print_error("__load_data_ai_main", e)
+
+    ##########################################################################
+    # __load_data_ai_catalog
+    ##########################################################################
+    def __load_data_ai_dcregistry(self, dc_client, compartments):
+
+        data = []
+        cnt = 0
+        start_time = time.time()
+
+        try:
+            self.__load_print_status("Data Connection Registry")
+
+            # loop on all compartments
+            for compartment in compartments:
+
+                # skip managed paas compartment
+                if self.__if_managed_paas_compartment(compartment['name']):
+                    print(".", end="")
+                    continue
+
+                array = []
+                try:
+                    array = oci.pagination.list_call_get_all_results(
+                        dc_client.list_registries,
+                        compartment['id'],
+                        retry_strategy=oci.retry.DEFAULT_RETRY_STRATEGY
+                    ).data
+
+                except oci.exceptions.ServiceError as e:
+                    if self.__check_service_error(e.code):
+                        self.__load_print_auth_warning()
+                        continue
+                    raise
+                except oci.exceptions.ConnectTimeout:
+                    self.__load_print_auth_warning()
+                    continue
+
+                print(".", end="")
+
+                # arr = oci.data_connectivity.models.RegistrySummaryCollection
+                for arr in array:
+                    if (arr.lifecycle_state == 'ACTIVE' or arr.lifecycle_state == 'UPDATING'):
+
+                        val = {'id': str(arr.id),
+                               'description': str(arr.description),
+                               'display_name': str(arr.display_name),
+                               'time_created': str(arr.time_created),
+                               'time_updated': str(arr.time_updated),
+                               'updated_by': str(arr.updated_by),
+                               'lifecycle_state': str(arr.lifecycle_state),
+                               'state_message': str(arr.state_message),
+                               'sum_info': "Data Conn Registry",
+                               'sum_size_gb': str("1"),
+                               'compartment_name': str(compartment['name']),
+                               'compartment_path': str(compartment['path']),
+                               'compartment_id': str(compartment['id']),
+                               'defined_tags': [] if arr.defined_tags is None else arr.defined_tags,
+                               'freeform_tags': [] if arr.freeform_tags is None else arr.freeform_tags,
+                               'region_name': str(self.config['region'])
+                               }
+
+                        # add the data
+                        cnt += 1
+                        data.append(val)
+
+            self.__load_print_cnt(cnt, start_time)
+            return data
+
+        except oci.exceptions.RequestException as e:
+            if self.__check_request_error(e):
+                return data
+            raise
+        except Exception as e:
+            self.__print_error("__load_data_ai_dcregistry", e)
+            return data
 
     ##########################################################################
     # __load_data_ai_catalog

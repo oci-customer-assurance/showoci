@@ -3873,6 +3873,11 @@ class ShowOCIData(object):
             if dc:
                 data_ai['data_catalog'] = dc
 
+            # Data Connectivity Registry
+            dc = self.service.search_multi_items(self.service.C_DATA_AI, self.service.C_DATA_AI_DCREGISTRY, 'region_name', region_name, 'compartment_id', compartment['id'])
+            if dc:
+                data_ai['data_connectivity_registry'] = dc
+
             # Data Integration
             di = self.service.search_multi_items(self.service.C_DATA_AI, self.service.C_DATA_AI_DI, 'region_name', region_name, 'compartment_id', compartment['id'])
             if di:
