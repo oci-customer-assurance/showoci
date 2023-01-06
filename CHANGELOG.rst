@@ -5,6 +5,11 @@ All notable changes to this project will be documented in this file.
 The format is based on `Keep a Changelog <http://keepachangelog.com/>`_.
 
 =====================
+23.01.10 - 23.01.10
+=====================
+* Added ExaCS DB Servers
+
+=====================
 22.12.06 - 22.12.06
 =====================
 * Added Data Connection Registry

@@ -1049,9 +1049,12 @@ class ShowOCIOutput(object):
                             print(self.tabs + "            Alert  : " + dbs['next_maintenance_run']['maintenance_alert'])
 
                 print("")
+                for index, srv in enumerate(dbs['db_servers'], start=1):
+                    print(self.tabs + "DB Srv " + str(index) + "  : " + srv['desc'])
 
                 # clusters
                 for vm in dbs['vm_clusters']:
+                    print("")
 
                     if 'display_name' in vm:
                         print(self.tabs + "VMCLSTR   : " + str(vm['display_name']) + " (" + vm['lifecycle_state'] + ")")
@@ -4426,8 +4429,8 @@ class ShowOCICSV(object):
                         'ntp_server': "",
                         'csi_number': "",
                         'node_count': "",
-                        'db_servers': "",
-                        'db_servers_ids': "",
+                        'db_servers': str(', '.join(x['desc'] for x in dbs['db_servers'])),
+                        'db_servers_ids': str(', '.join(x['id'] for x in dbs['db_servers'])),
                         'cluster_count': len(dbs['vm_clusters']),
                         'cluster_names': str(', '.join(x['display_name'] for x in dbs['vm_clusters'])),
                         'time_created': dbs['time_created'],

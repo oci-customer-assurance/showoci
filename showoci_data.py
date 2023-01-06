@@ -2300,6 +2300,7 @@ class ShowOCIData(object):
                     'sum_info_storage': 'Database - Storage (GB)',
                     'sum_size_gb': dbs['total_storage_size_in_gbs'],
                     'data': str(dbs['available_storage_size_in_gbs']) + "GB",
+                    'db_servers': [] if not dbs['db_servers'] else sorted(dbs['db_servers'], key=lambda i: i['desc']),
                     'vm_clusters': []
                 }
 

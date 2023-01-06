@@ -135,7 +135,7 @@ class ShowOCIFlags(object):
 # class ShowOCIService
 ##########################################################################
 class ShowOCIService(object):
-    oci_compatible_version = "2.88.0"
+    oci_compatible_version = "2.88.2"
 
     ##########################################################################
     # Global Constants
@@ -4545,9 +4545,9 @@ class ShowOCIService(object):
                                           'display_name': str(pol.display_name),
                                           'policy_type': str(pol.policy_type),
                                           'time_created': str(pol.time_created),
-                                          'capacity_min': str(pol.capacity.min),
-                                          'capacity_max': str(pol.capacity.max),
-                                          'capacity_initial': str(pol.capacity.initial),
+                                          'capacity_min': str(pol.capacity.min) if pol.capacity else "",
+                                          'capacity_max': str(pol.capacity.max) if pol.capacity else "",
+                                          'capacity_initial': str(pol.capacity.initial) if pol.capacity else "",
                                           'rules': []
                                           }
 
@@ -4556,12 +4556,13 @@ class ShowOCIService(object):
                                 ##############################
                                 if pol.policy_type == "threshold":
                                     for rule in pol.rules:
-                                        valpol['rules'].append(
-                                            str(rule.action.type) + " " +
-                                            str(rule.action.value).ljust(3) + " when " +
-                                            str(rule.metric.metric_type) + " " +
-                                            str(rule.metric.threshold.operator) + " " +
-                                            str(rule.metric.threshold.value))
+                                        if pol.action and pol.metric:
+                                            valpol['rules'].append(
+                                                str(rule.action.type) + " " +
+                                                str(rule.action.value).ljust(3) + " when " +
+                                                str(rule.metric.metric_type) + " " +
+                                                str(rule.metric.threshold.operator) + " " +
+                                                str(rule.metric.threshold.value))
 
                                 # add policy
                                 val['policies'].append(valpol)
@@ -7524,7 +7525,8 @@ class ShowOCIService(object):
                              'defined_tags': [] if dbs.defined_tags is None else dbs.defined_tags,
                              'freeform_tags': [] if dbs.freeform_tags is None else dbs.freeform_tags,
                              'region_name': str(self.config['region']),
-                             'vm_clusters': []
+                             'vm_clusters': [],
+                             'db_servers': self.__load_database_exacc_dbservers(database_client, compartment, dbs.id)
                              }
 
                     # get shape
