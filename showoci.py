@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 ##########################################################################
-# Copyright (c) 2016, 2020, Oracle and/or its affiliates.  All rights reserved.
+# Copyright (c) 2016, 2023, Oracle and/or its affiliates.  All rights reserved.
 # This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
 #
 # showoci.py
@@ -15,14 +15,6 @@
 #
 # require OCI read only user with OCI authentication:
 #    ALLOW GROUP ReadOnlyUsers to read all-resources IN TENANCY
-#
-# config file should contain:
-#     [TENANT_NAME]
-#     user =         user_ocid
-#     fingerprint =  fingerprint of the api ssh key
-#     key_file =     the path to the private key
-#     tenancy =      tenancy ocid
-#     region =       region
 #
 # Recommend to set below for display interactive
 # export PYTHONUNBUFFERED=TRUE
@@ -107,7 +99,7 @@ import datetime
 import contextlib
 import os
 
-version = "23.01.10"
+version = "23.01.24"
 
 ##########################################################################
 # check OCI version
@@ -311,6 +303,7 @@ def set_parser_arguments(argsList=[]):
     parser.add_argument('-sec', action='store_true', default=False, dest='security', help='Print Security, Logging, Vaults')
 
     parser.add_argument('-nobackups', action='store_true', default=False, dest='skip_backups', help='Do not process backups')
+    parser.add_argument('-skipdbhomes', action='store_true', default=False, dest='skip_dbhomes', help='Do not process Database Homes and Below')
     parser.add_argument('-so', action='store_true', default=False, dest='sumonly', help='Print Summary Only')
     parser.add_argument('-mc', action='store_true', default=False, dest='mgdcompart', help='exclude ManagedCompartmentForPaaS')
     parser.add_argument('-nr', action='store_true', default=False, dest='noroot', help='Not include root compartment')
@@ -450,6 +443,9 @@ def set_service_extract_flags(cmd):
 
     if cmd.skip_backups:
         prm.skip_backups = True
+
+    if cmd.skip_dbhomes:
+        prm.skip_dbhomes = True
 
     if cmd.config:
         if cmd.config.name:

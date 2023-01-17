@@ -151,12 +151,12 @@ Execute
 $ python3 showoci.py  
 
 usage: showoci.py [-h] [-a] [-ani] [-an] [-api] [-b] [-c] [-cn] [-d] [-e] [-edge] [-f] [-fun] [-i] [-ic] [-isc] [-l] [-lq] [-m]
-                  [-n] [-o] [-paas] [-dataai] [-rm] [-s] [-sec] [-nobackups] [-so] [-mc] [-nr] [-ip] [-is] [-dt] [-t PROFILE]
-                  [-p PROXY] [-rg REGION] [-cp COMPART] [-cpr COMPART_RECUR] [-cpath COMPARTPATH] [-tenantid TENANTID]
-                  [-cf CONFIG] [-csv CSV] [-csv_nodate] [-jf JOUTFILE] [-js] [-sjf SJOUTFILE] [-cachef SERVICEFILE] [-caches]
-                  [--version]
+                  [-n] [-o] [-paas] [-dataai] [-rm] [-s] [-sec] [-nobackups] [-skipdbhomes] [-so] [-mc] [-nr] [-ip] [-is] [-dt]
+                  [-t PROFILE] [-p PROXY] [-rg REGION] [-cp COMPART] [-cpr COMPART_RECUR] [-cpath COMPARTPATH]
+                  [-tenantid TENANTID] [-cf CONFIG] [-csv CSV] [-csvcol CSVCOL] [-csv_nodate] [-jf JOUTFILE] [-js]
+                  [-sjf SJOUTFILE] [-cachef SERVICEFILE] [-caches] [--version]
 
-optional arguments:
+options:
   -h, --help           show this help message and exit
   -a                   Print All Resources
   -ani                 Print All Resources but identity
@@ -184,6 +184,7 @@ optional arguments:
   -s                   Print Streams
   -sec                 Print Security, Logging, Vaults
   -nobackups           Do not process backups
+  -skipdbhomes         Do not process Database Homes and Below
   -so                  Print Summary Only
   -mc                  exclude ManagedCompartmentForPaaS
   -nr                  Not include root compartment
@@ -199,6 +200,7 @@ optional arguments:
   -tenantid TENANTID   Override confile file tenancy_id
   -cf CONFIG           Config File (~/.oci/config)
   -csv CSV             Output to CSV files, Input as file header
+  -csvcol CSVCOL       Extract define tags as columns for Compute in CSV
   -csv_nodate          Do not add date field to the csv
   -jf JOUTFILE         Output to file (JSON format)
   -js                  Output to screen (JSON format)

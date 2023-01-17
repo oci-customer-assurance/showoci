@@ -1,5 +1,5 @@
 ##########################################################################
-# Copyright (c) 2016, 2020, Oracle and/or its affiliates.  All rights reserved.
+# Copyright (c) 2016, 2023, Oracle and/or its affiliates.  All rights reserved.
 # This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
 #
 # showoci_service.py
@@ -59,6 +59,7 @@ class ShowOCIFlags(object):
     read_data_ai = False
     skip_identity_user_credential = False
     skip_backups = False
+    skip_dbhomes = False
 
     # is_vcn_exist_for_region
     is_vcn_exist_for_region = False
@@ -966,7 +967,7 @@ class ShowOCIService(object):
     # print status message
     ##########################################################################
     def __load_print_status(self, msg):
-        print("--> " + msg.ljust(25) + "<-- ", end="")
+        print("--> " + msg.ljust(27) + "<-- ", end="")
 
     ##########################################################################
     # print print error
@@ -7721,6 +7722,11 @@ class ShowOCIService(object):
         start_time = time.time()
 
         try:
+            # if skip db homes
+            if self.flags.skip_dbhomes:
+                self.__load_print_status("Database Homes")
+                print("Skipped.")
+                return data
 
             self.__load_print_status("Database Homes")
 
