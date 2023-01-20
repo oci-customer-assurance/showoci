@@ -6989,23 +6989,23 @@ class ShowOCIService(object):
             print("Database...")
 
             # LoadBalancerClient
-            database_client = oci.database.DatabaseClient(self.config, signer=self.signer, timeout=30)
+            database_client = oci.database.DatabaseClient(self.config, signer=self.signer, timeout=300)
             if self.flags.proxy:
                 database_client.base_client.session.proxies = {'https': self.flags.proxy}
 
-            virtual_network = oci.core.VirtualNetworkClient(self.config, signer=self.signer, timeout=15)
+            virtual_network = oci.core.VirtualNetworkClient(self.config, signer=self.signer, timeout=300)
             if self.flags.proxy:
                 virtual_network.base_client.session.proxies = {'https': self.flags.proxy}
 
-            nosql_client = oci.nosql.NosqlClient(self.config, signer=self.signer, timeout=15)
+            nosql_client = oci.nosql.NosqlClient(self.config, signer=self.signer, timeout=300)
             if self.flags.proxy:
                 nosql_client.base_client.session.proxies = {'https': self.flags.proxy}
 
-            mysql_client = oci.mysql.DbSystemClient(self.config, signer=self.signer, timeout=15)
+            mysql_client = oci.mysql.DbSystemClient(self.config, signer=self.signer, timeout=300)
             if self.flags.proxy:
                 mysql_client.base_client.session.proxies = {'https': self.flags.proxy}
 
-            gg_client = oci.golden_gate.GoldenGateClient(self.config, signer=self.signer, timeout=15)
+            gg_client = oci.golden_gate.GoldenGateClient(self.config, signer=self.signer, timeout=300)
             if self.flags.proxy:
                 gg_client.base_client.session.proxies = {'https': self.flags.proxy}
 
