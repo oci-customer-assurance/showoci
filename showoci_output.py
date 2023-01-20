@@ -130,6 +130,8 @@ class ShowOCIOutput(object):
                 print("Config File     : " + data['config_file'])
                 print("Config Profile  : " + data['config_profile'])
             print("Date/Time       : " + data['datetime'])
+            print("API Conn Timeout: " + str(data['connection_timeout']))
+            print("API Read Timeout: " + str(data['read_timeout']))
             print("Comand Line     : " + data['cmdline'])
             print("Showoci Version : " + data['version'])
             print("OCI SDK Version : " + data['oci_sdk_version'])

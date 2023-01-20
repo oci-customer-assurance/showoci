@@ -127,6 +127,8 @@ class ShowOCIData(object):
             'disclaimer': "This is not an official Oracle application, it is not supported by Oracle. It should NOT be used for utilization calculation purposes. If you run into issues using this, please file an issue at https://github.com/oracle/oci-python-sdk/issues rather than contacting support",
             'config_file': self.service.flags.config_file,
             'config_profile': self.service.flags.config_section,
+            'connection_timeout': self.service.flags.connection_timeout,
+            'read_timeout': self.service.flags.read_timeout,
             'use_instance_principals': self.service.flags.use_instance_principals,
             'use_delegation_token': self.service.flags.use_delegation_token,
             'use_security_token': self.service.flags.use_security_token,
