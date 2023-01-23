@@ -2703,6 +2703,7 @@ class ShowOCIData(object):
                 value = {'id': str(infra['id']),
                          'name': str(infra['display_name']) + " - " + str(infra['license_model']) + " - " + infra['shape'] + " - " + str(infra['lifecycle_state']),
                          'availability_domain': infra['availability_domain'],
+                         'display_name': infra['display_name'],
                          'subnet_id': infra['subnet_id'],
                          'subnet_name': infra['subnet_name'],
                          'nsg_ids': infra['nsg_ids'],
