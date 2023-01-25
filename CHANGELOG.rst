@@ -8,6 +8,8 @@ The format is based on `Keep a Changelog <http://keepachangelog.com/>`_.
 23.02.07 - 23.02.07
 =====================
 * Added version check of showoci classes
+* Added Queues
+* Added CSV for Streams and Queues
 
 =====================
 23.01.31 - 23.01.31

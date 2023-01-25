@@ -68,6 +68,7 @@
 # - oci.data_integration.DataIntegrationClient
 # - oci.visual_builder.VbInstanceClient
 # - oci.data_connectivity.models.RegistrySummary
+# - oci.queue.QueueAdminClient
 #
 # Modules Not Yet Covered:
 # - oci.blockchain.BlockchainPlatformClient
@@ -313,7 +314,7 @@ def set_parser_arguments(argsList=[]):
     parser.add_argument('-paas', action='store_true', default=False, dest='paas_native', help='Print PaaS Platform Services - OIC OAC OCE OCVS')
     parser.add_argument('-dataai', action='store_true', default=False, dest='data_ai', help='Print - D.Science, D.Catalog, D.Flow, ODA, BDS, DI')
     parser.add_argument('-rm', action='store_true', default=False, dest='orm', help='Print Resource management')
-    parser.add_argument('-s', action='store_true', default=False, dest='streams', help='Print Streams')
+    parser.add_argument('-s', action='store_true', default=False, dest='streams_queues', help='Print Streams and Queues')
     parser.add_argument('-sec', action='store_true', default=False, dest='security', help='Print Security, Logging, Vaults')
 
     parser.add_argument('-nobackups', action='store_true', default=False, dest='skip_backups', help='Do not process backups')
@@ -363,7 +364,7 @@ def set_parser_arguments(argsList=[]):
     if not (result.all or result.allnoiam or result.network or result.identity or result.identity_compartments or
             result.compute or result.object or
             result.load or result.database or result.file or result.email or result.orm or result.container or
-            result.streams or result.budgets or result.monitoring or result.edge or result.announcement or result.limits or result.paas_native or
+            result.streams_queues or result.budgets or result.monitoring or result.edge or result.announcement or result.limits or result.paas_native or
             result.api or result.function or result.data_ai or result.security):
 
         parser.print_help()
@@ -421,8 +422,8 @@ def set_service_extract_flags(cmd):
     if cmd.all or cmd.allnoiam or cmd.container:
         prm.read_containers = True
 
-    if cmd.all or cmd.allnoiam or cmd.streams:
-        prm.read_streams = True
+    if cmd.all or cmd.allnoiam or cmd.streams_queues:
+        prm.read_streams_queues = True
 
     if cmd.all or cmd.allnoiam or cmd.budgets:
         prm.read_budgets = True

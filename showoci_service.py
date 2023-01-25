@@ -155,9 +155,10 @@ class ShowOCIService(object):
     C_CONTAINER_CLUSTERS = "clusters"
     C_CONTAINER_NODE_POOLS = "nodepools"
 
-    # streams
-    C_STREAMS = "streams"
+    # streams and queues
+    C_STREAMS = "streams_queues"
     C_STREAMS_STREAMS = "streams"
+    C_STREAMS_QUEUES = "queues"
 
     # budgets
     C_BUDGETS = "budgets"
@@ -1068,9 +1069,9 @@ class ShowOCIService(object):
                 self.__load_resource_management_main()
 
         # if streams
-        if self.flags.read_streams:
+        if self.flags.read_streams_queues:
             if self.check_if_service_available(region_name, self.C_STREAMS):
-                self.__load_streams_main()
+                self.__load_streams_queues_main()
 
         # if budgets
         if self.flags.read_budgets:
@@ -9601,29 +9602,38 @@ class ShowOCIService(object):
     # OCI Classes used:
     #
     # class oci.streaming.StreamAdminClient(config, **kwargs)
+    # class oci.queue.QueueAdminClient(config, **kwargs)
     #
     ##########################################################################
-    def __load_streams_main(self):
+    def __load_streams_queues_main(self):
 
         try:
-            print("Streams...")
+            print("Streams and Queues...")
 
             # StreamAdminClient
             stream_client = oci.streaming.StreamAdminClient(self.config, signer=self.signer, timeout=(self.flags.connection_timeout, self.flags.read_timeout))
             if self.flags.proxy:
                 stream_client.base_client.session.proxies = {'https': self.flags.proxy}
 
+            # QueueAdminClient
+            queue_client = oci.queue.QueueAdminClient(self.config, signer=self.signer, timeout=(self.flags.connection_timeout, self.flags.read_timeout))
+            if self.flags.proxy:
+                queue_client.base_client.session.proxies = {'https': self.flags.proxy}
+
             # reference to compartments
             compartments = self.get_compartment()
 
             # add the key if not exists
             self.__initialize_data_key(self.C_STREAMS, self.C_STREAMS_STREAMS)
+            self.__initialize_data_key(self.C_STREAMS, self.C_STREAMS_QUEUES)
 
             # reference to stream
             stream = self.data[self.C_STREAMS]
 
             # append the data
             stream[self.C_STREAMS_STREAMS] += self.__load_streams_streams(stream_client, compartments)
+            stream[self.C_STREAMS_QUEUES] += self.__load_streams_queues(queue_client, compartments)
+
             print("")
 
         except oci.exceptions.RequestException:
@@ -9631,7 +9641,7 @@ class ShowOCIService(object):
         except oci.exceptions.ServiceError:
             raise
         except Exception as e:
-            self.__print_error("__load_streams_main", e)
+            self.__print_error("__load_streams_queues_main", e)
 
     ##########################################################################
     # __load_streams_streams
@@ -9672,6 +9682,7 @@ class ShowOCIService(object):
                            'compartment_name': str(compartment['name']), 'compartment_id': str(compartment['id']),
                            'compartment_path': str(compartment['path']),
                            'messages_endpoint': str(stream.messages_endpoint),
+                           'lifecycle_state': str(stream.lifecycle_state),
                            'defined_tags': [] if stream.defined_tags is None else stream.defined_tags,
                            'freeform_tags': [] if stream.freeform_tags is None else stream.freeform_tags,
                            'region_name': str(self.config['region'])}
@@ -9690,6 +9701,78 @@ class ShowOCIService(object):
             raise
         except Exception as e:
             self.__print_error("__load_streams_streams", e)
+            return data
+
+    ##########################################################################
+    # __load_queues_queues
+    ##########################################################################
+    def __load_streams_queues(self, queue_client, compartments):
+
+        data = []
+        cnt = 0
+        start_time = time.time()
+
+        try:
+            self.__load_print_status("Queues")
+
+            # loop on all compartments
+            for compartment in compartments:
+
+                queues = []
+                try:
+                    queues = oci.pagination.list_call_get_all_results(
+                        queue_client.list_queues, compartment_id=compartment['id'],
+                        sort_by="displayName",
+                        lifecycle_state=oci.streaming.models.StreamSummary.LIFECYCLE_STATE_ACTIVE,
+                        retry_strategy=oci.retry.DEFAULT_RETRY_STRATEGY
+                    ).data
+
+                except oci.exceptions.ServiceError as e:
+                    if self.__check_service_error(e.code):
+                        self.__load_print_auth_warning()
+                        continue
+                    raise
+
+                print(".", end="")
+
+                # queue = oci.queue.models.QueueSummary
+                for queue_list in queues:
+                    queue = queue_client.get_queue(queue_list.id, retry_strategy=oci.retry.DEFAULT_RETRY_STRATEGY).data
+                    val = {
+                        'id': str(queue.id),
+                        'name': str(queue.display_name),
+                        'time_created': str(queue.time_created),
+                        'time_updated': str(queue.time_updated),
+                        'lifecycle_state': str(queue.lifecycle_state),
+                        'lifecycle_details': str(queue.lifecycle_details) if queue.lifecycle_details else "",
+                        'retention_in_seconds': str(queue.retention_in_seconds),
+                        'visibility_in_seconds': str(queue.visibility_in_seconds),
+                        'timeout_in_seconds': str(queue.timeout_in_seconds),
+                        'dead_letter_queue_delivery_count': str(queue.dead_letter_queue_delivery_count),
+                        'custom_encryption_key_id': str(queue.custom_encryption_key_id) if queue.custom_encryption_key_id else "",
+                        'compartment_name': str(compartment['name']),
+                        'compartment_id': str(compartment['id']),
+                        'compartment_path': str(compartment['path']),
+                        'messages_endpoint': str(queue.messages_endpoint),
+                        'defined_tags': [] if queue.defined_tags is None else queue.defined_tags,
+                        'system_tags': [] if queue.defined_tags is None else queue.defined_tags,
+                        'freeform_tags': [] if queue.freeform_tags is None else queue.freeform_tags,
+                        'region_name': str(self.config['region'])}
+
+                    # add the data
+                    cnt += 1
+                    data.append(val)
+
+            self.__load_print_cnt(cnt, start_time)
+            return data
+
+        except oci.exceptions.RequestException as e:
+            if self.__check_request_error(e):
+                return data
+
+            raise
+        except Exception as e:
+            self.__print_error("__load_streams_queues", e)
             return data
 
     ##########################################################################
@@ -13381,7 +13464,7 @@ class ShowOCIFlags(object):
     read_email_distribution = False
     read_resource_management = False
     read_containers = False
-    read_streams = False
+    read_streams_queues = False
     read_budgets = False
     read_monitoring_notifications = False
     read_edge = False
@@ -13445,7 +13528,7 @@ class ShowOCIFlags(object):
                 self.read_email_distribution or
                 self.read_resource_management or
                 self.read_containers or
-                self.read_streams or
+                self.read_streams_queues or
                 self.read_budgets or
                 self.read_monitoring_notifications or
                 self.read_edge or

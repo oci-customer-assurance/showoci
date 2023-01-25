@@ -1716,24 +1716,33 @@ class ShowOCIOutput(object):
             self.__print_error("__print_email_main", e)
 
     ##########################################################################
-    # Streams
+    # Streams and Queues
     ##########################################################################
-    def __print_streams_main(self, streams):
+    def __print_streams_queues_main(self, sq):
 
         try:
-            if not streams:
+            if not sq:
                 return
 
-            self.print_header("Streams", 2)
+            if sq["streams"]:
+                self.print_header("Streams", 2)
 
-            for ct in streams:
-                print(self.taba + ct['name'] + ", partitions (" + ct['partitions'] + "), Created: " + ct['time_created'][0:16])
-                print(self.tabs + "URL   : " + str(ct['messages_endpoint']))
+                for ct in sq["streams"]:
+                    print(self.taba + ct['name'] + ", partitions (" + ct['partitions'] + "), Created: " + ct['time_created'][0:16])
+                    print(self.tabs + "URL   : " + str(ct['messages_endpoint']))
+                    print("")
 
-                print("")
+            if sq["queues"]:
+                self.print_header("Queues", 2)
+
+                for ct in sq["queues"]:
+                    print(self.taba + ct['name'] + ", Created: " + ct['time_created'][0:16])
+                    print(self.tabs + "URL   : " + str(ct['messages_endpoint']))
+                    print(self.tabs + "Params: Retention (Sec): " + str(ct['retention_in_seconds']) + ", Visibility: " + str(ct['visibility_in_seconds']) + ", Timeout: " + str(ct['timeout_in_seconds']) + ", Dead Letter Delivery Count: " + str(ct['dead_letter_queue_delivery_count']))
+                    print("")
 
         except Exception as e:
-            self.__print_error("__print_streams_main", e)
+            self.__print_error("__print_streams_queues_main", e)
 
     ##########################################################################
     # Functions
@@ -2633,8 +2642,8 @@ class ShowOCIOutput(object):
                     self.__print_resource_management_main(cdata['resource_management'])
                 if 'containers' in cdata:
                     self.__print_container_main(cdata['containers'])
-                if 'streams' in cdata:
-                    self.__print_streams_main(cdata['streams'])
+                if 'streams_queues' in cdata:
+                    self.__print_streams_queues_main(cdata['streams_queues'])
                 if 'monitoring' in cdata:
                     self.__print_monitoring_main(cdata['monitoring'])
                 if 'notifications' in cdata:
@@ -3518,6 +3527,7 @@ class ShowOCICSV(object):
     start_time = ""
     csv_add_date_field = True
     csv_columns = []
+    csv_streams_queues = []
     csv_monitor_agents = []
     csv_monitor_db_management = []
     csv_monitor_alarms = []
@@ -3613,6 +3623,7 @@ class ShowOCICSV(object):
             self.__export_to_csv_file("monitor_alarms", self.csv_monitor_alarms)
             self.__export_to_csv_file("monitor_events", self.csv_monitor_events)
             self.__export_to_csv_file("monitor_topics_subs", self.csv_notifications)
+            self.__export_to_csv_file("streams_queues", self.csv_streams_queues)
 
             print("")
         except Exception as e:
@@ -5883,6 +5894,71 @@ class ShowOCICSV(object):
             self.__print_error("__csv_paas_oic", e)
 
     ##########################################################################
+    # Streams
+    ##########################################################################
+    def __csv_streams_queues(self, region_name, services):
+        try:
+
+            if len(services) == 0:
+                return
+
+            if services:
+                if services['streams']:
+                    for ar in services['streams']:
+
+                        data = {
+                            'region_name': region_name,
+                            'compartment_name': ar['compartment_name'],
+                            'compartment_path': ar['compartment_path'],
+                            'type': "STREAM",
+                            'name': ar['name'],
+                            'partitions': ar['partitions'],
+                            'time_created': ar['time_created'][0:16],
+                            'lifecycle_state': ar['lifecycle_state'],
+                            'lifecycle_details': "",
+                            'messages_endpoint': ar['messages_endpoint'],
+                            'retention_in_seconds': "",
+                            'visibility_in_seconds': "",
+                            'timeout_in_seconds': "",
+                            'dead_letter_queue_delivery_count': "",
+                            'custom_encryption_key_id': "",
+                            'freeform_tags': self.__get_freeform_tags(ar['freeform_tags']),
+                            'defined_tags': self.__get_defined_tags(ar['defined_tags']),
+                            'id': ar['id']
+                        }
+
+                        self.csv_streams_queues.append(data)
+
+                if services['queues']:
+                    for ar in services['queues']:
+
+                        data = {
+                            'region_name': region_name,
+                            'compartment_name': ar['compartment_name'],
+                            'compartment_path': ar['compartment_path'],
+                            'type': "QUEUE",
+                            'name': ar['name'],
+                            'partitions': "",
+                            'time_created': ar['time_created'][0:16],
+                            'lifecycle_state': ar['lifecycle_state'],
+                            'lifecycle_details': ar['lifecycle_details'],
+                            'messages_endpoint': ar['messages_endpoint'],
+                            'retention_in_seconds': ar['retention_in_seconds'],
+                            'visibility_in_seconds': ar['visibility_in_seconds'],
+                            'timeout_in_seconds': ar['timeout_in_seconds'],
+                            'dead_letter_queue_delivery_count': ar['dead_letter_queue_delivery_count'],
+                            'custom_encryption_key_id': ar['custom_encryption_key_id'],
+                            'freeform_tags': self.__get_freeform_tags(ar['freeform_tags']),
+                            'defined_tags': self.__get_defined_tags(ar['defined_tags']),
+                            'id': ar['id']
+                        }
+
+                        self.csv_streams_queues.append(data)
+
+        except Exception as e:
+            self.__print_error("__csv_streams_queues", e)
+
+    ##########################################################################
     # Paas OAC
     ##########################################################################
     def __csv_paas_oac(self, region_name, services):
@@ -6554,6 +6630,8 @@ class ShowOCICSV(object):
                     self.__csv_edge_main(region_name, cdata['edge_services'])
                 if 'paas_services' in cdata:
                     self.__csv_paas_main(region_name, cdata['paas_services'])
+                if 'streams_queues' in cdata:
+                    self.__csv_streams_queues(region_name, cdata['streams_queues'])
                 if 'data_ai' in cdata:
                     self.__csv_data_ai_main(region_name, cdata['data_ai'])
                 if 'monitoring' in cdata:

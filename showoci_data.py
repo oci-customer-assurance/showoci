@@ -297,12 +297,12 @@ class ShowOCIData(object):
                             data['containers'] = value
                             has_data = True
 
-                # streams
-                if self.service.flags.read_streams:
-                    value = self.__get_streams_main(region_name, compartment)
+                # streams queues
+                if self.service.flags.read_streams_queues:
+                    value = self.__get_streams_queues_main(region_name, compartment)
                     if value is not None:
                         if len(value) > 0:
-                            data['streams'] = value
+                            data['streams_queues'] = value
                             has_data = True
 
                 # monitoring
@@ -3492,31 +3492,24 @@ class ShowOCIData(object):
     ##########################################################################
     # Streams
     ##########################################################################
-    def __get_streams_main(self, region_name, compartment):
+    def __get_streams_queues_main(self, region_name, compartment):
         try:
+            data = {}
             streams = self.service.search_multi_items(self.service.C_STREAMS, self.service.C_STREAMS_STREAMS, 'region_name', region_name, 'compartment_id', compartment['id'])
+            queues = self.service.search_multi_items(self.service.C_STREAMS, self.service.C_STREAMS_QUEUES, 'region_name', region_name, 'compartment_id', compartment['id'])
 
-            data = []
+            # if streams add it
             if streams:
-                for stream in streams:
-                    val = {'id': stream['id'],
-                           'name': stream['name'],
-                           'partitions': stream['partitions'],
-                           'time_created': stream['time_created'],
-                           'messages_endpoint': stream['messages_endpoint'],
-                           'defined_tags': stream['defined_tags'],
-                           'freeform_tags': stream['freeform_tags'],
-                           'compartment_name': stream['compartment_name'],
-                           'compartment_path': stream['compartment_path'],
-                           'compartment_id': stream['compartment_id'],
-                           'region_name': stream['region_name']
-                           }
+                data['streams'] = streams
 
-                    data.append(val)
+            # if queues add it
+            if queues:
+                data['queues'] = queues
+
             return data
 
         except Exception as e:
-            self.__print_error("__get_streams_main", e)
+            self.__print_error("__get_streams_queues_main", e)
             pass
 
     ##########################################################################
