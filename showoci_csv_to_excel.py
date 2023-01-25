@@ -38,5 +38,5 @@ for file in file_list:
     print('   Handling ' + sheet_name + " ...")
     df.to_excel(writer, sheet_name=sheet_name)
 
-writer.save()
+writer.close()
 print("Completed, Excel = " + excel_name)

@@ -31,114 +31,9 @@ import platform
 ##########################################################################
 # class ShowOCIService
 ##########################################################################
-class ShowOCIFlags(object):
-    # Read Flags
-    read_identity = False
-    read_identity_compartments = False
-    read_network = False
-    read_compute = False
-    read_database = False
-    read_file_storage = False
-    read_object_storage = False
-    read_load_balancer = False
-    read_email_distribution = False
-    read_resource_management = False
-    read_containers = False
-    read_streams = False
-    read_budgets = False
-    read_monitoring_notifications = False
-    read_edge = False
-    read_security = False
-    read_announcement = False
-    read_ManagedCompartmentForPaaS = True
-    read_root_compartment = True
-    read_limits = False
-    read_paas_native = False
-    read_function = False
-    read_api = False
-    read_data_ai = False
-    skip_identity_user_credential = False
-    skip_backups = False
-    skip_dbhomes = False
-    connection_timeout = 20
-    read_timeout = 150
-
-    # is_vcn_exist_for_region
-    is_vcn_exist_for_region = False
-
-    # filter flags
-    filter_by_region = ""
-    filter_by_compartment = ""
-    filter_by_compartment_recursive = ""
-    filter_by_compartment_path = ""
-    filter_by_tenancy_id = ""
-
-    # version, config files and proxy
-    proxy = ""
-    showoci_version = ""
-    config_file = oci.config.DEFAULT_LOCATION
-    config_section = oci.config.DEFAULT_PROFILE
-    use_instance_principals = False
-    use_delegation_token = False
-    use_security_token = False
-
-    # pyton and host info
-    machine = platform.node() + " (" + platform.machine() + ")"
-    python = platform.python_version()
-
-    # flag if to run on compartment
-    run_on_compartments = False
-
-    ############################################
-    # Init
-    ############################################
-    def __init__(self):
-        pass
-
-    ############################################
-    # get run on compartments flag
-    ############################################
-    def is_loop_on_compartments(self):
-        return (self.read_network or
-                self.read_compute or
-                self.read_database or
-                self.read_file_storage or
-                self.read_object_storage or
-                self.read_load_balancer or
-                self.read_email_distribution or
-                self.read_resource_management or
-                self.read_containers or
-                self.read_streams or
-                self.read_budgets or
-                self.read_monitoring_notifications or
-                self.read_edge or
-                self.read_paas_native or
-                self.read_limits or
-                self.read_api or
-                self.read_function or
-                self.read_data_ai or
-                self.read_security)
-
-    ############################################
-    # check if to load basic network (vcn+subnets)
-    ############################################
-    def is_load_basic_network(self):
-        return (self.read_network or
-                self.read_compute or
-                self.read_database or
-                self.read_file_storage or
-                self.read_load_balancer or
-                self.read_containers or
-                self.read_function or
-                self.read_api or
-                self.read_paas_native)
-
-
-##########################################################################
-# class ShowOCIService
-##########################################################################
 class ShowOCIService(object):
-    oci_compatible_version = "2.88.2"
+    version = "23.02.07"
+    oci_compatible_version = "2.90.3"
 
     ##########################################################################
     # Global Constants
@@ -13468,3 +13363,109 @@ class ShowOCIService(object):
         except Exception as e:
             self.__print_error("__load_security_bastions", e)
             return data
+
+
+##########################################################################
+# class ShowOCIFlags
+##########################################################################
+class ShowOCIFlags(object):
+    # Read Flags
+    read_identity = False
+    read_identity_compartments = False
+    read_network = False
+    read_compute = False
+    read_database = False
+    read_file_storage = False
+    read_object_storage = False
+    read_load_balancer = False
+    read_email_distribution = False
+    read_resource_management = False
+    read_containers = False
+    read_streams = False
+    read_budgets = False
+    read_monitoring_notifications = False
+    read_edge = False
+    read_security = False
+    read_announcement = False
+    read_ManagedCompartmentForPaaS = True
+    read_root_compartment = True
+    read_limits = False
+    read_paas_native = False
+    read_function = False
+    read_api = False
+    read_data_ai = False
+    skip_identity_user_credential = False
+    skip_backups = False
+    skip_dbhomes = False
+    connection_timeout = 20
+    read_timeout = 150
+
+    # is_vcn_exist_for_region
+    is_vcn_exist_for_region = False
+
+    # filter flags
+    filter_by_region = ""
+    filter_by_compartment = ""
+    filter_by_compartment_recursive = ""
+    filter_by_compartment_path = ""
+    filter_by_tenancy_id = ""
+
+    # version, config files and proxy
+    proxy = ""
+    showoci_version = ""
+    config_file = oci.config.DEFAULT_LOCATION
+    config_section = oci.config.DEFAULT_PROFILE
+    use_instance_principals = False
+    use_delegation_token = False
+    use_security_token = False
+
+    # pyton and host info
+    machine = platform.node() + " (" + platform.machine() + ")"
+    python = platform.python_version()
+
+    # flag if to run on compartment
+    run_on_compartments = False
+
+    ############################################
+    # Init
+    ############################################
+    def __init__(self):
+        pass
+
+    ############################################
+    # get run on compartments flag
+    ############################################
+    def is_loop_on_compartments(self):
+        return (self.read_network or
+                self.read_compute or
+                self.read_database or
+                self.read_file_storage or
+                self.read_object_storage or
+                self.read_load_balancer or
+                self.read_email_distribution or
+                self.read_resource_management or
+                self.read_containers or
+                self.read_streams or
+                self.read_budgets or
+                self.read_monitoring_notifications or
+                self.read_edge or
+                self.read_paas_native or
+                self.read_limits or
+                self.read_api or
+                self.read_function or
+                self.read_data_ai or
+                self.read_security)
+
+    ############################################
+    # check if to load basic network (vcn+subnets)
+    ############################################
+    def is_load_basic_network(self):
+        return (self.read_network or
+                self.read_compute or
+                self.read_database or
+                self.read_file_storage or
+                self.read_load_balancer or
+                self.read_containers or
+                self.read_function or
+                self.read_api or
+                self.read_paas_native)

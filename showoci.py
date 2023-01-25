@@ -90,7 +90,7 @@
 from __future__ import print_function
 from showoci_data import ShowOCIData
 from showoci_output import ShowOCIOutput, ShowOCISummary, ShowOCICSV
-from showoci_service import ShowOCIFlags
+from showoci_service import ShowOCIFlags, ShowOCIService
 
 import json
 import sys
@@ -99,7 +99,7 @@ import datetime
 import contextlib
 import os
 
-version = "23.01.31"
+version = "23.02.07"
 
 ##########################################################################
 # check OCI version
@@ -110,6 +110,20 @@ if sys.version_info.major < 3:
     print("***    Showoci only supports Python 3 or Above     ***")
     print("***             Current Version = " + python_version.ljust(16) + " ***")
     print("******************************************************")
+    sys.exit()
+
+##########################################################################
+# check application files version
+##########################################################################
+if version != ShowOCIData.version or version != ShowOCIService.version or version != ShowOCIOutput.version:
+    print("******************************************************")
+    print("***    Showoci files have different versions       ***")
+    print("***    showoci.py         - " + version + "               ***")
+    print("***    showoci_data.py    - " + ShowOCIData.version + "               ***")
+    print("***    showoci_output.py  - " + ShowOCIOutput.version + "               ***")
+    print("***    showoci_service.py - " + ShowOCIService.version + "               ***")
+    print("******************************************************")
+    print("Abort !")
     sys.exit()
 
 

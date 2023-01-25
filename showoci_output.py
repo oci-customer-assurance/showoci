@@ -20,6 +20,7 @@ import csv
 
 
 class ShowOCIOutput(object):
+    version = "23.02.07"
 
     ##########################################################################
     # spaces for align
@@ -1489,7 +1490,7 @@ class ShowOCIOutput(object):
 
                     # databases
                     for db in vm['databases']:
-                        print(self.tabs + self.taba + "ADB-S      : " + db['name'])
+                        print(self.tabs + self.taba + "ADB-D      : " + db['name'])
                         if 'cpu_core_count' in db:
                             print(self.tabs + self.tabs + "Size       : " + str(db['cpu_core_count']) + " OCPUs, " + str(db['data_storage_size_in_tbs']) + "TB Storage")
                         if 'time_created' in db:
