@@ -3564,6 +3564,7 @@ class ShowOCICSV(object):
             self.__export_to_csv_file("compute_reservations", self.csv_compute_reservations)
             self.__export_to_csv_file("block_volumes", self.csv_block_volumes)
             self.__export_to_csv_file("block_volumes_backups", self.csv_block_volumes_backups)
+            self.__export_to_csv_file("block_volumes_not_attached", self.csv_block_volumes_not_attached)
             self.__export_to_csv_file("network_subnet", self.csv_network_subnet)
             self.__export_to_csv_file("network_subnet_prv_ips", self.csv_network_subnet_prv_ips)
             self.__export_to_csv_file("network_drgs", self.csv_network_drg)
@@ -5141,7 +5142,9 @@ class ShowOCICSV(object):
                             'vpus_per_gb': bv['vpus_per_gb'],
                             'volume_group_name': bv['volume_group_name'],
                             'instance_name': instance['display_name'],
-                            'instance_id': instance['id']
+                            'instance_id': instance['id'],
+                            'freeform_tags': self.__get_freeform_tags(bv['freeform_tags']),
+                            'defined_tags': self.__get_defined_tags(bv['defined_tags'])
                         }
                         self.csv_block_volumes.append(data)
 
@@ -5160,7 +5163,9 @@ class ShowOCICSV(object):
                             'vpus_per_gb': bv['vpus_per_gb'],
                             'volume_group_name': bv['volume_group_name'],
                             'instance_name': instance['display_name'],
-                            'instance_id': instance['id']
+                            'instance_id': instance['id'],
+                            'freeform_tags': self.__get_freeform_tags(bv['freeform_tags']),
+                            'defined_tags': self.__get_defined_tags(bv['defined_tags'])
                         }
                         self.csv_block_volumes.append(data)
 
@@ -5223,7 +5228,9 @@ class ShowOCICSV(object):
                     'vpus_per_gb': bv['vpus_per_gb'],
                     'volume_group_name': bv['volume_group_name'],
                     'instance_name': '',
-                    'instance_id': ''
+                    'instance_id': '',
+                    'freeform_tags': self.__get_freeform_tags(bv['freeform_tags']),
+                    'defined_tags': self.__get_defined_tags(bv['defined_tags'])
                 }
                 self.csv_block_volumes.append(data)
 
