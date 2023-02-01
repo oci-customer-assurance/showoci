@@ -32,7 +32,7 @@ excel_name = csv_location + '.xlsx'
 # convert to excel
 writer = pd.ExcelWriter(excel_name)
 
-for file in file_list:
+for file in sorted(file_list):
     df = pd.read_csv(file)
     sheet_name = file[len(csv_location) + 1:-4]
     print('   Handling ' + sheet_name + " ...")
