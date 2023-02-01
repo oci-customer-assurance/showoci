@@ -3460,6 +3460,7 @@ class ShowOCICSV(object):
     ############################################
     # class variables
     ############################################
+    csv_tags_to_cols = False
     csv_file_header = ""
     csv_identity_compartments = []
     csv_identity_groups = []
@@ -3631,6 +3632,44 @@ class ShowOCICSV(object):
         print("#" + name.center(chars - 2, " ") + "#")
         print('#' * chars)
 
+    #######################################
+    # get key in order                    #
+    #######################################
+    def get_all_keys_in_order(self, list_of_dicts):
+        try:
+            ordered_keys = []
+            for dict_ in list_of_dicts:
+                for key in dict_:
+                    if key not in ordered_keys:
+                        ordered_keys.append(key)
+            return ordered_keys
+        except Exception as e:
+            raise Exception("Error in get_all_keys_in_order: " + str(e.args))
+
+    #######################################
+    # extract_tags_to_columns             #
+    #######################################
+    def extract_tags_to_columns(self, list_of_dicts):
+        try:
+            new_result = []
+            for row in list_of_dicts:
+                for tag_type in ['defined_tags', 'freeform_tags']:
+                    if tag_type in row:
+                        tags = row[tag_type].split(', ')
+                        for tag in tags:
+                            tag_split = tag.split("=")
+                            if len(tag_split) > 1:
+                                key_value = 'Tag_' + tag_split[0]
+                                data_value = tag_split[1]
+                                row.update({key_value: data_value})
+                        # Remove the main key
+                        row.pop(tag_type)
+                # Append the row
+                new_result.append(row)
+            return new_result
+        except Exception as e:
+            raise Exception("Error in extract_tags_to_columns: " + str(e.args))
+
     ##########################################################################
     # create csv file
     ##########################################################################
@@ -3651,8 +3690,12 @@ class ShowOCICSV(object):
             else:
                 result = [dict(item) for item in data]
 
+            # if convert tags to cols
+            if self.csv_tags_to_cols:
+                result = self.extract_tags_to_columns(result)
+
             # generate fields
-            fields = [key for key in result[0].keys()]
+            fields = self.get_all_keys_in_order(result)
 
             with open(file_name, mode='w', newline='') as csv_file:
                 writer = csv.DictWriter(csv_file, fieldnames=fields)
