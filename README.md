@@ -155,7 +155,7 @@ usage: showoci.py [-h] [-a] [-ani] [-an] [-api] [-b] [-c] [-cn] [-d] [-e] [-edge
                   [-n] [-o] [-paas] [-dataai] [-rm] [-s] [-sec] [-nobackups] [-skipdbhomes] [-readtimeout READTIMEOUT]
                   [-conntimeout CONNTIMEOUT] [-so] [-mc] [-nr] [-ip] [-is] [-dt] [-t PROFILE] [-p PROXY] [-rg REGION]
                   [-cp COMPART] [-cpr COMPART_RECUR] [-cpath COMPARTPATH] [-tenantid TENANTID] [-cf CONFIG] [-csv CSV]
-                  [-csvcol CSVCOL] [-csv_nodate] [-csvtagstocols] [-jf JOUTFILE] [-js] [-sjf SJOUTFILE] [-cachef SERVICEFILE]
+                  [-csvcol CSVCOL] [-csv_nodate] [-csv_notagstocols] [-jf JOUTFILE] [-js] [-sjf SJOUTFILE] [-cachef SERVICEFILE]
                   [-caches] [--version]
 
 options:
@@ -206,13 +206,14 @@ options:
   -csv CSV                  Output to CSV files, Input as file header
   -csvcol CSVCOL            Extract define tags as columns for Compute in CSV
   -csv_nodate               Do not add date field to the csv
-  -csvtagstocols            Convert Tags to Columns in CSV Extract
+  -csv_notagstocols         Do not Convert Tags to Columns in CSV Extract
   -jf JOUTFILE              Output to file (JSON format)
   -js                       Output to screen (JSON format)
   -sjf SJOUTFILE            Output to screen (nice format) and JSON File
   -cachef SERVICEFILE       Output Cache to file (JSON format)
   -caches                   Output Cache to screen (JSON format)
-  --version                 show program's version number and exit```
+  --version                 show program's version number and exit
+  ```
 
 ## Below example of reports from few tenancies  
 

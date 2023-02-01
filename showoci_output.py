@@ -5278,7 +5278,7 @@ class ShowOCICSV(object):
                 self.csv_block_volumes.append(data)
 
         except Exception as e:
-            self.__print_error("__csv_core_compute_block_volumes", e)
+            self.__print_error("__csv_core_compute_block_not_attached", e)
 
     ##########################################################################
     # csv compute block volumes backups
