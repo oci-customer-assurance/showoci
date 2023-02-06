@@ -20,7 +20,7 @@ import csv
 
 
 class ShowOCIOutput(object):
-    version = "23.02.07"
+    version = "23.02.14"
 
     ##########################################################################
     # spaces for align
@@ -1504,6 +1504,21 @@ class ShowOCIOutput(object):
             self.__print_error("__print_database_db_autonomous", e)
 
     ##########################################################################
+    # print database standalone backups
+    ##########################################################################
+
+    def __print_database_standalone_backups(self, backups):
+        try:
+            for backup in backups:
+                if backup['standalone']:
+                    print(self.taba + "Name    : " + backup['name'] + " - " + backup['time'] + " - " + backup['size'] + " - " + backup["availability_domain"])
+                    print(self.tabs + "Shape   : " + backup['shape'] + ", Edition: " + backup["database_edition"] + ", Version: " + backup["version"])
+                    print("")
+
+        except Exception as e:
+            self.__print_error("__print_database_standalone_backups", e)
+
+    ##########################################################################
     # print database nosql
     ##########################################################################
 
@@ -1620,6 +1635,11 @@ class ShowOCIOutput(object):
             if 'db_system' in list_databases:
                 self.print_header("Databases DB Systems", 2)
                 self.__print_database_db_system(list_databases['db_system'])
+                print("")
+
+            if 'db_all_backups' in list_databases:
+                self.print_header("Databases Standalone Backups", 2)
+                self.__print_database_standalone_backups(list_databases['db_all_backups'])
                 print("")
 
             if 'autonomous_dedicated' in list_databases:
@@ -2934,6 +2954,9 @@ class ShowOCISummary(object):
             if 'db_system' in list_databases:
                 self.__summary_database_db_system(list_databases['db_system'])
 
+            if 'db_all_backups' in list_databases:
+                self.__summary_database_all_backups(list_databases['db_all_backups'])
+
             if 'autonomous' in list_databases:
                 self.__summary_database_db_autonomous(list_databases['autonomous'])
 
@@ -2960,6 +2983,18 @@ class ShowOCISummary(object):
 
         except Exception as e:
             self.__print_error("__summary_database_main", e)
+
+    ##########################################################################
+    # __summary_database_all_backups
+    ##########################################################################
+    def __summary_database_all_backups(self, list_db_backups):
+
+        try:
+            for dbs in list_db_backups:
+                self.__summary_core_size(list_db_backups)
+
+        except Exception as e:
+            self.__print_error("__summary_database_all_backups", e)
 
     ##########################################################################
     # Database db systems
@@ -2999,11 +3034,6 @@ class ShowOCISummary(object):
                 if dbs['sum_size_gb'] is not None:
                     if dbs['sum_size_gb'] != 'None' and dbs['sum_size_gb'] != "":
                         self.summary_global_list.append({'type': dbs['sum_info_storage'], 'size': float(dbs['sum_size_gb'])})
-
-                # db homes
-                for db_home in dbs['db_homes']:
-                    for db in db_home['databases']:
-                        self.__summary_core_size(db['backups'])
 
         except Exception as e:
             self.__print_error("__summary_database_db_system", e)
@@ -4329,6 +4359,13 @@ class ShowOCICSV(object):
     ##########################################################################
     # csv database db systems
     ##########################################################################
+    def __csv_database_db_backups(self, region_name, list_db_backups):
+
+        self.__csv_database_backup_item(list_db_backups, "", "")
+
+    ##########################################################################
+    # csv database db systems
+    ##########################################################################
     def __csv_database_db_system(self, region_name, list_db_systems):
 
         try:
@@ -4424,23 +4461,39 @@ class ShowOCICSV(object):
 
                         # database Backups
                         if 'backups' in db:
-                            for backup in db['backups']:
-                                data = {
-                                    'region_name': region_name,
-                                    'compartment_name': dbs['compartment_name'],
-                                    'compartment_path': dbs['compartment_path'],
-                                    'dbs_name': dbs['display_name'],
-                                    'database': db['db_name'],
-                                    'shape': dbs['shape'],
-                                    'backup_name': backup['display_name'],
-                                    'time': backup['time'],
-                                    'size': backup['size'],
-                                    'lifecycle_state': backup['lifecycle_state']
-                                }
-                                self.csv_database_backups.append(data)
+                            self.__csv_database_backup_item(db['backups'], dbs['display_name'], db['db_name'])
 
         except Exception as e:
             self.__print_error("__csv_database_db_system", e)
+
+    ##########################################################################
+    # csv database db systems
+    ##########################################################################
+    def __csv_database_backup_item(self, backups, dbs_name, db_name):
+        try:
+
+            for backup in backups:
+                data = {
+                    'region_name': backup['region_name'],
+                    'compartment_name': backup['compartment_name'],
+                    'compartment_path': backup['compartment_path'],
+                    'dbs_name': dbs_name,
+                    'database': db_name,
+                    'shape': backup['shape'],
+                    'database_edition': backup['database_edition'],
+                    'backup_name': backup['display_name'],
+                    'time': backup['time'],
+                    'size': backup['size'],
+                    'id': backup['id'],
+                    'database_id': backup['database_id'],
+                    'lifecycle_state': backup['lifecycle_state']
+                }
+                # if not exist in array add
+                if not any(d['id'] == str(backup['id']) for d in self.csv_database_backups):
+                    self.csv_database_backups.append(data)
+
+        except Exception as e:
+            self.__print_error("__csv_database_backup_item", e)
 
     ##########################################################################
     # csv database exadata
@@ -4581,20 +4634,7 @@ class ShowOCICSV(object):
 
                             # database Backups
                             if 'backups' in db:
-                                for backup in db['backups']:
-                                    data = {
-                                        'region_name': region_name,
-                                        'compartment_name': dbs['compartment_name'],
-                                        'compartment_path': dbs['compartment_path'],
-                                        'dbs_name': dbs['display_name'],
-                                        'database': db['db_name'],
-                                        'shape': dbs['shape'],
-                                        'backup_name': backup['display_name'],
-                                        'time': backup['time'],
-                                        'size': backup['size'],
-                                        'lifecycle_state': backup['lifecycle_state']
-                                    }
-                                    self.csv_database_backups.append(data)
+                                self.__csv_database_backup_item(db['backups'], dbs['display_name'], db['db_name'])
 
         except Exception as e:
             self.__print_error("__csv_database_db_exadata", e)
@@ -4739,20 +4779,7 @@ class ShowOCICSV(object):
 
                             # database Backups
                             if 'backups' in db:
-                                for backup in db['backups']:
-                                    data = {
-                                        'region_name': region_name,
-                                        'compartment_name': dbs['compartment_name'],
-                                        'compartment_path': dbs['compartment_path'],
-                                        'dbs_name': dbs['display_name'],
-                                        'database': db['db_name'],
-                                        'shape': dbs['shape'],
-                                        'backup_name': backup['display_name'],
-                                        'time': backup['time'],
-                                        'size': backup['size'],
-                                        'lifecycle_state': backup['lifecycle_state']
-                                    }
-                                    self.csv_database_backups.append(data)
+                                self.__csv_database_backup_item(db['backups'], dbs['display_name'], db['db_name'])
 
         except Exception as e:
             self.__print_error("__csv_database_db_exacc", e)
@@ -4896,9 +4923,12 @@ class ShowOCICSV(object):
                             'dbs_name': dbs['display_name'],
                             'database': dbs['db_name'],
                             'shape': 'Autononous',
+                            'database_edition': "",
                             'backup_name': ("Automatic Backup - " if backup['is_automatic'] == 'True' else "") + backup['display_name'],
                             'time': backup['time'],
                             'size': "",
+                            'id': backup['id'],
+                            'database_id': dbs['id'],
                             'lifecycle_state': backup['lifecycle_state']
                         }
                         self.csv_database_backups.append(data)
@@ -5011,9 +5041,12 @@ class ShowOCICSV(object):
                                         'dbs_name': dbs['display_name'],
                                         'database': dbs['db_name'],
                                         'shape': 'Autononous',
+                                        'database_edition': "",
                                         'backup_name': ("Automatic Backup - " if backup['is_automatic'] == 'True' else "") + backup['display_name'],
                                         'time': backup['time'],
                                         'size': "",
+                                        'id': backup['id'],
+                                        'database_id': dbs['id'],
                                         'lifecycle_state': backup['lifecycle_state']
                                     }
                                     self.csv_database_backups.append(data)
@@ -5043,6 +5076,9 @@ class ShowOCICSV(object):
 
             if 'db_system' in list_databases:
                 self.__csv_database_db_system(region_name, list_databases['db_system'])
+
+            if 'db_all_backups' in list_databases:
+                self.__csv_database_db_backups(region_name, list_databases['db_all_backups'])
 
             if 'autonomous' in list_databases:
                 self.__csv_database_db_autonomous(region_name, list_databases['autonomous'])

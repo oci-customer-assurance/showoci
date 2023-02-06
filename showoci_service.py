@@ -32,7 +32,7 @@ import platform
 # class ShowOCIService
 ##########################################################################
 class ShowOCIService(object):
-    version = "23.02.07"
+    version = "23.02.14"
     oci_compatible_version = "2.90.3"
 
     ##########################################################################
@@ -133,6 +133,7 @@ class ShowOCIService(object):
     # database
     C_DATABASE = "database"
     C_DATABASE_HOMES = "dhomes"
+    C_DATABASE_BACKUPS = "backups"
     C_DATABASE_DBSYSTEMS = "dbsystems"
     C_DATABASE_EXADATA = "exadata"
     C_DATABASE_EXADATA_VMS = "exadata_vmclusters"
@@ -766,6 +767,38 @@ class ShowOCIService(object):
             if len(val) == 6:
                 return "20" + val[0:2] + "-" + val[2:4]
         return ""
+
+    ##########################################################################
+    # Get Database Edition
+    ##########################################################################
+    def get_database_short_edition(self, edition):
+        if not edition:
+            return ""
+
+        if edition == "ENTERPRISE_EDITION":
+            return "EE"
+        elif edition == "ENTERPRISE_EDITION_EXTREME_PERFORMANCE":
+            return "XP"
+        elif edition == "ENTERPRISE_EDITION_HIGH_PERFORMANCE":
+            return "HP"
+        elif edition == "STANDARD_EDITION":
+            return "SE"
+        else:
+            return edition
+
+    ##########################################################################
+    # Get Database Short license
+    ##########################################################################
+    def get_database_short_license(self, license):
+        if not license:
+            return ""
+
+        if license == "BRING_YOUR_OWN_LICENSE":
+            return "BYOL"
+        elif license == "LICENSE_INCLUDED":
+            return "INCL"
+        else:
+            return license
 
     ##########################################################################
     # check oci version
@@ -6931,6 +6964,7 @@ class ShowOCIService(object):
 
             # add the key if not exists
             self.__initialize_data_key(self.C_DATABASE, self.C_DATABASE_HOMES)
+            self.__initialize_data_key(self.C_DATABASE, self.C_DATABASE_BACKUPS)
             self.__initialize_data_key(self.C_DATABASE, self.C_DATABASE_DBSYSTEMS)
             self.__initialize_data_key(self.C_DATABASE, self.C_DATABASE_EXADATA)
             self.__initialize_data_key(self.C_DATABASE, self.C_DATABASE_EXADATA_VMS)
@@ -6954,6 +6988,7 @@ class ShowOCIService(object):
             db = self.data[self.C_DATABASE]
 
             # append the data
+            db[self.C_DATABASE_BACKUPS] += self.__load_database_standalone_backups(database_client, compartments)
             db[self.C_DATABASE_HOMES] += self.__load_database_homes(database_client, compartments)
             db[self.C_DATABASE_EXACC] += self.__load_database_exacc_infrastructure(database_client, virtual_network, compartments)
             db[self.C_DATABASE_EXACC_VMS] += self.__load_database_exacc_vm_clusters(database_client, virtual_network, compartments)
@@ -7841,6 +7876,95 @@ class ShowOCIService(object):
             return data
 
     ##########################################################################
+    # __load_database_backups
+    ##########################################################################
+    def __load_database_standalone_backups(self, database_client, compartments):
+
+        data = []
+        cnt = 0
+        start_time = time.time()
+
+        try:
+            self.__load_print_status("Database Standalone Backups")
+
+            if self.flags.skip_backups:
+                print("Skipped.")
+                return data
+
+            # loop on all compartments
+            for compartment in compartments:
+
+                # skip managed paas compartment
+                if self.__if_managed_paas_compartment(compartment['name']):
+                    print(".", end="")
+                    continue
+
+                print(".", end="")
+
+                backups = []
+                try:
+                    backups = oci.pagination.list_call_get_all_results(
+                        database_client.list_backups,
+                        compartment_id=compartment['id'],
+                        retry_strategy=oci.retry.DEFAULT_RETRY_STRATEGY
+                    ).data
+
+                except oci.exceptions.ServiceError as e:
+                    if self.__check_service_error(e.code):
+                        self.__load_print_auth_warning("a", False)
+                        continue
+                    else:
+                        raise
+
+                for backup in backups:
+                    if (backup.lifecycle_state == "DELETING" or backup.lifecycle_state == "DELETED"):
+                        continue
+
+                    value = {
+                        'id': str(backup.id),
+                        'display_name': str(backup.display_name),
+                        'database_id': str(backup.database_id),
+                        'standalone': True,
+                        'type': str(backup.type),
+                        'time_started': str(backup.time_started),
+                        'time_ended': str(backup.time_ended),
+                        'lifecycle_state': str(backup.lifecycle_state),
+                        'lifecycle_details': str(backup.lifecycle_details),
+                        'availability_domain': str(backup.availability_domain),
+                        'database_edition': self.get_database_short_edition(backup.database_edition),
+                        'shape': str(backup.shape),
+                        'version': str(backup.version),
+                        'kms_key_id': str(backup.kms_key_id) if backup.kms_key_id else "",
+                        'kms_key_version_id': str(backup.kms_key_version_id) if backup.kms_key_version_id else "",
+                        'vault_id': str(backup.vault_id) if backup.vault_id else "",
+                        'database_size_in_gbs': "" if backup.database_size_in_gbs is None else str(backup.database_size_in_gbs),
+                        'compartment_id': str(compartment['id']),
+                        'compartment_name': str(compartment['name']),
+                        'compartment_path': str(compartment['path']),
+                        'region_name': str(self.config['region'])}
+
+                    # add to main data
+                    cnt += 1
+                    data.append(value)
+
+            self.__load_print_cnt(cnt, start_time)
+            return data
+
+        except oci.exceptions.ServiceError as e:
+            if self.__check_service_error(e.code):
+                self.__load_print_auth_warning()
+                return data
+            else:
+                raise
+        except oci.exceptions.RequestException as e:
+            if self.__check_request_error(e):
+                return data
+            raise
+        except Exception as e:
+            self.__print_error("__load_database_standalone_backups", e)
+            return data
+
+    ##########################################################################
     # __load_database_exadata_vm_patches
     ##########################################################################
     def __load_database_exadata_vm_patches(self, database_client, vm_id):
@@ -7962,6 +8086,9 @@ class ShowOCIService(object):
                              'zone_id': str(dbs.zone_id),
                              }
 
+                    value['database_edition_short'] = self.get_database_short_edition(dbs.database_edition)
+                    value['license_model'] = self.get_database_short_license(dbs.license_model)
+
                     # get shape
                     if dbs.shape:
                         shape_sizes = self.get_shape_details(str(dbs.shape))
@@ -7974,26 +8101,6 @@ class ShowOCIService(object):
                     if dbs.db_system_options:
                         if dbs.db_system_options.storage_management:
                             value['storage_management'] = dbs.db_system_options.storage_management
-
-                    # license model
-                    if dbs.license_model == oci.database.models.DbSystem.LICENSE_MODEL_LICENSE_INCLUDED:
-                        value['license_model'] = "INCL"
-                    elif dbs.license_model == oci.database.models.DbSystem.LICENSE_MODEL_BRING_YOUR_OWN_LICENSE:
-                        value['license_model'] = "BYOL"
-                    else:
-                        value['license_model'] = str(dbs.license_model)
-
-                    # Edition
-                    if dbs.database_edition == oci.database.models.DbSystem.DATABASE_EDITION_ENTERPRISE_EDITION:
-                        value['database_edition_short'] = "EE"
-                    elif dbs.database_edition == oci.database.models.DbSystem.DATABASE_EDITION_ENTERPRISE_EDITION_EXTREME_PERFORMANCE:
-                        value['database_edition_short'] = "XP"
-                    elif dbs.database_edition == oci.database.models.DbSystem.DATABASE_EDITION_ENTERPRISE_EDITION_HIGH_PERFORMANCE:
-                        value['database_edition_short'] = "HP"
-                    elif dbs.database_edition == oci.database.models.DbSystem.DATABASE_EDITION_STANDARD_EDITION:
-                        value['database_edition_short'] = "SE"
-                    else:
-                        value['database_edition_short'] = dbs.database_edition
 
                     # scan IPs
                     value['scan_ips'] = []
@@ -8105,6 +8212,67 @@ class ShowOCIService(object):
             return self.search_multi_items(self.C_DATABASE, self.C_DATABASE_HOMES, 'vm_cluster_id', dbs_id)
 
     ##########################################################################
+    # __load_database_dbsystems_db_backups
+    ##########################################################################
+    def __load_database_dbsystems_db_backups(self, database_client, db_id, compartment):
+
+        data = []
+        try:
+            backups = oci.pagination.list_call_get_all_results(
+                database_client.list_backups,
+                database_id=db_id,
+                retry_strategy=oci.retry.DEFAULT_RETRY_STRATEGY
+            ).data
+
+            for backup in backups:
+                value = {
+                    'id': str(backup.id),
+                    'display_name': str(backup.display_name),
+                    'database_id': str(backup.database_id),
+                    'standalone': False,
+                    'type': str(backup.type),
+                    'time_started': str(backup.time_started),
+                    'time_ended': str(backup.time_ended),
+                    'lifecycle_state': str(backup.lifecycle_state),
+                    'lifecycle_details': str(backup.lifecycle_details),
+                    'availability_domain': str(backup.availability_domain),
+                    'database_edition': self.get_database_short_edition(backup.database_edition),
+                    'shape': str(backup.shape),
+                    'version': str(backup.version),
+                    'kms_key_id': str(backup.kms_key_id) if backup.kms_key_id else "",
+                    'kms_key_version_id': str(backup.kms_key_version_id) if backup.kms_key_version_id else "",
+                    'vault_id': str(backup.vault_id) if backup.vault_id else "",
+                    'database_size_in_gbs': "" if backup.database_size_in_gbs is None else str(backup.database_size_in_gbs),
+                    'compartment_id': str(compartment['id']),
+                    'compartment_name': str(compartment['name']),
+                    'compartment_path': str(compartment['path']),
+                    'region_name': str(self.config['region'])}
+
+                data.append(value)
+
+                # add to main backup array if not exist
+                db = self.data[self.C_DATABASE]
+                bk = db[self.C_DATABASE_BACKUPS]
+                if not any(d['id'] == str(backup.id) for d in bk):
+                    bk.append(value)
+
+            return data
+
+        except oci.exceptions.ServiceError as e:
+            if self.__check_service_error(e.code):
+                self.__load_print_auth_warning()
+                return data
+            else:
+                raise
+        except oci.exceptions.RequestException as e:
+            if self.__check_request_error(e):
+                return data
+            raise
+        except Exception as e:
+            self.__print_error("__load_database_dbsystems_patches", e)
+            return data
+
+    ##########################################################################
     # __load_database_dbsystems_dbhomes_databases
     ##########################################################################
 
@@ -8149,7 +8317,7 @@ class ShowOCIService(object):
                     'connection_strings_cdb': "",
                     'auto_backup_enabled': False,
                     'dataguard': self.__load_database_dbsystems_db_dg(database_client, db.id),
-                    'backups': [] if self.flags.skip_backups else self.__load_database_dbsystems_db_backups(database_client, db.id),
+                    'backups': [] if self.flags.skip_backups else self.__load_database_dbsystems_db_backups(database_client, db.id, compartment),
                     'pdbs': self.__load_database_dbsystems_dbhomes_databases_pdbs(database_client, db.id)
                 }
 
@@ -8329,45 +8497,6 @@ class ShowOCIService(object):
 
         except oci.exceptions.ServiceError as e:
             if self.__check_service_error(e.code):
-                return data
-            else:
-                raise
-        except oci.exceptions.RequestException as e:
-            if self.__check_request_error(e):
-                return data
-            raise
-        except Exception as e:
-            self.__print_error("__load_database_dbsystems_patches", e)
-            return data
-
-    ##########################################################################
-    # get db system patches
-    ##########################################################################
-    def __load_database_dbsystems_db_backups(self, database_client, db_id):
-
-        data = []
-        try:
-            backups = oci.pagination.list_call_get_all_results(
-                database_client.list_backups,
-                database_id=db_id,
-                retry_strategy=oci.retry.DEFAULT_RETRY_STRATEGY
-            ).data
-
-            for backup in backups:
-                data.append(
-                    {'id': str(backup.id),
-                     'display_name': str(backup.display_name),
-                     'type': str(backup.type),
-                     'lifecycle_state': str(backup.lifecycle_state),
-                     'time_started': str(backup.time_started),
-                     'time_ended': str(backup.time_ended),
-                     'database_size_in_gbs': "" if backup.database_size_in_gbs is None else str(backup.database_size_in_gbs)
-                     })
-            return data
-
-        except oci.exceptions.ServiceError as e:
-            if self.__check_service_error(e.code):
-                self.__load_print_auth_warning()
                 return data
             else:
                 raise
