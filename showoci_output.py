@@ -3554,6 +3554,8 @@ class ShowOCICSV(object):
     csv_monitor_alarms = []
     csv_monitor_events = []
     csv_notifications = []
+    tenant_id = ""
+    tenant_name = ""
 
     ############################################
     # Init
@@ -3565,10 +3567,12 @@ class ShowOCICSV(object):
     ##########################################################################
     # generate_csv
     ##########################################################################
-    def generate_csv(self, data, csv_file_header, add_date_field=True, csv_columns=""):
+    def generate_csv(self, data, csv_file_header, tenancy, add_date_field=True, csv_columns=""):
         self.csv_add_date_field = add_date_field
         self.csv_file_header = csv_file_header
         self.csv_columns = str(csv_columns).split(",")
+        self.tenant_id = str(tenancy['id'])[-6:]
+        self.tenant_name = str(tenancy['name'])
         try:
             for d in data:
                 if 'type' in d:
@@ -3692,8 +3696,6 @@ class ShowOCICSV(object):
                                 key_value = 'Tag_' + tag_split[0]
                                 data_value = tag_split[1]
                                 row.update({key_value: data_value})
-                        # Remove the main key
-                        row.pop(tag_type)
                 # Append the row
                 new_result.append(row)
             return new_result
@@ -3712,13 +3714,14 @@ class ShowOCICSV(object):
 
             # get the file name of the CSV
             file_name = self.csv_file_header + "_" + file_subject + ".csv"
+            tenant_dict = {'tenant_name': self.tenant_name, 'tenant_id': self.tenant_id}
 
             # add start_date to each dictionary
             result = []
             if self.csv_add_date_field:
-                result = [dict(item, extract_date=self.start_time) for item in data]
+                result = [dict(list(tenant_dict.items()) + list(item.items()), extract_date=self.start_time) for item in data]
             else:
-                result = [dict(item) for item in data]
+                result = [dict(list(tenant_dict.items()) + list(item.items())) for item in data]
 
             # if convert tags to cols
             if self.csv_tags_to_cols:

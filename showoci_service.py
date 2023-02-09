@@ -4078,18 +4078,11 @@ class ShowOCIService(object):
 
                 # read instances and console connections
                 arrs = []
-                consoles = []
                 try:
                     arrs = oci.pagination.list_call_get_all_results(
                         compute.list_instances,
                         compartment['id'],
                         sort_by="DISPLAYNAME",
-                        retry_strategy=oci.retry.DEFAULT_RETRY_STRATEGY
-                    ).data
-
-                    consoles = oci.pagination.list_call_get_all_results(
-                        compute.list_instance_console_connections,
-                        compartment['id'],
                         retry_strategy=oci.retry.DEFAULT_RETRY_STRATEGY
                     ).data
 
@@ -4110,39 +4103,43 @@ class ShowOCIService(object):
                         continue
 
                     # load data
-                    val = {'id': str(arr.id), 'display_name': str(arr.display_name), 'shape': str(arr.shape),
-                           'lifecycle_state': str(arr.lifecycle_state),
-                           'availability_domain': str(arr.availability_domain), 'fault_domain': str(arr.fault_domain),
-                           'time_created': str(arr.time_created),
-                           'time_maintenance_reboot_due': str(arr.time_maintenance_reboot_due),
-                           'image_id': str(arr.image_id),
-                           'compartment_name': str(compartment['name']),
-                           'compartment_path': str(compartment['path']),
-                           'compartment_id': str(compartment['id']), 'region_name': str(self.config['region']),
-                           'console_id': "", 'console': "", 'console_connection_string': "",
-                           'defined_tags': [] if arr.defined_tags is None else arr.defined_tags,
-                           'freeform_tags': [] if arr.freeform_tags is None else arr.freeform_tags,
-                           'shape_ocpu': 0,
-                           'shape_memory_gb': 0,
-                           'shape_storage_tb': 0,
-                           'shape_gpu_description': "",
-                           'shape_gpus': 0,
-                           'shape_local_disk_description': "",
-                           'shape_local_disks': 0,
-                           'shape_max_vnic_attachments': 0,
-                           'shape_networking_bandwidth_in_gbps': 0,
-                           'shape_processor_description': "",
-                           'console_vnc_connection_string': "",
-                           'image': "Unknown",
-                           'image_os': "Unknown",
-                           'are_all_plugins_disabled': "",
-                           'agent_is_management_disabled': "",
-                           'agent_is_monitoring_disabled': "",
-                           'agent_plugin_config': [],
-                           'agent_plugin_status': [],
-                           'metadata': arr.metadata,
-                           'extended_metadata': arr.extended_metadata
-                           }
+                    val = {
+                        'id': str(arr.id),
+                        'display_name': str(arr.display_name),
+                        'shape': str(arr.shape),
+                        'lifecycle_state': str(arr.lifecycle_state),
+                        'availability_domain': str(arr.availability_domain),
+                        'fault_domain': str(arr.fault_domain),
+                        'time_created': str(arr.time_created),
+                        'time_maintenance_reboot_due': str(arr.time_maintenance_reboot_due),
+                        'image_id': str(arr.image_id),
+                        'compartment_name': str(compartment['name']),
+                        'compartment_path': str(compartment['path']),
+                        'compartment_id': str(compartment['id']),
+                        'region_name': str(self.config['region']),
+                        'console_id': "", 'console': "", 'console_connection_string': "",
+                        'defined_tags': [] if arr.defined_tags is None else arr.defined_tags,
+                        'freeform_tags': [] if arr.freeform_tags is None else arr.freeform_tags,
+                        'shape_ocpu': 0,
+                        'shape_memory_gb': 0,
+                        'shape_storage_tb': 0,
+                        'shape_gpu_description': "",
+                        'shape_gpus': 0,
+                        'shape_local_disk_description': "",
+                        'shape_local_disks': 0,
+                        'shape_max_vnic_attachments': 0,
+                        'shape_networking_bandwidth_in_gbps': 0,
+                        'shape_processor_description': "",
+                        'console_vnc_connection_string': "",
+                        'image': "Unknown",
+                        'image_os': "Unknown",
+                        'are_all_plugins_disabled': "",
+                        'agent_is_management_disabled': "",
+                        'agent_is_monitoring_disabled': "",
+                        'agent_plugin_config': [],
+                        'agent_plugin_status': [],
+                        'metadata': arr.metadata,
+                        'extended_metadata': arr.extended_metadata}
 
                     # agent_config
                     if arr.agent_config:
@@ -4165,7 +4162,28 @@ class ShowOCIService(object):
 
                     except oci.exceptions.ServiceError as e:
                         if self.__check_service_error(e.code):
-                            continue
+                            self.__load_print_auth_warning()
+
+                    # console
+                    consoles = []
+                    try:
+                        consoles = oci.pagination.list_call_get_all_results(
+                            compute.list_instance_console_connections,
+                            compartment['id'],
+                            retry_strategy=oci.retry.DEFAULT_RETRY_STRATEGY
+                        ).data
+
+                        # check console connections enabled
+                        for icc in consoles:
+                            if str(icc.instance_id) == str(arr.id) and str(icc.lifecycle_state) == oci.core.models.InstanceConsoleConnection.LIFECYCLE_STATE_ACTIVE:
+                                val['console_id'] = str(icc.id)
+                                val['console'] = "Console Connection Active"
+                                val['console_connection_string'] = icc.connection_string
+                                val['console_vnc_connection_string'] = icc.vnc_connection_string
+
+                    except oci.exceptions.ServiceError as e:
+                        if self.__check_service_error(e.code):
+                            self.__load_print_auth_warning()
 
                     # check if vm has shape config
                     if arr.shape_config:
@@ -4199,14 +4217,6 @@ class ShowOCIService(object):
                             val['image_os'] = str(image.operating_system)
                     except Exception:
                         pass
-
-                    # check console connections enabled
-                    for icc in consoles:
-                        if str(icc.instance_id) == str(arr.id) and str(icc.lifecycle_state) == oci.core.models.InstanceConsoleConnection.LIFECYCLE_STATE_ACTIVE:
-                            val['console_id'] = str(icc.id)
-                            val['console'] = "Console Connection Active"
-                            val['console_connection_string'] = icc.connection_string
-                            val['console_vnc_connection_string'] = icc.vnc_connection_string
 
                     # add data to array
 
@@ -6321,6 +6331,7 @@ class ShowOCIService(object):
                     except oci.exceptions.ServiceError as e:
                         if self.__check_service_error(e.code):
                             self.__load_print_auth_warning()
+                            continue
                         else:
                             raise
 
@@ -6330,6 +6341,11 @@ class ShowOCIService(object):
                     lp = None
                     try:
                         lp = object_storage.get_object_lifecycle_policy(namespace_name, str(arr.name)).data
+                        if lp:
+                            for lc in lp.items:
+                                if val['object_lifecycle']:
+                                    val['object_lifecycle'] += ", "
+                                val['object_lifecycle'] += str(lc.name) + " - " + str(lc.action) + " - " + str(lc.time_amount) + " " + str(lc.time_unit)
                     except oci.exceptions.ServiceError as e:
                         if e.code == "LifecyclePolicyNotFound":
                             pass
@@ -6337,12 +6353,6 @@ class ShowOCIService(object):
                             self.__load_print_auth_warning()
                         else:
                             raise
-
-                    if lp:
-                        for lc in lp.items:
-                            if val['object_lifecycle']:
-                                val['object_lifecycle'] += ", "
-                            val['object_lifecycle'] += str(lc.name) + " - " + str(lc.action) + " - " + str(lc.time_amount) + " " + str(lc.time_unit)
 
                     data.append(val)
                     cnt += 1
