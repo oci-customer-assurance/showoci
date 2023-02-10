@@ -1368,6 +1368,10 @@ class ShowOCIOutput(object):
                 if dbs['cluster_name']:
                     print(self.tabs + "Cluster : " + dbs['cluster_name'])
 
+            if 'database_edition' in dbs:
+                if dbs['database_edition']:
+                    print(self.tabs + "Edition : " + dbs['database_edition'])
+
             if 'data' in dbs:
                 if dbs['data']:
                     print(self.tabs + "Data    : " + dbs['data'])
