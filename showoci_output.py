@@ -1357,6 +1357,9 @@ class ShowOCIOutput(object):
             if 'host' in dbs:
                 print(self.tabs + "Host    : " + dbs['host'])
 
+            if 'license_model' in dbs:
+                print(self.tabs + "License : " + dbs['license_model'])
+
             if 'domain' in dbs:
                 if dbs['domain']:
                     print(self.tabs + "Domain  : " + dbs['domain'])
@@ -1390,6 +1393,9 @@ class ShowOCIOutput(object):
 
             if 'listener_port' in dbs:
                 print(self.tabs + "Port    : " + dbs['listener_port'])
+
+            if 'cluster_name' in dbs:
+                print(self.tabs + "Cluster : " + dbs['cluster_name'])
 
             if 'patches' in dbs:
                 for p in dbs['patches']:
