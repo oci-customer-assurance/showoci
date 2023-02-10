@@ -21,6 +21,8 @@
 # Tables used:
 # - OCI_SHOWOCI_COMPUTE
 # - OCI_SHOWOCI_BLOCK_VOLUMES
+# - OCI_SHOWOCI_DATABASE_SYSTEMS
+# - OCI_SHOWOCI_DATABASES_ADB
 ##########################################################################
 import sys
 import argparse
@@ -48,10 +50,11 @@ def print_header(name, category):
 ##########################################################################
 # Get Column from Array
 ##########################################################################
-def get_column_value_from_array(column, array):
+def get_column_value_from_array(column, array, limit_size):
     if column in array:
-        return array[column][0:3999]
+        return array[column][0:limit_size]
     else:
+        print("   Column not found in CSV --> " + column)
         return ""
 
 
@@ -103,83 +106,202 @@ def set_parser_arguments():
 def handle_compute(connection, csv_location):
     try:
 
-        compute_json = {
+        json = {
             'table_name': "OCI_SHOWOCI_COMPUTE",
             'csv_file': "compute.csv",
             'items': [
-                {'col': 'tenant_name           ', 'csv': 'tenant_name           ', 'type': 'varchar2(1000)', 'pk': 'n', 'fn': ":1  "},
-                {'col': 'tenant_id             ', 'csv': 'tenant_id             ', 'type': 'varchar2(100) ', 'pk': 'n', 'fn': ":2  "},
-                {'col': 'instance_id           ', 'csv': 'instance_id           ', 'type': 'varchar2(1000)', 'pk': 'y', 'fn': ":3  "},
-                {'col': 'region_name           ', 'csv': 'region_name           ', 'type': 'varchar2(100) ', 'pk': 'n', 'fn': ":4  "},
-                {'col': 'availability_domain   ', 'csv': 'availability_domain   ', 'type': 'varchar2(100) ', 'pk': 'n', 'fn': ":5  "},
-                {'col': 'fault_domain          ', 'csv': 'fault_domain          ', 'type': 'varchar2(100) ', 'pk': 'n', 'fn': ":6  "},
-                {'col': 'compartment_path      ', 'csv': 'compartment_path      ', 'type': 'varchar2(2000)', 'pk': 'n', 'fn': ":7  "},
-                {'col': 'compartment_name      ', 'csv': 'compartment_name      ', 'type': 'varchar2(1000)', 'pk': 'n', 'fn': ":8  "},
-                {'col': 'server_name           ', 'csv': 'server_name           ', 'type': 'varchar2(1000)', 'pk': 'n', 'fn': ":9  "},
-                {'col': 'status                ', 'csv': 'status                ', 'type': 'varchar2(100) ', 'pk': 'n', 'fn': ":10 "},
-                {'col': 'type                  ', 'csv': 'type                  ', 'type': 'varchar2(1000)', 'pk': 'n', 'fn': ":11 "},
-                {'col': 'image                 ', 'csv': 'image                 ', 'type': 'varchar2(1000)', 'pk': 'n', 'fn': ":12 "},
-                {'col': 'primary_vcn           ', 'csv': 'primary_vcn           ', 'type': 'varchar2(100) ', 'pk': 'n', 'fn': ":13 "},
-                {'col': 'primary_subnet        ', 'csv': 'primary_subnet        ', 'type': 'varchar2(100) ', 'pk': 'n', 'fn': ":14 "},
-                {'col': 'shape                 ', 'csv': 'shape                 ', 'type': 'varchar2(100) ', 'pk': 'n', 'fn': ":15 "},
-                {'col': 'ocpus                 ', 'csv': 'ocpus                 ', 'type': 'number        ', 'pk': 'n', 'fn': "to_number(:16)"},
-                {'col': 'memory_gb             ', 'csv': 'memory_gb             ', 'type': 'number        ', 'pk': 'n', 'fn': "to_number(:17)"},
-                {'col': 'local_storage_tb      ', 'csv': 'local_storage_tb      ', 'type': 'number        ', 'pk': 'n', 'fn': "to_number(:18)"},
-                {'col': 'public_ips            ', 'csv': 'public_ips            ', 'type': 'varchar2(500) ', 'pk': 'n', 'fn': ":19 "},
-                {'col': 'private_ips           ', 'csv': 'private_ips           ', 'type': 'varchar2(500) ', 'pk': 'n', 'fn': ":20 "},
-                {'col': 'security_groups       ', 'csv': 'security_groups       ', 'type': 'varchar2(1000)', 'pk': 'n', 'fn': ":21 "},
-                {'col': 'internal_fqdn         ', 'csv': 'internal_fqdn         ', 'type': 'varchar2(1000)', 'pk': 'n', 'fn': ":22 "},
-                {'col': 'time_created          ', 'csv': 'time_created          ', 'type': 'date          ', 'pk': 'n', 'fn': "to_date(:23,'YYYY-MM-DD HH24:MI')"},
-                {'col': 'boot_volume           ', 'csv': 'boot_volume           ', 'type': 'varchar2(100) ', 'pk': 'n', 'fn': ":24 "},
-                {'col': 'boot_volume_size_gb   ', 'csv': 'boot_volume_size_gb   ', 'type': 'number        ', 'pk': 'n', 'fn': "to_number(:25)"},
-                {'col': 'boot_volume_b_policy  ', 'csv': 'boot_volume_b_policy  ', 'type': 'varchar2(1000)', 'pk': 'n', 'fn': ":26 "},
-                {'col': 'boot_volume_encryption', 'csv': 'boot_volume_encryption', 'type': 'varchar2(20)  ', 'pk': 'n', 'fn': ":27 "},
-                {'col': 'block_volumes         ', 'csv': 'block_volumes         ', 'type': 'varchar2(1000)', 'pk': 'n', 'fn': ":28 "},
-                {'col': 'block_volumes_total_gb', 'csv': 'block_volumes_total_gb', 'type': 'number        ', 'pk': 'n', 'fn': "to_number(:29)"},
-                {'col': 'block_volumes_b_policy', 'csv': 'block_volumes_b_policy', 'type': 'varchar2(1000)', 'pk': 'n', 'fn': ":30 "},
-                {'col': 'defined_tags          ', 'csv': 'defined_tags          ', 'type': 'varchar2(4000)', 'pk': 'n', 'fn': ":31 "},
-                {'col': 'freeform_tags         ', 'csv': 'freeform_tags         ', 'type': 'varchar2(4000)', 'pk': 'n', 'fn': ":32 "},
-                {'col': 'extract_date          ', 'csv': 'extract_date          ', 'type': 'date          ', 'pk': 'n', 'fn': "to_date(:33,'YYYY-MM-DD HH24:MI:SS')"}
+                {'col': 'tenant_name           ', 'csv': 'tenant_name           ', 'type': 'varchar2(1000)', 'pk': 'n'},
+                {'col': 'tenant_id             ', 'csv': 'tenant_id             ', 'type': 'varchar2(100) ', 'pk': 'n'},
+                {'col': 'instance_id           ', 'csv': 'instance_id           ', 'type': 'varchar2(1000)', 'pk': 'y'},
+                {'col': 'region_name           ', 'csv': 'region_name           ', 'type': 'varchar2(100) ', 'pk': 'n'},
+                {'col': 'availability_domain   ', 'csv': 'availability_domain   ', 'type': 'varchar2(100) ', 'pk': 'n'},
+                {'col': 'fault_domain          ', 'csv': 'fault_domain          ', 'type': 'varchar2(100) ', 'pk': 'n'},
+                {'col': 'compartment_path      ', 'csv': 'compartment_path      ', 'type': 'varchar2(2000)', 'pk': 'n'},
+                {'col': 'compartment_name      ', 'csv': 'compartment_name      ', 'type': 'varchar2(1000)', 'pk': 'n'},
+                {'col': 'server_name           ', 'csv': 'server_name           ', 'type': 'varchar2(1000)', 'pk': 'n'},
+                {'col': 'status                ', 'csv': 'status                ', 'type': 'varchar2(100) ', 'pk': 'n'},
+                {'col': 'type                  ', 'csv': 'type                  ', 'type': 'varchar2(1000)', 'pk': 'n'},
+                {'col': 'image                 ', 'csv': 'image                 ', 'type': 'varchar2(1000)', 'pk': 'n'},
+                {'col': 'primary_vcn           ', 'csv': 'primary_vcn           ', 'type': 'varchar2(100) ', 'pk': 'n'},
+                {'col': 'primary_subnet        ', 'csv': 'primary_subnet        ', 'type': 'varchar2(100) ', 'pk': 'n'},
+                {'col': 'shape                 ', 'csv': 'shape                 ', 'type': 'varchar2(100) ', 'pk': 'n'},
+                {'col': 'ocpus                 ', 'csv': 'ocpus                 ', 'type': 'number        ', 'pk': 'n'},
+                {'col': 'memory_gb             ', 'csv': 'memory_gb             ', 'type': 'number        ', 'pk': 'n'},
+                {'col': 'local_storage_tb      ', 'csv': 'local_storage_tb      ', 'type': 'number        ', 'pk': 'n'},
+                {'col': 'public_ips            ', 'csv': 'public_ips            ', 'type': 'varchar2(500) ', 'pk': 'n'},
+                {'col': 'private_ips           ', 'csv': 'private_ips           ', 'type': 'varchar2(500) ', 'pk': 'n'},
+                {'col': 'security_groups       ', 'csv': 'security_groups       ', 'type': 'varchar2(1000)', 'pk': 'n'},
+                {'col': 'internal_fqdn         ', 'csv': 'internal_fqdn         ', 'type': 'varchar2(1000)', 'pk': 'n'},
+                {'col': 'time_created          ', 'csv': 'time_created          ', 'type': 'date          ', 'pk': 'n'},
+                {'col': 'boot_volume           ', 'csv': 'boot_volume           ', 'type': 'varchar2(100) ', 'pk': 'n'},
+                {'col': 'boot_volume_size_gb   ', 'csv': 'boot_volume_size_gb   ', 'type': 'number        ', 'pk': 'n'},
+                {'col': 'boot_volume_b_policy  ', 'csv': 'boot_volume_b_policy  ', 'type': 'varchar2(1000)', 'pk': 'n'},
+                {'col': 'boot_volume_encryption', 'csv': 'boot_volume_encryption', 'type': 'varchar2(20)  ', 'pk': 'n'},
+                {'col': 'block_volumes         ', 'csv': 'block_volumes         ', 'type': 'varchar2(1000)', 'pk': 'n'},
+                {'col': 'block_volumes_total_gb', 'csv': 'block_volumes_total_gb', 'type': 'number        ', 'pk': 'n'},
+                {'col': 'block_volumes_b_policy', 'csv': 'block_volumes_b_policy', 'type': 'varchar2(1000)', 'pk': 'n'},
+                {'col': 'defined_tags          ', 'csv': 'defined_tags          ', 'type': 'varchar2(4000)', 'pk': 'n'},
+                {'col': 'freeform_tags         ', 'csv': 'freeform_tags         ', 'type': 'varchar2(4000)', 'pk': 'n'},
+                {'col': 'extract_date          ', 'csv': 'extract_date          ', 'type': 'date          ', 'pk': 'n'}
             ]
         }
-        handle_table(connection, compute_json, csv_location)
+        handle_table(connection, json, csv_location)
     except Exception as e:
         raise Exception("\nError at procedure: handle_compute - " + str(e))
+
+
+##########################################################################
+# Check Table Structure for Block Storage
+##########################################################################
+def handle_block_volume(connection, csv_location):
+    try:
+
+        json = {
+            'table_name': "OCI_SHOWOCI_BLOCK_VOLUMES",
+            'csv_file': "block_volumes.csv",
+            'items': [
+                {'col': 'tenant_name        ', 'csv': 'tenant_name        ', 'type': 'varchar2(1000)', 'pk': 'n'},
+                {'col': 'tenant_id          ', 'csv': 'tenant_id          ', 'type': 'varchar2(100) ', 'pk': 'n'},
+                {'col': 'id                 ', 'csv': 'id                 ', 'type': 'varchar2(1000)', 'pk': 'y'},
+                {'col': 'region_name        ', 'csv': 'region_name        ', 'type': 'varchar2(100) ', 'pk': 'n'},
+                {'col': 'availability_domain', 'csv': 'availability_domain', 'type': 'varchar2(100) ', 'pk': 'n'},
+                {'col': 'compartment_path   ', 'csv': 'compartment_path   ', 'type': 'varchar2(2000)', 'pk': 'n'},
+                {'col': 'compartment_name   ', 'csv': 'compartment_name   ', 'type': 'varchar2(1000)', 'pk': 'n'},
+                {'col': 'display_name       ', 'csv': 'display_name       ', 'type': 'varchar2(1000)', 'pk': 'n'},
+                {'col': 'size_gb            ', 'csv': 'size               ', 'type': 'number        ', 'pk': 'n'},
+                {'col': 'backup_policy      ', 'csv': 'backup_policy      ', 'type': 'varchar2(100) ', 'pk': 'n'},
+                {'col': 'vpus_per_gb        ', 'csv': 'vpus_per_gb        ', 'type': 'number        ', 'pk': 'n'},
+                {'col': 'volume_group_name  ', 'csv': 'volume_group_name  ', 'type': 'varchar2(1000)', 'pk': 'n'},
+                {'col': 'instance_name      ', 'csv': 'instance_name      ', 'type': 'varchar2(100) ', 'pk': 'n'},
+                {'col': 'instance_id        ', 'csv': 'instance_id        ', 'type': 'varchar2(100) ', 'pk': 'n'},
+                {'col': 'defined_tags       ', 'csv': 'defined_tags       ', 'type': 'varchar2(4000)', 'pk': 'n'},
+                {'col': 'freeform_tags      ', 'csv': 'freeform_tags      ', 'type': 'varchar2(4000)', 'pk': 'n'},
+                {'col': 'extract_date       ', 'csv': 'extract_date       ', 'type': 'date          ', 'pk': 'n'}
+            ]
+        }
+        handle_table(connection, json, csv_location)
+    except Exception as e:
+        raise Exception("\nError at procedure: handle_block_storage - " + str(e))
+
+
+##########################################################################
+# Check Table Structure for Database All
+##########################################################################
+def handle_database_systems(connection, csv_location):
+    try:
+
+        json = {
+            'table_name': "OCI_SHOWOCI_DATABASE_SYSTEMS",
+            'csv_file': "database_db_all.csv",
+            'items': [
+                {'col': 'tenant_name         ', 'csv': 'tenant_name         ', 'type': 'varchar2(1000)', 'pk': 'n'},
+                {'col': 'tenant_id           ', 'csv': 'tenant_id           ', 'type': 'varchar2(100) ', 'pk': 'n'},
+                {'col': 'id                  ', 'csv': 'id                  ', 'type': 'varchar2(1000)', 'pk': 'y'},
+                {'col': 'region_name         ', 'csv': 'region_name         ', 'type': 'varchar2(100) ', 'pk': 'n'},
+                {'col': 'availability_domain ', 'csv': 'availability_domain ', 'type': 'varchar2(100) ', 'pk': 'n'},
+                {'col': 'compartment_path    ', 'csv': 'compartment_path    ', 'type': 'varchar2(2000)', 'pk': 'n'},
+                {'col': 'compartment_name    ', 'csv': 'compartment_name    ', 'type': 'varchar2(1000)', 'pk': 'n'},
+                {'col': 'status              ', 'csv': 'status              ', 'type': 'varchar2(100) ', 'pk': 'n'},
+                {'col': 'type                ', 'csv': 'type                ', 'type': 'varchar2(100) ', 'pk': 'n'},
+                {'col': 'name                ', 'csv': 'name                ', 'type': 'varchar2(100) ', 'pk': 'n'},
+                {'col': 'vm_name             ', 'csv': 'vm_name             ', 'type': 'varchar2(100) ', 'pk': 'n'},
+                {'col': 'shape               ', 'csv': 'shape               ', 'type': 'varchar2(100) ', 'pk': 'n'},
+                {'col': 'gi_version          ', 'csv': 'gi_version          ', 'type': 'varchar2(100) ', 'pk': 'n'},
+                {'col': 'gi_version_date     ', 'csv': 'gi_version_date     ', 'type': 'varchar2(100) ', 'pk': 'n'},
+                {'col': 'system_version      ', 'csv': 'system_version      ', 'type': 'varchar2(100) ', 'pk': 'n'},
+                {'col': 'system_version_date ', 'csv': 'system_version_date ', 'type': 'varchar2(100) ', 'pk': 'n'},
+                {'col': 'database_edition    ', 'csv': 'database_edition    ', 'type': 'varchar2(100) ', 'pk': 'n'},
+                {'col': 'license_model       ', 'csv': 'license_model       ', 'type': 'varchar2(100) ', 'pk': 'n'},
+                {'col': 'data_subnet         ', 'csv': 'data_subnet         ', 'type': 'varchar2(1000)', 'pk': 'n'},
+                {'col': 'backup_subnet       ', 'csv': 'backup_subnet       ', 'type': 'varchar2(1000)', 'pk': 'n'},
+                {'col': 'scan_ips            ', 'csv': 'scan_ips            ', 'type': 'varchar2(1000)', 'pk': 'n'},
+                {'col': 'vip_ips             ', 'csv': 'vip_ips             ', 'type': 'varchar2(1000)', 'pk': 'n'},
+                {'col': 'cluster_name        ', 'csv': 'cluster_name        ', 'type': 'varchar2(100) ', 'pk': 'n'},
+                {'col': 'domain              ', 'csv': 'domain              ', 'type': 'varchar2(100) ', 'pk': 'n'},
+                {'col': 'db_nodes            ', 'csv': 'db_nodes            ', 'type': 'varchar2(4000)', 'pk': 'n'},
+                {'col': 'db_homes            ', 'csv': 'db_homes            ', 'type': 'varchar2(4000)', 'pk': 'n'},
+                {'col': 'maintenance_window  ', 'csv': 'maintenance_window  ', 'type': 'varchar2(4000)', 'pk': 'n'},
+                {'col': 'last_maintenance_run', 'csv': 'last_maintenance_run', 'type': 'varchar2(4000)', 'pk': 'n'},
+                {'col': 'next_maintenance_run', 'csv': 'next_maintenance_run', 'type': 'varchar2(4000)', 'pk': 'n'},
+                {'col': 'infra_id            ', 'csv': 'infra_id            ', 'type': 'varchar2(100) ', 'pk': 'n'},
+                {'col': 'cpu_core_count      ', 'csv': 'cpu_core_count      ', 'type': 'number        ', 'pk': 'n'},
+                {'col': 'shape_ocpus         ', 'csv': 'shape_ocpus         ', 'type': 'number        ', 'pk': 'n'},
+                {'col': 'db_storage_gb       ', 'csv': 'db_storage_gb       ', 'type': 'number        ', 'pk': 'n'},
+                {'col': 'memory_gb           ', 'csv': 'memory_gb           ', 'type': 'number        ', 'pk': 'n'},
+                {'col': 'local_storage_tb    ', 'csv': 'local_storage_tb    ', 'type': 'number        ', 'pk': 'n'},
+                {'col': 'node_count          ', 'csv': 'node_count          ', 'type': 'number        ', 'pk': 'n'},
+                {'col': 'defined_tags        ', 'csv': 'defined_tags        ', 'type': 'varchar2(4000)', 'pk': 'n'},
+                {'col': 'freeform_tags       ', 'csv': 'freeform_tags       ', 'type': 'varchar2(4000)', 'pk': 'n'},
+                {'col': 'time_created        ', 'csv': 'time_created        ', 'type': 'date          ', 'pk': 'n'},
+                {'col': 'extract_date        ', 'csv': 'extract_date        ', 'type': 'date          ', 'pk': 'n'}
+            ]
+        }
+        handle_table(connection, json, csv_location)
+    except Exception as e:
+        raise Exception("\nError at procedure: handle_database_systems - " + str(e))
+
+
+##########################################################################
+# Check Table Structure for Databases
+##########################################################################
+def handle_database_autonomous(connection, csv_location):
+    try:
+
+        json = {
+            'table_name': "OCI_SHOWOCI_DATABASES_ADB",
+            'csv_file': "database_autonomous.csv",
+            'items': [
+                {'col': 'tenant_name            ', 'csv': 'tenant_name            ', 'type': 'varchar2(1000)', 'pk': 'n'},
+                {'col': 'tenant_id              ', 'csv': 'tenant_id              ', 'type': 'varchar2(100) ', 'pk': 'n'},
+                {'col': 'id                     ', 'csv': 'id                     ', 'type': 'varchar2(1000)', 'pk': 'y'},
+                {'col': 'region_name            ', 'csv': 'region_name            ', 'type': 'varchar2(100) ', 'pk': 'n'},
+                {'col': 'compartment_path       ', 'csv': 'compartment_path       ', 'type': 'varchar2(2000)', 'pk': 'n'},
+                {'col': 'compartment_name       ', 'csv': 'compartment_name       ', 'type': 'varchar2(1000)', 'pk': 'n'},
+                {'col': 'status                 ', 'csv': 'status                 ', 'type': 'varchar2(100) ', 'pk': 'n'},
+                {'col': 'type                   ', 'csv': 'type                   ', 'type': 'varchar2(100) ', 'pk': 'n'},
+                {'col': 'name                   ', 'csv': 'name                   ', 'type': 'varchar2(100) ', 'pk': 'n'},
+                {'col': 'infra_name             ', 'csv': 'infra_name             ', 'type': 'varchar2(100) ', 'pk': 'n'},
+                {'col': 'cluster_name           ', 'csv': 'cluster_name           ', 'type': 'varchar2(100) ', 'pk': 'n'},
+                {'col': 'container_name         ', 'csv': 'container_name         ', 'type': 'varchar2(100) ', 'pk': 'n'},
+                {'col': 'db_version             ', 'csv': 'db_version             ', 'type': 'varchar2(100) ', 'pk': 'n'},
+                {'col': 'db_name                ', 'csv': 'db_name                ', 'type': 'varchar2(100) ', 'pk': 'n'},
+                {'col': 'version_license_model  ', 'csv': 'version_license_model  ', 'type': 'varchar2(100) ', 'pk': 'n'},
+                {'col': 'data_safe_status       ', 'csv': 'data_safe_status       ', 'type': 'varchar2(100) ', 'pk': 'n'},
+                {'col': 'time_maintenance_begin ', 'csv': 'time_maintenance_begin ', 'type': 'varchar2(100) ', 'pk': 'n'},
+                {'col': 'time_maintenance_end   ', 'csv': 'time_maintenance_end   ', 'type': 'varchar2(100) ', 'pk': 'n'},
+                {'col': 'subnet_id              ', 'csv': 'subnet_id              ', 'type': 'varchar2(100) ', 'pk': 'n'},
+                {'col': 'subnet_name            ', 'csv': 'subnet_name            ', 'type': 'varchar2(1000)', 'pk': 'n'},
+                {'col': 'private_endpoint       ', 'csv': 'private_endpoint       ', 'type': 'varchar2(1000)', 'pk': 'n'},
+                {'col': 'private_endpoint_label ', 'csv': 'private_endpoint_label ', 'type': 'varchar2(100) ', 'pk': 'n'},
+                {'col': 'nsg_ids                ', 'csv': 'nsg_ids                ', 'type': 'varchar2(1000)', 'pk': 'n'},
+                {'col': 'nsg_names              ', 'csv': 'nsg_names              ', 'type': 'varchar2(4000)', 'pk': 'n'},
+                {'col': 'whitelisted_ips        ', 'csv': 'whitelisted_ips        ', 'type': 'varchar2(4000)', 'pk': 'n'},
+                {'col': 'service_console_url    ', 'csv': 'service_console_url    ', 'type': 'varchar2(4000)', 'pk': 'n'},
+                {'col': 'connection_strings     ', 'csv': 'connection_strings     ', 'type': 'varchar2(4000)', 'pk': 'n'},
+                {'col': 'is_auto_scaling_enabled', 'csv': 'is_auto_scaling_enabled', 'type': 'varchar2(100) ', 'pk': 'n'},
+                {'col': 'is_dedicated           ', 'csv': 'is_dedicated           ', 'type': 'varchar2(100) ', 'pk': 'n'},
+                {'col': 'cpu_core_count         ', 'csv': 'cpu_core_count         ', 'type': 'number        ', 'pk': 'n'},
+                {'col': 'db_storage_tb          ', 'csv': 'db_storage_tb          ', 'type': 'number        ', 'pk': 'n'},
+                {'col': 'defined_tags           ', 'csv': 'defined_tags           ', 'type': 'varchar2(4000)', 'pk': 'n'},
+                {'col': 'freeform_tags          ', 'csv': 'freeform_tags          ', 'type': 'varchar2(4000)', 'pk': 'n'},
+                {'col': 'time_created           ', 'csv': 'time_created           ', 'type': 'date          ', 'pk': 'n'},
+                {'col': 'extract_date           ', 'csv': 'extract_date           ', 'type': 'date          ', 'pk': 'n'}
+            ]
+        }
+        handle_table(connection, json, csv_location)
+    except Exception as e:
+        raise Exception("\nError at procedure: handle_database_autonomous - " + str(e))
 
 
 ##########################################################################
 # Check Table Structure for Compute
 ##########################################################################
-def handle_block_volume(connection, csv_location):
-    try:
-
-        compute_json = {
-            'table_name': "OCI_SHOWOCI_BLOCK_VOLUMES",
-            'csv_file': "block_volumes.csv",
-            'items': [
-                {'col': 'tenant_name        ', 'csv': 'tenant_name        ', 'type': 'varchar2(1000)', 'pk': 'n', 'fn': ":1  "},
-                {'col': 'tenant_id          ', 'csv': 'tenant_id          ', 'type': 'varchar2(100) ', 'pk': 'n', 'fn': ":2  "},
-                {'col': 'id                 ', 'csv': 'id                 ', 'type': 'varchar2(1000)', 'pk': 'y', 'fn': ":3  "},
-                {'col': 'region_name        ', 'csv': 'region_name        ', 'type': 'varchar2(100) ', 'pk': 'n', 'fn': ":4  "},
-                {'col': 'availability_domain', 'csv': 'availability_domain', 'type': 'varchar2(100) ', 'pk': 'n', 'fn': ":5  "},
-                {'col': 'fault_domain       ', 'csv': 'fault_domain       ', 'type': 'varchar2(100) ', 'pk': 'n', 'fn': ":6  "},
-                {'col': 'compartment_path   ', 'csv': 'compartment_path   ', 'type': 'varchar2(2000)', 'pk': 'n', 'fn': ":7  "},
-                {'col': 'compartment_name   ', 'csv': 'compartment_name   ', 'type': 'varchar2(1000)', 'pk': 'n', 'fn': ":8  "},
-                {'col': 'display_name       ', 'csv': 'display_name       ', 'type': 'varchar2(1000)', 'pk': 'n', 'fn': ":9  "},
-                {'col': 'size_gb            ', 'csv': 'size               ', 'type': 'number        ', 'pk': 'n', 'fn': "to_number(:10)"},
-                {'col': 'backup_policy      ', 'csv': 'backup_policy      ', 'type': 'varchar2(100) ', 'pk': 'n', 'fn': ":11 "},
-                {'col': 'vpus_per_gb        ', 'csv': 'vpus_per_gb        ', 'type': 'number        ', 'pk': 'n', 'fn': "to_number(:12)"},
-                {'col': 'volume_group_name  ', 'csv': 'volume_group_name  ', 'type': 'varchar2(1000)', 'pk': 'n', 'fn': ":13 "},
-                {'col': 'instance_name      ', 'csv': 'instance_name      ', 'type': 'varchar2(100) ', 'pk': 'n', 'fn': ":14 "},
-                {'col': 'instance_id        ', 'csv': 'instance_id        ', 'type': 'varchar2(100) ', 'pk': 'n', 'fn': ":15 "},
-                {'col': 'defined_tags       ', 'csv': 'defined_tags       ', 'type': 'varchar2(4000)', 'pk': 'n', 'fn': ":16 "},
-                {'col': 'freeform_tags      ', 'csv': 'freeform_tags      ', 'type': 'varchar2(4000)', 'pk': 'n', 'fn': ":17 "},
-                {'col': 'extract_date       ', 'csv': 'extract_date       ', 'type': 'date          ', 'pk': 'n', 'fn': "to_date(:18,'YYYY-MM-DD HH24:MI:SS')"}
-            ]
-        }
-        handle_table(connection, compute_json, csv_location)
-    except Exception as e:
-        raise Exception("\nError at procedure: handle_compute - " + str(e))
+def variable_generation(item, index):
+    if 'number' in item['type']:
+        return "to_number(:" + str(index) + ")"
+    if 'date' in item['type']:
+        return "to_date(:" + str(index) + ",'YYYY-MM-DD HH24:MI')"
+    return ":" + str(index) + " "
 
 
 ##########################################################################
@@ -200,9 +322,8 @@ def handle_table(connection, inputdata, csv_location):
         merge_sql_columns = str(', '.join("a." + x['col'] + " = b." + x['col'] for x in inputdata['items'] if x['pk'] != "y"))
         insert_def_sql_columns = str(', '.join(x['col'] for x in inputdata['items']))
         insert_val_sql_columns = str(', '.join("b." + x['col'] for x in inputdata['items']))
-        insert_bulk_func = str(', '.join(x['fn'] for x in inputdata['items']))
         primary_key = next((col for col in inputdata['items'] if col['pk'] == "y"), None)['col']
-
+        insert_bulk_func = str(', '.join(variable_generation(x, index) for index, x in enumerate(inputdata['items'], start=1)))
         print("\nHandling " + csv_file)
 
         # Check if file exist
@@ -275,7 +396,8 @@ def handle_table(connection, inputdata, csv_location):
                     rowarray = []
                     for item in inputdata['items']:
                         column = str(item['csv']).strip()
-                        value = get_column_value_from_array(column, row)
+                        limit_size = 16 if 'date' in item['type'] else 3999
+                        value = get_column_value_from_array(column, row, limit_size)
                         rowarray.append(value)
                     data.append(tuple(rowarray))
                     num_rows += 1
@@ -361,6 +483,8 @@ def main_process():
             # Handling CSVs
             handle_compute(connection, cmd.csvlocation)
             handle_block_volume(connection, cmd.csvlocation)
+            handle_database_systems(connection, cmd.csvlocation)
+            handle_database_autonomous(connection, cmd.csvlocation)
 
     except oracledb.DatabaseError as e:
         print("\nError manipulating database - " + str(e) + "\n")
