@@ -40,8 +40,8 @@ elif [ -f "/home/opc/oci-python-sdk/examples/showoci/showoci.py" ]; then
    echo "   Creating Symbolic Link: ln -s /home/opc/oci-python-sdk/examples/showoci ."
    ln -s /home/opc/oci-python-sdk/examples/showoci .
 else
-   echo "   File showoci.py could not find, cannot upgrade, abort "
-   exit 1
+   echo "   File showoci.py could not find, creating showoci folder"
+   mkdir -p /home/opc/showoci
 fi
 
 ###########################################
