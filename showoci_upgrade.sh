@@ -57,4 +57,10 @@ download_file showoci_csv2adw.py
 download_file CHANGELOG.rst
 download_file README.md
 
+###########################################
+# Upgrading OCI SDK
+###########################################
 
+echo "" | tee -a $LOG
+echo "Upgrading OCI SDK Drivers - oci oci-cli oracledb" | tee -a $LOG
+python3 -m pip install --upgrade oci oci-cli oracledb pip
