@@ -15,8 +15,10 @@ and [usage reports](https://docs.oracle.com/en-us/iaas/Content/Billing/Concepts/
 
 ## Content
 [1. Step by Step installation Guide on OCI VM](#1-step-by-step-installation-guide-on-oci-vm)
+
 [2. How to Upgrade showoci code ](#2-how-to-upgrade-showoci-from-adi-zohar-github)
-[2. How to Upgrade oci python drivers](#2-how-to-upgrade-showoci-from-adi-zohar-github)
+
+[3. How to Upgrade oci SDK drivers](#3-how-to-upgrade-oci-sdk-drivers)
 
 
 ## 1. Step by Step installation Guide on OCI VM
@@ -58,8 +60,6 @@ and [usage reports](https://docs.oracle.com/en-us/iaas/Content/Billing/Concepts/
    --> Statement = allow dynamic-group ShowOCIDynamicGroup to read all-resources in tenancy
    
 ```
-
-![](img/Image_05.png)
 
 ### 1.4. Login to Linux Machine
 
@@ -107,7 +107,7 @@ and [usage reports](https://docs.oracle.com/en-us/iaas/Content/Billing/Concepts/
    bash -c "$(curl -L https://raw.githubusercontent.com/adizohar/showoci/master/showoci_upgrade.sh)"    
 ```
 
-## 3. How to upgrade showoci drivers
+## 3. How to upgrade OCI SDK drivers
 
 ```
    python3 -m pip install --upgrade oci oci-cli oracledb pip
