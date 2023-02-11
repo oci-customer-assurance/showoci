@@ -10,13 +10,13 @@
 #
 # @author: Adi Zohar
 #
-# Supports Python 3 and above
-#
 # coding: utf-8
 ##########################################################################
 # showoci_csv2adw - Load showoci csv reports to ADW to be used with usage2adw,
 # Currently supported: Compute + Block Volumes
 #
+# Requires oracledb python package
+# python3 -m pip install oracledb
 ##########################################################################
 # Tables used:
 # - OCI_SHOWOCI_COMPUTE
