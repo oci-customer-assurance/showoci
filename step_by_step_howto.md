@@ -16,7 +16,7 @@ and [usage reports](https://docs.oracle.com/en-us/iaas/Content/Billing/Concepts/
 ## Content
 [1. Step by Step installation Guide on OCI VM](#1-step-by-step-installation-guide-on-oci-vm)
 
-[2. How to Upgrade showoci code ](#2-how-to-upgrade-showoci-from-adi-zohar-github)
+[2. How to Upgrade or install showoci code](#2-how-to-upgrade-or-install-showoci-from-adi-zohar-github)
 
 [3. How to Upgrade oci SDK drivers](#3-how-to-upgrade-oci-sdk-drivers)
 
@@ -100,7 +100,7 @@ and [usage reports](https://docs.oracle.com/en-us/iaas/Content/Billing/Concepts/
     python3 showoci.py -ip -ani
 ```
 
-## 2. How to upgrade showoci from Adi Zohar github
+## 2. How to upgrade or install showoci from Adi Zohar github
 
 ```
    # run on oci vm
