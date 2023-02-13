@@ -18,7 +18,7 @@ and [usage reports](https://docs.oracle.com/en-us/iaas/Content/Billing/Concepts/
 
 [2. How to Upgrade or install showoci code](#2-how-to-upgrade-or-install-showoci-from-adi-zohar-github)
 
-[3. How to Upgrade oci SDK drivers](#3-how-to-upgrade-oci-sdk-drivers)
+[3. How to Upgrade OCI SDK drivers](#3-how-to-upgrade-oci-sdk-drivers)
 
 
 ## 1. Step by Step installation Guide on OCI VM
