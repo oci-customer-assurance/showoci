@@ -56,8 +56,6 @@ download_file showoci_output.py
 download_file showoci_csv2adw.py
 download_file CHANGELOG.rst
 download_file README.md
-download_file run_daily_report.sh
-chmod +x $HOME/showoci/run_daily_report.sh
 
 ###########################################
 # Upgrading OCI SDK
