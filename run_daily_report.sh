@@ -43,14 +43,14 @@ run_report()
     echo "###################################################################################"
     echo "Please Wait ..."
 
-	mkdir -p $DIR
+    mkdir -p $DIR
     mkdir -p $CSV_DIR
-	echo "Running $NAME... to $OUTPUT_FILE "
+    echo "Running $NAME... to $OUTPUT_FILE "
 
     # if using instant principle don't add -t
     if [ "$2" = "-ip" ]
     then
-	    python3 $APPDIR/showoci.py -ani $3 $4 $5 $6 -sjf $JSON_FILE -csv $CSV_FILE > $OUTPUT_FILE 2>&1
+	    python3 $APPDIR/showoci.py -ani $2 $3 $4 $5 $6 -sjf $JSON_FILE -csv $CSV_FILE > $OUTPUT_FILE 2>&1
     else
 	    python3 $APPDIR/showoci.py -ani -t $NAME $2 $3 $4 $5 $6 -sjf $JSON_FILE -csv $CSV_FILE > $OUTPUT_FILE 2>&1
     fi
@@ -80,7 +80,7 @@ run_report()
     /usr/bin/find ${DIR} -name "*.txt" -mtime +180 -exec rm -f '{}' \;
 
     echo "###################################################################################"
-	echo "# Finish `date` - $NAME $ERROR $WARNING "
+    echo "# Finish `date` - $NAME $ERROR $WARNING "
     echo "###################################################################################"
 
 }
