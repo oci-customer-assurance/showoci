@@ -6056,57 +6056,59 @@ class ShowOCICSV(object):
                 return
 
             if services:
-                if services['streams']:
-                    for ar in services['streams']:
+                if 'streams' in services:
+                    if services['streams']:
+                        for ar in services['streams']:
 
-                        data = {
-                            'region_name': region_name,
-                            'compartment_name': ar['compartment_name'],
-                            'compartment_path': ar['compartment_path'],
-                            'type': "STREAM",
-                            'name': ar['name'],
-                            'partitions': ar['partitions'],
-                            'time_created': ar['time_created'][0:16],
-                            'lifecycle_state': ar['lifecycle_state'],
-                            'lifecycle_details': "",
-                            'messages_endpoint': ar['messages_endpoint'],
-                            'retention_in_seconds': "",
-                            'visibility_in_seconds': "",
-                            'timeout_in_seconds': "",
-                            'dead_letter_queue_delivery_count': "",
-                            'custom_encryption_key_id': "",
-                            'freeform_tags': self.__get_freeform_tags(ar['freeform_tags']),
-                            'defined_tags': self.__get_defined_tags(ar['defined_tags']),
-                            'id': ar['id']
-                        }
+                            data = {
+                                'region_name': region_name,
+                                'compartment_name': ar['compartment_name'],
+                                'compartment_path': ar['compartment_path'],
+                                'type': "STREAM",
+                                'name': ar['name'],
+                                'partitions': ar['partitions'],
+                                'time_created': ar['time_created'][0:16],
+                                'lifecycle_state': ar['lifecycle_state'],
+                                'lifecycle_details': "",
+                                'messages_endpoint': ar['messages_endpoint'],
+                                'retention_in_seconds': "",
+                                'visibility_in_seconds': "",
+                                'timeout_in_seconds': "",
+                                'dead_letter_queue_delivery_count': "",
+                                'custom_encryption_key_id': "",
+                                'freeform_tags': self.__get_freeform_tags(ar['freeform_tags']),
+                                'defined_tags': self.__get_defined_tags(ar['defined_tags']),
+                                'id': ar['id']
+                            }
 
-                        self.csv_streams_queues.append(data)
+                            self.csv_streams_queues.append(data)
 
-                if services['queues']:
-                    for ar in services['queues']:
+                if 'queues' in services:
+                    if services['queues']:
+                        for ar in services['queues']:
 
-                        data = {
-                            'region_name': region_name,
-                            'compartment_name': ar['compartment_name'],
-                            'compartment_path': ar['compartment_path'],
-                            'type': "QUEUE",
-                            'name': ar['name'],
-                            'partitions': "",
-                            'time_created': ar['time_created'][0:16],
-                            'lifecycle_state': ar['lifecycle_state'],
-                            'lifecycle_details': ar['lifecycle_details'],
-                            'messages_endpoint': ar['messages_endpoint'],
-                            'retention_in_seconds': ar['retention_in_seconds'],
-                            'visibility_in_seconds': ar['visibility_in_seconds'],
-                            'timeout_in_seconds': ar['timeout_in_seconds'],
-                            'dead_letter_queue_delivery_count': ar['dead_letter_queue_delivery_count'],
-                            'custom_encryption_key_id': ar['custom_encryption_key_id'],
-                            'freeform_tags': self.__get_freeform_tags(ar['freeform_tags']),
-                            'defined_tags': self.__get_defined_tags(ar['defined_tags']),
-                            'id': ar['id']
-                        }
+                            data = {
+                                'region_name': region_name,
+                                'compartment_name': ar['compartment_name'],
+                                'compartment_path': ar['compartment_path'],
+                                'type': "QUEUE",
+                                'name': ar['name'],
+                                'partitions': "",
+                                'time_created': ar['time_created'][0:16],
+                                'lifecycle_state': ar['lifecycle_state'],
+                                'lifecycle_details': ar['lifecycle_details'],
+                                'messages_endpoint': ar['messages_endpoint'],
+                                'retention_in_seconds': ar['retention_in_seconds'],
+                                'visibility_in_seconds': ar['visibility_in_seconds'],
+                                'timeout_in_seconds': ar['timeout_in_seconds'],
+                                'dead_letter_queue_delivery_count': ar['dead_letter_queue_delivery_count'],
+                                'custom_encryption_key_id': ar['custom_encryption_key_id'],
+                                'freeform_tags': self.__get_freeform_tags(ar['freeform_tags']),
+                                'defined_tags': self.__get_defined_tags(ar['defined_tags']),
+                                'id': ar['id']
+                            }
 
-                        self.csv_streams_queues.append(data)
+                            self.csv_streams_queues.append(data)
 
         except Exception as e:
             self.__print_error("__csv_streams_queues", e)
