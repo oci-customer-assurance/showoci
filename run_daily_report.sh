@@ -43,9 +43,9 @@ run_report()
     echo "###################################################################################"
     echo "Please Wait ..."
 
-    mkdir -p $DIR
+	mkdir -p $DIR
     mkdir -p $CSV_DIR
-    echo "Running $NAME... to $OUTPUT_FILE "
+	echo "Running $NAME... to $OUTPUT_FILE "
 
     # if using instant principle don't add -t
     if [ "$2" = "-ip" ]
@@ -80,7 +80,7 @@ run_report()
     /usr/bin/find ${DIR} -name "*.txt" -mtime +180 -exec rm -f '{}' \;
 
     echo "###################################################################################"
-    echo "# Finish `date` - $NAME $ERROR $WARNING "
+	echo "# Finish `date` - $NAME $ERROR $WARNING "
     echo "###################################################################################"
 
 }

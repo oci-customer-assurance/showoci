@@ -2830,15 +2830,34 @@ class ShowOCISummary(object):
                 return
 
             if 'oic' in paas_services:
-                self.__summary_core_size(paas_services['oic'])
+                array = [x for x in paas_services['oic'] if x['lifecycle_state'] == 'ACTIVE']
+                self.__summary_core_size(array)
+                array = [x for x in paas_services['oic'] if x['lifecycle_state'] != 'ACTIVE']
+                self.__summary_core_size(array, add_info="Stopped ")
+
             if 'oac' in paas_services:
-                self.__summary_core_size(paas_services['oac'])
+                array = [x for x in paas_services['oac'] if x['lifecycle_state'] == 'ACTIVE']
+                self.__summary_core_size(array)
+                array = [x for x in paas_services['oac'] if x['lifecycle_state'] != 'ACTIVE']
+                self.__summary_core_size(array, add_info="Stopped ")
+
             if 'oce' in paas_services:
-                self.__summary_core_size(paas_services['oce'])
+                array = [x for x in paas_services['oce'] if x['lifecycle_state'] == 'ACTIVE']
+                self.__summary_core_size(array)
+                array = [x for x in paas_services['oce'] if x['lifecycle_state'] != 'ACTIVE']
+                self.__summary_core_size(array, add_info="Stopped ")
+
             if 'ocvs' in paas_services:
-                self.__summary_core_size(paas_services['ocvs'])
+                array = [x for x in paas_services['ocvs'] if x['lifecycle_state'] == 'ACTIVE']
+                self.__summary_core_size(array)
+                array = [x for x in paas_services['ocvs'] if x['lifecycle_state'] != 'ACTIVE']
+                self.__summary_core_size(array, add_info="Stopped ")
+
             if 'vb' in paas_services:
-                self.__summary_core_size(paas_services['vb'])
+                array = [x for x in paas_services['vb'] if x['lifecycle_state'] == 'ACTIVE']
+                self.__summary_core_size(array)
+                array = [x for x in paas_services['vb'] if x['lifecycle_state'] != 'ACTIVE']
+                self.__summary_core_size(array, add_info="Stopped ")
 
         except Exception as e:
             self.__print_error("__summary_paas_services_main", e)
@@ -2877,19 +2896,46 @@ class ShowOCISummary(object):
                 return
 
             if 'data_catalog' in data_ai:
-                self.__summary_core_size(data_ai['data_catalog'])
+                array = [x for x in data_ai['data_catalog'] if x['lifecycle_state'] == 'ACTIVE']
+                self.__summary_core_size(array)
+                array = [x for x in data_ai['data_catalog'] if x['lifecycle_state'] != 'ACTIVE']
+                self.__summary_core_size(array, add_info="Stopped ")
+
             if 'data_science' in data_ai:
-                self.__summary_core_size(data_ai['data_science'])
+                array = [x for x in data_ai['data_science'] if x['lifecycle_state'] == 'ACTIVE']
+                self.__summary_core_size(array)
+                array = [x for x in data_ai['data_science'] if x['lifecycle_state'] != 'ACTIVE']
+                self.__summary_core_size(array, add_info="Stopped ")
+
             if 'data_flow' in data_ai:
-                self.__summary_core_size(data_ai['data_flow'])
+                array = [x for x in data_ai['data_flow'] if x['lifecycle_state'] == 'ACTIVE']
+                self.__summary_core_size(array)
+                array = [x for x in data_ai['data_flow'] if x['lifecycle_state'] != 'ACTIVE']
+                self.__summary_core_size(array, add_info="Stopped ")
+
             if 'oda' in data_ai:
-                self.__summary_core_size(data_ai['oda'])
+                array = [x for x in data_ai['oda'] if x['lifecycle_state'] == 'ACTIVE']
+                self.__summary_core_size(array)
+                array = [x for x in data_ai['oda'] if x['lifecycle_state'] != 'ACTIVE']
+                self.__summary_core_size(array, add_info="Stopped ")
+
             if 'bds' in data_ai:
-                self.__summary_core_size(data_ai['bds'])
+                array = [x for x in data_ai['bds'] if x['lifecycle_state'] == 'ACTIVE']
+                self.__summary_core_size(array)
+                array = [x for x in data_ai['bds'] if x['lifecycle_state'] != 'ACTIVE']
+                self.__summary_core_size(array, add_info="Stopped ")
+
             if 'data_integration' in data_ai:
-                self.__summary_core_size(data_ai['data_integration'])
+                array = [x for x in data_ai['data_integration'] if x['lifecycle_state'] == 'ACTIVE']
+                self.__summary_core_size(array)
+                array = [x for x in data_ai['data_integration'] if x['lifecycle_state'] != 'ACTIVE']
+                self.__summary_core_size(array, add_info="Stopped ")
+
             if 'data_connectivity_registry' in data_ai:
-                self.__summary_core_size(data_ai['data_connectivity_registry'])
+                array = [x for x in data_ai['data_connectivity_registry'] if x['lifecycle_state'] == 'ACTIVE']
+                self.__summary_core_size(array)
+                array = [x for x in data_ai['data_connectivity_registry'] if x['lifecycle_state'] != 'ACTIVE']
+                self.__summary_core_size(array, add_info="Stopped ")
 
         except Exception as e:
             self.__print_error("__summary_data_ai_main", e)
@@ -3208,7 +3254,7 @@ class ShowOCISummary(object):
     # sum core sizes
     ##########################################################################
 
-    def __summary_core_size(self, objects, sum_info="sum_info", sum_size="sum_size_gb"):
+    def __summary_core_size(self, objects, sum_info="sum_info", sum_size="sum_size_gb", add_info=""):
         try:
             if len(objects) == 0:
                 return
@@ -3217,7 +3263,7 @@ class ShowOCISummary(object):
                 if sum_info in obj and sum_size in obj:
                     if obj[sum_size] != '':
                         if float(obj[sum_size]) > 0:
-                            self.summary_global_list.append({'type': obj[sum_info], 'size': float(obj[sum_size])})
+                            self.summary_global_list.append({'type': add_info + obj[sum_info], 'size': float(obj[sum_size])})
 
         except Exception as e:
             self.__print_error("__summary_core_size", e)

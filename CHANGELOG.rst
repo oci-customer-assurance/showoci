@@ -5,6 +5,11 @@ All notable changes to this project will be documented in this file.
 The format is based on `Keep a Changelog <http://keepachangelog.com/>`_.
 
 =====================
+23.02.21 - 23.02.21
+=====================
+* Added function for lifecycle_state active
+
+=====================
 23.02.14 - 23.02.14
 =====================
 * Added database standalone backups
