@@ -3101,6 +3101,8 @@ class ShowOCISummary(object):
 
         try:
             for dbs in list_exa:
+                if not (dbs['lifecycle_state'] == 'TERMINATED' or dbs['lifecycle_state'] == 'DELETED'):
+                    self.summary_global_list.append({'type': dbs['sum_info'] + " - Count", 'size': 1})
 
                 for vm in dbs['vm_clusters']:
                     if 'cpu_core_count' in vm:
@@ -3143,7 +3145,7 @@ class ShowOCISummary(object):
 
         try:
             for dbs in list_exa:
-                if dbs['lifecycle_state'] == 'ACTIVE' or dbs['lifecycle_state'] == 'UPDATING':
+                if not (dbs['lifecycle_state'] == 'TERMINATED' or dbs['lifecycle_state'] == 'DELETED'):
                     self.summary_global_list.append({'type': dbs['sum_info'] + " - Count", 'size': 1})
 
                 for vm in dbs['vm_clusters']:
