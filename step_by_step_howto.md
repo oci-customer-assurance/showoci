@@ -20,6 +20,9 @@ and [usage reports](https://docs.oracle.com/en-us/iaas/Content/Billing/Concepts/
 
 [3. How to Upgrade OCI SDK drivers](#3-how-to-upgrade-oci-sdk-drivers)
 
+[4. How to run using Cloud Shell](#4-how-to-run-using-cloud-shell)
+
+[4. How to run using different flags](#5-how-to-run-with-different-flags)
 
 ## 1. Step by Step installation Guide on OCI VM
 
@@ -112,6 +115,31 @@ bash -c "$(curl -L https://raw.githubusercontent.com/adizohar/showoci/master/sho
 
 ```
 python3 -m pip install --upgrade oci oci-cli oracledb pip
+```
+
+## 4. How to run using Cloud Shell
+
+```
+1. clone the oci sdk repo
+git clone https://github.com/oracle/oci-python-sdk
+
+2. run showoci with delegation token
+cd oci-python-sdk/examples/showoci
+python3 showoci.py -dt -ani
+```
+
+## 5. How to run with different flags
+
+Extract all instances and produce CSV file using Cloud Shell
+
+```
+python3 showoci.py -dt -c -csv $HOME/output
+```
+
+Extract all instances and databases and produce CSV file using Cloud Shell
+
+```
+python3 showoci.py -dt -c -d -csv $HOME/output
 ```
 
 ## License
