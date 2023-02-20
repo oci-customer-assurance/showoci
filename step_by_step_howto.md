@@ -22,7 +22,7 @@ and [usage reports](https://docs.oracle.com/en-us/iaas/Content/Billing/Concepts/
 
 [4. How to run using Cloud Shell](#4-how-to-run-using-cloud-shell)
 
-[4. How to run using different flags](#5-how-to-run-with-different-flags)
+[5. How to run using different flags](#5-how-to-run-with-different-flags)
 
 ## 1. Step by Step installation Guide on OCI VM
 
