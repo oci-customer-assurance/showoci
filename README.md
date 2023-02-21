@@ -42,9 +42,9 @@ and [usage reports](https://docs.oracle.com/en-us/iaas/Content/Billing/Concepts/
 ### Requirements
 
 1. Cloud Shell or Virtual Machine or Home PC
-2. Connectivity to Internet or NAT Gateway
-3. Python3
-4. OCI SDK Python Packages - oci
+2. Connectivity to the Internet to access OCI Rest APIs
+3. Python3 (3.9+ Recommedned)
+4. OCI SDK Python Packages - oci oracledb
 
 ### Modules Included:  
 - oci.core.VirtualNetworkClient          
@@ -94,7 +94,7 @@ and [usage reports](https://docs.oracle.com/en-us/iaas/Content/Billing/Concepts/
 
 ## 2. Executing using Cloud Shell
 
-Cloud Shell has 20 minutes limitation, for large extract, I would suggest to use dedicated Virtual Machine 
+Cloud Shell has 20 minutes timeout, for large extract, I would recommend to use dedicated Virtual Machine
 
 Step 1 - Clone from OCI SDK Repo and Create symbolink link
 
@@ -167,7 +167,7 @@ Use 'oci setup config' to configure the user on VM
 OCI -> Menu -> Compute -> Instances
 Create Instance
 --> Name = ShowOCIVM
---> Image = Oracle Linux 7
+--> Image = Oracle Linux 8
 --> Shape = Any Shape
 --> Choose your network VCN and Subnet (any type of VCN and Subnet)
 --> Assign public IP -  Optional if on public subnet
@@ -206,14 +206,21 @@ Using the SSH key you provided, SSH to the linux machine from step #1
 ssh opc@UsageVM
 ```
 
-### 5.5. Install Python 3, GIT and OCI packages
+### 5.5. Install Python 3.9, GIT and OCI packages
 
 ```
-sudo yum install -y python3 git
-sudo pip3 install --upgrade oci oci-cli oracledb
+sudo yum -y update
+sudo dnf -y module install python39
+sudo dnf -y install python39-pip
+sudo dnf -y install python39-setuptools
+sudo alternatives --set python3 /usr/bin/python3.9
+python3 -m pip install --upgrade pip
+python3 -m pip install --upgrade oci oci-cli git
+python3 -m pip install --upgrade oracledb 
 ```
 
 Test instance principle is working using oci-cli
+
 ```
 oci os ns get --auth instance_principal
 ```
