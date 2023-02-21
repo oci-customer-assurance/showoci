@@ -32,7 +32,7 @@ import platform
 # class ShowOCIService
 ##########################################################################
 class ShowOCIService(object):
-    version = "23.02.14"
+    version = "23.02.28"
     oci_compatible_version = "2.90.3"
 
     ##########################################################################
@@ -12393,9 +12393,11 @@ class ShowOCIService(object):
                         'sum_info': "PaaS OIC Native " + ("BYOL" if oic.is_byol else "INCL") + " - Msg Pack",
                         'sum_size_gb': str(oic.message_packs),
                         'is_file_server_enabled': str(oic.is_file_server_enabled),
+                        'is_visual_builder_enabled': str(oic.is_visual_builder_enabled),
+                        'shape': str(oic.shape),
                         'consumption_model': str(oic.consumption_model),
-                        'defined_tags': [],
-                        'freeform_tags': [],
+                        'defined_tags': [] if oic.defined_tags is None else oic.defined_tags,
+                        'freeform_tags': [] if oic.freeform_tags is None else oic.freeform_tags,
                         'compartment_name': str(compartment['name']),
                         'compartment_path': str(compartment['path']),
                         'compartment_id': str(compartment['id']),
