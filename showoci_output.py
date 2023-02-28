@@ -1746,22 +1746,24 @@ class ShowOCIOutput(object):
             if not sq:
                 return
 
-            if sq["streams"]:
-                self.print_header("Streams", 2)
+            if "streams" in sq:
+                if sq["streams"]:
+                    self.print_header("Streams", 2)
 
-                for ct in sq["streams"]:
-                    print(self.taba + ct['name'] + ", partitions (" + ct['partitions'] + "), Created: " + ct['time_created'][0:16])
-                    print(self.tabs + "URL   : " + str(ct['messages_endpoint']))
-                    print("")
+                    for ct in sq["streams"]:
+                        print(self.taba + ct['name'] + ", partitions (" + ct['partitions'] + "), Created: " + ct['time_created'][0:16])
+                        print(self.tabs + "URL   : " + str(ct['messages_endpoint']))
+                        print("")
 
-            if sq["queues"]:
-                self.print_header("Queues", 2)
+            if "queues" in sq:
+                if sq["queues"]:
+                    self.print_header("Queues", 2)
 
-                for ct in sq["queues"]:
-                    print(self.taba + ct['name'] + ", Created: " + ct['time_created'][0:16])
-                    print(self.tabs + "URL   : " + str(ct['messages_endpoint']))
-                    print(self.tabs + "Params: Retention (Sec): " + str(ct['retention_in_seconds']) + ", Visibility: " + str(ct['visibility_in_seconds']) + ", Timeout: " + str(ct['timeout_in_seconds']) + ", Dead Letter Delivery Count: " + str(ct['dead_letter_queue_delivery_count']))
-                    print("")
+                    for ct in sq["queues"]:
+                        print(self.taba + ct['name'] + ", Created: " + ct['time_created'][0:16])
+                        print(self.tabs + "URL   : " + str(ct['messages_endpoint']))
+                        print(self.tabs + "Params: Retention (Sec): " + str(ct['retention_in_seconds']) + ", Visibility: " + str(ct['visibility_in_seconds']) + ", Timeout: " + str(ct['timeout_in_seconds']) + ", Dead Letter Delivery Count: " + str(ct['dead_letter_queue_delivery_count']))
+                        print("")
 
         except Exception as e:
             self.__print_error("__print_streams_queues_main", e)
