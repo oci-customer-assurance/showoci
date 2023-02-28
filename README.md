@@ -210,12 +210,13 @@ ssh opc@UsageVM
 
 ```
 sudo yum -y update
+sudo yum -y git
 sudo dnf -y module install python39
 sudo dnf -y install python39-pip
 sudo dnf -y install python39-setuptools
 sudo alternatives --set python3 /usr/bin/python3.9
 python3 -m pip install --upgrade pip
-python3 -m pip install --upgrade oci oci-cli git
+python3 -m pip install --upgrade oci oci-cli 
 python3 -m pip install --upgrade oracledb 
 ```
 
