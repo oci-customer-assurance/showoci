@@ -469,6 +469,7 @@ def handle_table(connection, inputdata, csv_location, drop_before_load):
 
             # if main table exist and drop before load
             if val > 0 and drop_before_load:
+                print("   Table " + table_name + " exist, but drop flag enabled, dropping..")
                 sql = "drop table " + table_name
                 cursor.execute(sql)
                 val = 0
@@ -489,6 +490,7 @@ def handle_table(connection, inputdata, csv_location, drop_before_load):
 
             # if temp table exist and drop before load
             if val > 0 and drop_before_load:
+                print("   Table " + tmp_table_name + " exist, but drop flag enabled, dropping..")
                 sql = "drop table " + tmp_table_name
                 cursor.execute(sql)
                 val = 0
