@@ -216,7 +216,7 @@ sudo dnf -y install python39-pip
 sudo dnf -y install python39-setuptools
 sudo alternatives --set python3 /usr/bin/python3.9
 python3 -m pip install --upgrade pip
-python3 -m pip install --upgrade oci oci-cli 
+python3 -m pip install --upgrade oci oci-cli
 python3 -m pip install --upgrade oracledb 
 ```
 

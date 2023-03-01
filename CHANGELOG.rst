@@ -5,9 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on `Keep a Changelog <http://keepachangelog.com/>`_.
 
 =====================
+23.03.07 - 23.03.07
+=====================
+* Added Tags to file storage and object storage CSVs
+* Added File Storage and Object Storage to csv2adw process
+
+=====================
 23.02.28 - 23.02.28
 =====================
-* 
+* Add Information on README.md
 
 =====================
 23.02.21 - 23.02.21

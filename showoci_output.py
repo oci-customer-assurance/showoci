@@ -20,7 +20,7 @@ import csv
 
 
 class ShowOCIOutput(object):
-    version = "23.02.28"
+    version = "23.03.07"
 
     ##########################################################################
     # spaces for align
@@ -5657,7 +5657,10 @@ class ShowOCICSV(object):
                             'size_gb': fs['size_gb'],
                             'id': fs['id'],
                             'exports': exports,
-                            'mount_ips': mount_ips
+                            'mount_ips': mount_ips,
+                            'snapshots': str(','.join(x for x in fs['snapshots'])),
+                            'freeform_tags': self.__get_freeform_tags(fs['freeform_tags']),
+                            'defined_tags': self.__get_defined_tags(fs['defined_tags'])
                             }
 
                     self.csv_file_storage.append(data)
@@ -5696,6 +5699,8 @@ class ShowOCICSV(object):
                         'auto_tiering': ar['auto_tiering'],
                         'kms_key_id': ar['kms_key_id'],
                         'bucket_id': ar['id'],
+                        'freeform_tags': self.__get_freeform_tags(ar['freeform_tags']),
+                        'defined_tags': self.__get_defined_tags(ar['defined_tags']),
                         'logs': str(', '.join(x['name'] for x in ar['logs']))
                     }
 

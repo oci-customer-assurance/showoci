@@ -18,7 +18,7 @@ from showoci_service import ShowOCIService, ShowOCIFlags
 
 
 class ShowOCIData(object):
-    version = "23.02.28"
+    version = "23.03.07"
 
     ############################################
     # ShowOCIService - Service object to query
@@ -3229,6 +3229,8 @@ class ShowOCIData(object):
                            'sum_info': 'File Storage (GB)',
                            'sum_size_gb': fs['size_gb'],
                            'snapshots': [e['name'] + " - " + e['time_created'][0:16] for e in fs['snapshots']],
+                           'defined_tags': fs['defined_tags'],
+                           'freeform_tags': fs['freeform_tags'],
                            'compartment_name': fs['compartment_name'],
                            'compartment_path': fs['compartment_path'],
                            'compartment_id': fs['compartment_id'],

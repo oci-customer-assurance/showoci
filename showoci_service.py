@@ -32,7 +32,7 @@ import platform
 # class ShowOCIService
 ##########################################################################
 class ShowOCIService(object):
-    version = "23.02.28"
+    version = "23.03.07"
     oci_compatible_version = "2.90.3"
 
     ##########################################################################
@@ -6757,11 +6757,17 @@ class ShowOCIService(object):
                     # query the stacks
                     # fs = oci.file_storage.models.FileSystemSummary.
                     for fs in file_systems:
-                        val = {'id': str(fs.id), 'display_name': str(fs.display_name),
-                               'time_created': str(fs.time_created), 'availability_domain': str(fs.availability_domain),
+                        val = {'id': str(fs.id),
+                               'display_name': str(fs.display_name),
+                               'time_created': str(fs.time_created),
+                               'availability_domain': str(fs.availability_domain),
                                'size_gb': str(round(int(fs.metered_bytes) / 1024 / 1024 / 1024, 1)),
-                               'metered_bytes': str(fs.metered_bytes), 'snapshots': [],
-                               'compartment_name': str(compartment['name']), 'compartment_id': str(compartment['id']),
+                               'metered_bytes': str(fs.metered_bytes),
+                               'snapshots': [],
+                               'defined_tags': [] if fs.defined_tags is None else fs.defined_tags,
+                               'freeform_tags': [] if fs.freeform_tags is None else fs.freeform_tags,
+                               'compartment_name': str(compartment['name']),
+                               'compartment_id': str(compartment['id']),
                                'compartment_path': str(compartment['path']),
                                'region_name': str(self.config['region'])}
 

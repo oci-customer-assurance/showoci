@@ -23,6 +23,8 @@
 # - OCI_SHOWOCI_BLOCK_VOLUMES
 # - OCI_SHOWOCI_DATABASE_SYSTEMS
 # - OCI_SHOWOCI_DATABASES_ADB
+# - OCI_SHOWOCI_FILE_STORAGE
+# - OCI_SHOWOCI_OBJECT_STORAGE
 ##########################################################################
 import sys
 import argparse
@@ -32,7 +34,7 @@ import oracledb
 import time
 import os
 
-version = "23.02.14"
+version = "23.03.07"
 
 
 ##########################################################################
@@ -294,6 +296,79 @@ def handle_database_autonomous(connection, csv_location):
 
 
 ##########################################################################
+# Check Table Structure for File Storage
+##########################################################################
+def handle_file_storage(connection, csv_location):
+    try:
+
+        json = {
+            'table_name': "OCI_SHOWOCI_FILE_STORAGE",
+            'csv_file': "file_storage.csv",
+            'items': [
+                {'col': 'tenant_name        ', 'csv': 'tenant_name        ', 'type': 'varchar2(1000)', 'pk': 'n'},
+                {'col': 'tenant_id          ', 'csv': 'tenant_id          ', 'type': 'varchar2(100) ', 'pk': 'n'},
+                {'col': 'id                 ', 'csv': 'id                 ', 'type': 'varchar2(1000)', 'pk': 'y'},
+                {'col': 'region_name        ', 'csv': 'region_name        ', 'type': 'varchar2(100) ', 'pk': 'n'},
+                {'col': 'availability_domain', 'csv': 'availability_domain', 'type': 'varchar2(100) ', 'pk': 'n'},
+                {'col': 'compartment_path   ', 'csv': 'compartment_path   ', 'type': 'varchar2(2000)', 'pk': 'n'},
+                {'col': 'compartment_name   ', 'csv': 'compartment_name   ', 'type': 'varchar2(1000)', 'pk': 'n'},
+                {'col': 'display_name       ', 'csv': 'display_name       ', 'type': 'varchar2(1000)', 'pk': 'n'},
+                {'col': 'size_gb            ', 'csv': 'size               ', 'type': 'number        ', 'pk': 'n'},
+                {'col': 'exports            ', 'csv': 'exports            ', 'type': 'varchar2(2000)', 'pk': 'n'},
+                {'col': 'snapshots          ', 'csv': 'snapshots          ', 'type': 'varchar2(2000)', 'pk': 'n'},
+                {'col': 'mount_ips          ', 'csv': 'mount_ips          ', 'type': 'varchar2(2000)', 'pk': 'n'},
+                {'col': 'defined_tags       ', 'csv': 'defined_tags       ', 'type': 'varchar2(4000)', 'pk': 'n'},
+                {'col': 'freeform_tags      ', 'csv': 'freeform_tags      ', 'type': 'varchar2(4000)', 'pk': 'n'},
+                {'col': 'extract_date       ', 'csv': 'extract_date       ', 'type': 'date          ', 'pk': 'n'}
+            ]
+        }
+        handle_table(connection, json, csv_location)
+    except Exception as e:
+        raise Exception("\nError at procedure: handle_file_storage - " + str(e))
+
+
+##########################################################################
+# Check Table Structure for File Storage
+##########################################################################
+def handle_object_storage(connection, csv_location):
+    try:
+
+        json = {
+            'table_name': "OCI_SHOWOCI_OBJECT_STORAGE",
+            'csv_file': "object_storage_buckets.csv",
+            'items': [
+                {'col': 'tenant_name        ', 'csv': 'tenant_name        ', 'type': 'varchar2(1000)', 'pk': 'n'},
+                {'col': 'tenant_id          ', 'csv': 'tenant_id          ', 'type': 'varchar2(100) ', 'pk': 'n'},
+                {'col': 'id                 ', 'csv': 'bucket_id          ', 'type': 'varchar2(1000)', 'pk': 'y'},
+                {'col': 'namespace_name     ', 'csv': 'namespace_name     ', 'type': 'varchar2(100) ', 'pk': 'n'},
+                {'col': 'region_name        ', 'csv': 'region_name        ', 'type': 'varchar2(100) ', 'pk': 'n'},
+                {'col': 'compartment_path   ', 'csv': 'compartment_path   ', 'type': 'varchar2(2000)', 'pk': 'n'},
+                {'col': 'compartment_name   ', 'csv': 'compartment_name   ', 'type': 'varchar2(1000)', 'pk': 'n'},
+                {'col': 'bucket_name        ', 'csv': 'bucket_name        ', 'type': 'varchar2(1000)', 'pk': 'n'},
+                {'col': 'size_gb            ', 'csv': 'size               ', 'type': 'number        ', 'pk': 'n'},
+                {'col': 'objects            ', 'csv': 'objects            ', 'type': 'number        ', 'pk': 'n'},
+                {'col': 'object_lifecycle   ', 'csv': 'object_lifecycle   ', 'type': 'varchar2(2000)', 'pk': 'n'},
+                {'col': 'public_access_type ', 'csv': 'public_access_type ', 'type': 'varchar2(2000)', 'pk': 'n'},
+                {'col': 'storage_tier       ', 'csv': 'storage_tier       ', 'type': 'varchar2(2000)', 'pk': 'n'},
+                {'col': 'is_read_only       ', 'csv': 'is_read_only       ', 'type': 'varchar2(2000)', 'pk': 'n'},
+                {'col': 'versioning         ', 'csv': 'versioning         ', 'type': 'varchar2(2000)', 'pk': 'n'},
+                {'col': 'auto_tiering       ', 'csv': 'auto_tiering       ', 'type': 'varchar2(2000)', 'pk': 'n'},
+                {'col': 'kms_key_id         ', 'csv': 'kms_key_id         ', 'type': 'varchar2(2000)', 'pk': 'n'},
+                {'col': 'logs               ', 'csv': 'logs               ', 'type': 'varchar2(4000)', 'pk': 'n'},
+                {'col': 'defined_tags       ', 'csv': 'defined_tags       ', 'type': 'varchar2(4000)', 'pk': 'n'},
+                {'col': 'freeform_tags      ', 'csv': 'freeform_tags      ', 'type': 'varchar2(4000)', 'pk': 'n'},
+                {'col': 'preauthenticated_requests', 'csv': 'preauthenticated_requests', 'type': 'varchar2(2000)', 'pk': 'n'},
+                {'col': 'object_events_enabled    ', 'csv': 'object_events_enabled    ', 'type': 'varchar2(2000)', 'pk': 'n'},
+                {'col': 'replication_enabled      ', 'csv': 'replication_enabled      ', 'type': 'varchar2(2000)', 'pk': 'n'},
+                {'col': 'extract_date       ', 'csv': 'extract_date       ', 'type': 'date          ', 'pk': 'n'}
+            ]
+        }
+        handle_table(connection, json, csv_location)
+    except Exception as e:
+        raise Exception("\nError at procedure: handle_object_storage - " + str(e))
+
+
+##########################################################################
 # Check Table Structure for Compute
 ##########################################################################
 def variable_generation(item, index):
@@ -485,6 +560,8 @@ def main_process():
             handle_block_volume(connection, cmd.csvlocation)
             handle_database_systems(connection, cmd.csvlocation)
             handle_database_autonomous(connection, cmd.csvlocation)
+            handle_file_storage(connection, cmd.csvlocation)
+            handle_object_storage(connection, cmd.csvlocation)
 
     except oracledb.DatabaseError as e:
         print("\nError manipulating database - " + str(e) + "\n")
