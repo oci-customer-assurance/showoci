@@ -5484,7 +5484,10 @@ class ShowOCICSV(object):
                             'listener_path': "",
                             'listener_rule': "",
                             'listener_host': "",
+                            'time_created': lb['time_created'],
                             'lb_certificates': lb['certificates'],
+                            'freeform_tags': self.__get_freeform_tags(lb['freeform_tags']),
+                            'defined_tags': self.__get_defined_tags(lb['defined_tags']),
                             'loadbalancer_id': lb['id']
                             }
                     self.csv_load_balancer.append(data)
@@ -5509,7 +5512,10 @@ class ShowOCICSV(object):
                             'listener_host': str(', '.join(x for x in listener['hostname_names'])),
                             'listener_path': listener['path_route_set_name'],
                             'listener_rule': str(', '.join(x for x in listener['rule_set_names'])),
+                            'time_created': lb['time_created'],
                             'lb_certificates': lb['certificates'],
+                            'freeform_tags': self.__get_freeform_tags(lb['freeform_tags']),
+                            'defined_tags': self.__get_defined_tags(lb['defined_tags']),
                             'loadbalancer_id': lb['id']
                             }
                     self.csv_load_balancer.append(data)
@@ -5656,6 +5662,7 @@ class ShowOCICSV(object):
                             'display_name': fs['display_name'],
                             'size_gb': fs['size_gb'],
                             'id': fs['id'],
+                            'time_created': fs['time_created'],
                             'exports': exports,
                             'mount_ips': mount_ips,
                             'snapshots': str(','.join(x for x in fs['snapshots'])),
@@ -5699,6 +5706,7 @@ class ShowOCICSV(object):
                         'auto_tiering': ar['auto_tiering'],
                         'kms_key_id': ar['kms_key_id'],
                         'bucket_id': ar['id'],
+                        'time_created': ar['time_created'],
                         'freeform_tags': self.__get_freeform_tags(ar['freeform_tags']),
                         'defined_tags': self.__get_defined_tags(ar['defined_tags']),
                         'logs': str(', '.join(x['name'] for x in ar['logs']))

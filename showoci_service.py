@@ -5626,6 +5626,7 @@ class ShowOCIService(object):
                     # add the rest
                     val = {'id': str(arr.id),
                            'shape_name': str(arr.shape_name),
+                           'time_created': str(arr.time_created)[0:16],
                            'shape_min_mbps': "",
                            'shape_max_mbps': "",
                            'display_name': str(arr.display_name),
@@ -6303,7 +6304,7 @@ class ShowOCIService(object):
                         if bucket:
                             val = {
                                 'name': str(arr.name),
-                                'time_created': str(arr.time_created),
+                                'time_created': str(arr.time_created)[0:16],
                                 'compartment_name': str(compartment['name']),
                                 'compartment_path': str(compartment['path']),
                                 'compartment_id': str(compartment['id']),
@@ -6759,7 +6760,7 @@ class ShowOCIService(object):
                     for fs in file_systems:
                         val = {'id': str(fs.id),
                                'display_name': str(fs.display_name),
-                               'time_created': str(fs.time_created),
+                               'time_created': str(fs.time_created)[0:16],
                                'availability_domain': str(fs.availability_domain),
                                'size_gb': str(round(int(fs.metered_bytes) / 1024 / 1024 / 1024, 1)),
                                'metered_bytes': str(fs.metered_bytes),

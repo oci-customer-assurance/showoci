@@ -3223,6 +3223,7 @@ class ShowOCIData(object):
             for fs in file_systems:
                 dataval = {'id': fs['id'],
                            'filesystem': fs['display_name'] + " - " + fs['availability_domain'] + " - " + fs['size_gb'] + "GB metered",
+                           'time_created': fs['time_created'],
                            'display_name': fs['display_name'],
                            'availability_domain': fs['availability_domain'],
                            'size_gb': fs['size_gb'],
@@ -3262,6 +3263,7 @@ class ShowOCIData(object):
             for bucket in buckets:
                 value = {'name': bucket['name'],
                          'objects': bucket['approximate_count'],
+                         'time_created': bucket['time_created'],
                          'size': bucket['approximate_size'],
                          'sum_size_gb': bucket['size_gb'],
                          'sum_info': 'Object Storage - Buckets (GB)',
@@ -3396,6 +3398,7 @@ class ShowOCIData(object):
             data['compartment_path'] = lb['compartment_path']
             data['compartment_id'] = lb['compartment_id']
             data['subnet_ids'] = lb['subnet_ids']
+            data['time_created'] = lb['time_created']
             data['defined_tags'] = lb['defined_tags']
             data['freeform_tags'] = lb['freeform_tags']
             data['certificates'] = lb['certificates']

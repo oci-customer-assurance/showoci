@@ -25,6 +25,7 @@
 # - OCI_SHOWOCI_DATABASES_ADB
 # - OCI_SHOWOCI_FILE_STORAGE
 # - OCI_SHOWOCI_OBJECT_STORAGE
+# - OCI_SHOWOCI_LB_LISTENERS
 ##########################################################################
 import sys
 import argparse
@@ -319,6 +320,7 @@ def handle_file_storage(connection, csv_location):
                 {'col': 'mount_ips          ', 'csv': 'mount_ips          ', 'type': 'varchar2(2000)', 'pk': 'n'},
                 {'col': 'defined_tags       ', 'csv': 'defined_tags       ', 'type': 'varchar2(4000)', 'pk': 'n'},
                 {'col': 'freeform_tags      ', 'csv': 'freeform_tags      ', 'type': 'varchar2(4000)', 'pk': 'n'},
+                {'col': 'time_created       ', 'csv': 'time_created       ', 'type': 'date          ', 'pk': 'n'},
                 {'col': 'extract_date       ', 'csv': 'extract_date       ', 'type': 'date          ', 'pk': 'n'}
             ]
         }
@@ -360,12 +362,56 @@ def handle_object_storage(connection, csv_location):
                 {'col': 'preauthenticated_requests', 'csv': 'preauthenticated_requests', 'type': 'varchar2(2000)', 'pk': 'n'},
                 {'col': 'object_events_enabled    ', 'csv': 'object_events_enabled    ', 'type': 'varchar2(2000)', 'pk': 'n'},
                 {'col': 'replication_enabled      ', 'csv': 'replication_enabled      ', 'type': 'varchar2(2000)', 'pk': 'n'},
+                {'col': 'time_created       ', 'csv': 'time_created       ', 'type': 'date          ', 'pk': 'n'},
                 {'col': 'extract_date       ', 'csv': 'extract_date       ', 'type': 'date          ', 'pk': 'n'}
             ]
         }
         handle_table(connection, json, csv_location)
     except Exception as e:
         raise Exception("\nError at procedure: handle_object_storage - " + str(e))
+
+
+##########################################################################
+# Check Table Structure for load_balancer_listeners
+##########################################################################
+def handle_load_balancer_listeners(connection, csv_location):
+    try:
+
+        json = {
+            'table_name': "OCI_SHOWOCI_LB_LISTENERS",
+            'csv_file': "load_balancer_listeners.csv",
+            'items': [
+                {'col': 'tenant_name        ', 'csv': 'tenant_name        ', 'type': 'varchar2(1000)', 'pk': 'n'},
+                {'col': 'tenant_id          ', 'csv': 'tenant_id          ', 'type': 'varchar2(100) ', 'pk': 'n'},
+                {'col': 'id                 ', 'csv': 'loadbalancer_id    ', 'type': 'varchar2(1000)', 'pk': 'y'},
+                {'col': 'region_name        ', 'csv': 'region_name        ', 'type': 'varchar2(100) ', 'pk': 'n'},
+                {'col': 'compartment_path   ', 'csv': 'compartment_path   ', 'type': 'varchar2(2000)', 'pk': 'n'},
+                {'col': 'compartment_name   ', 'csv': 'compartment_name   ', 'type': 'varchar2(1000)', 'pk': 'n'},
+                {'col': 'name               ', 'csv': 'name               ', 'type': 'varchar2(1000)', 'pk': 'n'},
+                {'col': 'status             ', 'csv': 'status             ', 'type': 'varchar2(1000)', 'pk': 'n'},
+                {'col': 'shape              ', 'csv': 'shape              ', 'type': 'varchar2(1000)', 'pk': 'n'},
+                {'col': 'type               ', 'csv': 'type               ', 'type': 'varchar2(1000)', 'pk': 'n'},
+                {'col': 'ip_addresses       ', 'csv': 'ip_addresses       ', 'type': 'varchar2(1000)', 'pk': 'n'},
+                {'col': 'log_errors         ', 'csv': 'log_errors         ', 'type': 'varchar2(1000)', 'pk': 'n'},
+                {'col': 'log_access         ', 'csv': 'log_access         ', 'type': 'varchar2(1000)', 'pk': 'n'},
+                {'col': 'logs               ', 'csv': 'logs               ', 'type': 'varchar2(1000)', 'pk': 'n'},
+                {'col': 'subnets            ', 'csv': 'subnets            ', 'type': 'varchar2(1000)', 'pk': 'n'},
+                {'col': 'listener_port      ', 'csv': 'listener_port      ', 'type': 'varchar2(2000)', 'pk': 'n'},
+                {'col': 'listener_def_bs    ', 'csv': 'listener_def_bs    ', 'type': 'varchar2(2000)', 'pk': 'n'},
+                {'col': 'listener_ssl       ', 'csv': 'listener_ssl       ', 'type': 'varchar2(2000)', 'pk': 'n'},
+                {'col': 'listener_host      ', 'csv': 'listener_host      ', 'type': 'varchar2(4000)', 'pk': 'n'},
+                {'col': 'listener_path      ', 'csv': 'listener_path      ', 'type': 'varchar2(4000)', 'pk': 'n'},
+                {'col': 'listener_rule      ', 'csv': 'listener_rule      ', 'type': 'varchar2(4000)', 'pk': 'n'},
+                {'col': 'lb_certificates    ', 'csv': 'lb_certificates    ', 'type': 'varchar2(4000)', 'pk': 'n'},
+                {'col': 'defined_tags       ', 'csv': 'defined_tags       ', 'type': 'varchar2(4000)', 'pk': 'n'},
+                {'col': 'freeform_tags      ', 'csv': 'freeform_tags      ', 'type': 'varchar2(4000)', 'pk': 'n'},
+                {'col': 'time_created       ', 'csv': 'time_created       ', 'type': 'date          ', 'pk': 'n'},
+                {'col': 'extract_date       ', 'csv': 'extract_date       ', 'type': 'date          ', 'pk': 'n'}
+            ]
+        }
+        handle_table(connection, json, csv_location)
+    except Exception as e:
+        raise Exception("\nError at procedure: handle_load_balancer_listeners - " + str(e))
 
 
 ##########################################################################
@@ -562,6 +608,7 @@ def main_process():
             handle_database_autonomous(connection, cmd.csvlocation)
             handle_file_storage(connection, cmd.csvlocation)
             handle_object_storage(connection, cmd.csvlocation)
+            handle_load_balancer_listeners(connection, cmd.csvlocation)
 
     except oracledb.DatabaseError as e:
         print("\nError manipulating database - " + str(e) + "\n")
