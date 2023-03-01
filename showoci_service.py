@@ -6322,6 +6322,7 @@ class ShowOCIService(object):
                                 'auto_tiering': str(bucket.auto_tiering) if bucket.auto_tiering else "",
                                 'id': str(bucket.id),
                                 'size_gb': "",
+                                'count': "",
                                 'approximate_count': "",
                                 'approximate_size': "",
                                 'object_lifecycle': "",
@@ -6336,6 +6337,7 @@ class ShowOCIService(object):
                                 val['approximate_count'] = str('{:11,.0f}'.format(objcnt))
                                 val['approximate_size'] = str('{:11,.1f}'.format(round(size / 1024 / 1024 / 1024, 1)))
                                 val['size_gb'] = str(round(size / 1024 / 1024 / 1024, 1))
+                                val['count'] = objcnt
 
                     except oci.exceptions.ServiceError as e:
                         if self.__check_service_error(e.code):
@@ -8786,9 +8788,6 @@ class ShowOCIService(object):
                         'compartment_id': str(compartment['id']),
                         'region_name': str(self.config['region'])
                     }
-
-                    # add to main data
-                    data.append(value)
 
                     # add the data
                     cnt += 1

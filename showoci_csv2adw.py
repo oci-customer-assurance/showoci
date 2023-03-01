@@ -27,6 +27,7 @@
 # - OCI_SHOWOCI_OBJECT_STORAGE
 # - OCI_SHOWOCI_LB_LISTENERS
 ##########################################################################
+
 import sys
 import argparse
 import datetime
@@ -82,7 +83,7 @@ def get_time_elapsed(start_time):
 def set_parser_arguments():
 
     parser = argparse.ArgumentParser(formatter_class=lambda prog: argparse.HelpFormatter(prog, max_help_position=80, width=130))
-    parser.add_argument('-csv', default="", dest='csvlocation', help='CSV Location from showoci including header')
+    parser.add_argument('-csv', default="", dest='csv_location', help='CSV Location from showoci including header')
     parser.add_argument('-du', default="", dest='duser', help='ADB User')
     parser.add_argument('-dp', default="", dest='dpass', help='ADB Password')
     parser.add_argument('-dn', default="", dest='dname', help='ADB DSN')
@@ -91,11 +92,13 @@ def set_parser_arguments():
     parser.add_argument('-wl', default="", dest='wallet_location', help='Wallet Location')
     parser.add_argument('-wp', default="", dest='wallet_password', help='Wallet Password')
 
+    parser.add_argument('-drop', action='store_true', default=False, dest='drop', help='Drop Tables before Load')
+
     parser.add_argument('--version', action='version', version='%(prog)s ' + version)
 
     result = parser.parse_args()
 
-    if not (result.duser and result.dpass and result.dname and result.csvlocation):
+    if not (result.duser and result.dpass and result.dname and result.csv_location):
         parser.print_help()
         print_header("You must specify database credentials and csv location!!", 0)
         return None
@@ -106,7 +109,7 @@ def set_parser_arguments():
 ##########################################################################
 # Check Table Structure for Compute
 ##########################################################################
-def handle_compute(connection, csv_location):
+def handle_compute(connection, cmd):
     try:
 
         json = {
@@ -114,7 +117,7 @@ def handle_compute(connection, csv_location):
             'csv_file': "compute.csv",
             'items': [
                 {'col': 'tenant_name           ', 'csv': 'tenant_name           ', 'type': 'varchar2(1000)', 'pk': 'n'},
-                {'col': 'tenant_id             ', 'csv': 'tenant_id             ', 'type': 'varchar2(100) ', 'pk': 'n'},
+                {'col': 'tenant_id             ', 'csv': 'tenant_id             ', 'type': 'varchar2(1000)', 'pk': 'n'},
                 {'col': 'instance_id           ', 'csv': 'instance_id           ', 'type': 'varchar2(1000)', 'pk': 'y'},
                 {'col': 'region_name           ', 'csv': 'region_name           ', 'type': 'varchar2(100) ', 'pk': 'n'},
                 {'col': 'availability_domain   ', 'csv': 'availability_domain   ', 'type': 'varchar2(100) ', 'pk': 'n'},
@@ -139,7 +142,7 @@ def handle_compute(connection, csv_location):
                 {'col': 'boot_volume           ', 'csv': 'boot_volume           ', 'type': 'varchar2(100) ', 'pk': 'n'},
                 {'col': 'boot_volume_size_gb   ', 'csv': 'boot_volume_size_gb   ', 'type': 'number        ', 'pk': 'n'},
                 {'col': 'boot_volume_b_policy  ', 'csv': 'boot_volume_b_policy  ', 'type': 'varchar2(1000)', 'pk': 'n'},
-                {'col': 'boot_volume_encryption', 'csv': 'boot_volume_encryption', 'type': 'varchar2(20)  ', 'pk': 'n'},
+                {'col': 'boot_volume_encryption', 'csv': 'boot_volume_encryption', 'type': 'varchar2(200) ', 'pk': 'n'},
                 {'col': 'block_volumes         ', 'csv': 'block_volumes         ', 'type': 'varchar2(1000)', 'pk': 'n'},
                 {'col': 'block_volumes_total_gb', 'csv': 'block_volumes_total_gb', 'type': 'number        ', 'pk': 'n'},
                 {'col': 'block_volumes_b_policy', 'csv': 'block_volumes_b_policy', 'type': 'varchar2(1000)', 'pk': 'n'},
@@ -148,7 +151,7 @@ def handle_compute(connection, csv_location):
                 {'col': 'extract_date          ', 'csv': 'extract_date          ', 'type': 'date          ', 'pk': 'n'}
             ]
         }
-        handle_table(connection, json, csv_location)
+        handle_table(connection, json, cmd.csv_location, cmd.drop)
     except Exception as e:
         raise Exception("\nError at procedure: handle_compute - " + str(e))
 
@@ -156,7 +159,7 @@ def handle_compute(connection, csv_location):
 ##########################################################################
 # Check Table Structure for Block Storage
 ##########################################################################
-def handle_block_volume(connection, csv_location):
+def handle_block_volume(connection, cmd):
     try:
 
         json = {
@@ -164,7 +167,7 @@ def handle_block_volume(connection, csv_location):
             'csv_file': "block_volumes.csv",
             'items': [
                 {'col': 'tenant_name        ', 'csv': 'tenant_name        ', 'type': 'varchar2(1000)', 'pk': 'n'},
-                {'col': 'tenant_id          ', 'csv': 'tenant_id          ', 'type': 'varchar2(100) ', 'pk': 'n'},
+                {'col': 'tenant_id          ', 'csv': 'tenant_id          ', 'type': 'varchar2(1000)', 'pk': 'n'},
                 {'col': 'id                 ', 'csv': 'id                 ', 'type': 'varchar2(1000)', 'pk': 'y'},
                 {'col': 'region_name        ', 'csv': 'region_name        ', 'type': 'varchar2(100) ', 'pk': 'n'},
                 {'col': 'availability_domain', 'csv': 'availability_domain', 'type': 'varchar2(100) ', 'pk': 'n'},
@@ -175,14 +178,14 @@ def handle_block_volume(connection, csv_location):
                 {'col': 'backup_policy      ', 'csv': 'backup_policy      ', 'type': 'varchar2(100) ', 'pk': 'n'},
                 {'col': 'vpus_per_gb        ', 'csv': 'vpus_per_gb        ', 'type': 'number        ', 'pk': 'n'},
                 {'col': 'volume_group_name  ', 'csv': 'volume_group_name  ', 'type': 'varchar2(1000)', 'pk': 'n'},
-                {'col': 'instance_name      ', 'csv': 'instance_name      ', 'type': 'varchar2(100) ', 'pk': 'n'},
-                {'col': 'instance_id        ', 'csv': 'instance_id        ', 'type': 'varchar2(100) ', 'pk': 'n'},
+                {'col': 'instance_name      ', 'csv': 'instance_name      ', 'type': 'varchar2(1000)', 'pk': 'n'},
+                {'col': 'instance_id        ', 'csv': 'instance_id        ', 'type': 'varchar2(1000)', 'pk': 'n'},
                 {'col': 'defined_tags       ', 'csv': 'defined_tags       ', 'type': 'varchar2(4000)', 'pk': 'n'},
                 {'col': 'freeform_tags      ', 'csv': 'freeform_tags      ', 'type': 'varchar2(4000)', 'pk': 'n'},
                 {'col': 'extract_date       ', 'csv': 'extract_date       ', 'type': 'date          ', 'pk': 'n'}
             ]
         }
-        handle_table(connection, json, csv_location)
+        handle_table(connection, json, cmd.csv_location, cmd.drop)
     except Exception as e:
         raise Exception("\nError at procedure: handle_block_storage - " + str(e))
 
@@ -190,7 +193,7 @@ def handle_block_volume(connection, csv_location):
 ##########################################################################
 # Check Table Structure for Database All
 ##########################################################################
-def handle_database_systems(connection, csv_location):
+def handle_database_systems(connection, cmd):
     try:
 
         json = {
@@ -198,7 +201,7 @@ def handle_database_systems(connection, csv_location):
             'csv_file': "database_db_all.csv",
             'items': [
                 {'col': 'tenant_name         ', 'csv': 'tenant_name         ', 'type': 'varchar2(1000)', 'pk': 'n'},
-                {'col': 'tenant_id           ', 'csv': 'tenant_id           ', 'type': 'varchar2(100) ', 'pk': 'n'},
+                {'col': 'tenant_id           ', 'csv': 'tenant_id           ', 'type': 'varchar2(1000)', 'pk': 'n'},
                 {'col': 'id                  ', 'csv': 'id                  ', 'type': 'varchar2(1000)', 'pk': 'y'},
                 {'col': 'region_name         ', 'csv': 'region_name         ', 'type': 'varchar2(100) ', 'pk': 'n'},
                 {'col': 'availability_domain ', 'csv': 'availability_domain ', 'type': 'varchar2(100) ', 'pk': 'n'},
@@ -220,13 +223,13 @@ def handle_database_systems(connection, csv_location):
                 {'col': 'scan_ips            ', 'csv': 'scan_ips            ', 'type': 'varchar2(1000)', 'pk': 'n'},
                 {'col': 'vip_ips             ', 'csv': 'vip_ips             ', 'type': 'varchar2(1000)', 'pk': 'n'},
                 {'col': 'cluster_name        ', 'csv': 'cluster_name        ', 'type': 'varchar2(100) ', 'pk': 'n'},
-                {'col': 'domain              ', 'csv': 'domain              ', 'type': 'varchar2(100) ', 'pk': 'n'},
+                {'col': 'domain              ', 'csv': 'domain              ', 'type': 'varchar2(1000)', 'pk': 'n'},
                 {'col': 'db_nodes            ', 'csv': 'db_nodes            ', 'type': 'varchar2(4000)', 'pk': 'n'},
                 {'col': 'db_homes            ', 'csv': 'db_homes            ', 'type': 'varchar2(4000)', 'pk': 'n'},
                 {'col': 'maintenance_window  ', 'csv': 'maintenance_window  ', 'type': 'varchar2(4000)', 'pk': 'n'},
                 {'col': 'last_maintenance_run', 'csv': 'last_maintenance_run', 'type': 'varchar2(4000)', 'pk': 'n'},
                 {'col': 'next_maintenance_run', 'csv': 'next_maintenance_run', 'type': 'varchar2(4000)', 'pk': 'n'},
-                {'col': 'infra_id            ', 'csv': 'infra_id            ', 'type': 'varchar2(100) ', 'pk': 'n'},
+                {'col': 'infra_id            ', 'csv': 'infra_id            ', 'type': 'varchar2(1000)', 'pk': 'n'},
                 {'col': 'cpu_core_count      ', 'csv': 'cpu_core_count      ', 'type': 'number        ', 'pk': 'n'},
                 {'col': 'shape_ocpus         ', 'csv': 'shape_ocpus         ', 'type': 'number        ', 'pk': 'n'},
                 {'col': 'db_storage_gb       ', 'csv': 'db_storage_gb       ', 'type': 'number        ', 'pk': 'n'},
@@ -239,7 +242,7 @@ def handle_database_systems(connection, csv_location):
                 {'col': 'extract_date        ', 'csv': 'extract_date        ', 'type': 'date          ', 'pk': 'n'}
             ]
         }
-        handle_table(connection, json, csv_location)
+        handle_table(connection, json, cmd.csv_location, cmd.drop)
     except Exception as e:
         raise Exception("\nError at procedure: handle_database_systems - " + str(e))
 
@@ -247,7 +250,7 @@ def handle_database_systems(connection, csv_location):
 ##########################################################################
 # Check Table Structure for Databases
 ##########################################################################
-def handle_database_autonomous(connection, csv_location):
+def handle_database_autonomous(connection, cmd):
     try:
 
         json = {
@@ -255,7 +258,7 @@ def handle_database_autonomous(connection, csv_location):
             'csv_file': "database_autonomous.csv",
             'items': [
                 {'col': 'tenant_name            ', 'csv': 'tenant_name            ', 'type': 'varchar2(1000)', 'pk': 'n'},
-                {'col': 'tenant_id              ', 'csv': 'tenant_id              ', 'type': 'varchar2(100) ', 'pk': 'n'},
+                {'col': 'tenant_id              ', 'csv': 'tenant_id              ', 'type': 'varchar2(1000)', 'pk': 'n'},
                 {'col': 'id                     ', 'csv': 'id                     ', 'type': 'varchar2(1000)', 'pk': 'y'},
                 {'col': 'region_name            ', 'csv': 'region_name            ', 'type': 'varchar2(100) ', 'pk': 'n'},
                 {'col': 'compartment_path       ', 'csv': 'compartment_path       ', 'type': 'varchar2(2000)', 'pk': 'n'},
@@ -272,11 +275,11 @@ def handle_database_autonomous(connection, csv_location):
                 {'col': 'data_safe_status       ', 'csv': 'data_safe_status       ', 'type': 'varchar2(100) ', 'pk': 'n'},
                 {'col': 'time_maintenance_begin ', 'csv': 'time_maintenance_begin ', 'type': 'varchar2(100) ', 'pk': 'n'},
                 {'col': 'time_maintenance_end   ', 'csv': 'time_maintenance_end   ', 'type': 'varchar2(100) ', 'pk': 'n'},
-                {'col': 'subnet_id              ', 'csv': 'subnet_id              ', 'type': 'varchar2(100) ', 'pk': 'n'},
+                {'col': 'subnet_id              ', 'csv': 'subnet_id              ', 'type': 'varchar2(1000)', 'pk': 'n'},
                 {'col': 'subnet_name            ', 'csv': 'subnet_name            ', 'type': 'varchar2(1000)', 'pk': 'n'},
                 {'col': 'private_endpoint       ', 'csv': 'private_endpoint       ', 'type': 'varchar2(1000)', 'pk': 'n'},
-                {'col': 'private_endpoint_label ', 'csv': 'private_endpoint_label ', 'type': 'varchar2(100) ', 'pk': 'n'},
-                {'col': 'nsg_ids                ', 'csv': 'nsg_ids                ', 'type': 'varchar2(1000)', 'pk': 'n'},
+                {'col': 'private_endpoint_label ', 'csv': 'private_endpoint_label ', 'type': 'varchar2(1000)', 'pk': 'n'},
+                {'col': 'nsg_ids                ', 'csv': 'nsg_ids                ', 'type': 'varchar2(4000)', 'pk': 'n'},
                 {'col': 'nsg_names              ', 'csv': 'nsg_names              ', 'type': 'varchar2(4000)', 'pk': 'n'},
                 {'col': 'whitelisted_ips        ', 'csv': 'whitelisted_ips        ', 'type': 'varchar2(4000)', 'pk': 'n'},
                 {'col': 'service_console_url    ', 'csv': 'service_console_url    ', 'type': 'varchar2(4000)', 'pk': 'n'},
@@ -291,7 +294,7 @@ def handle_database_autonomous(connection, csv_location):
                 {'col': 'extract_date           ', 'csv': 'extract_date           ', 'type': 'date          ', 'pk': 'n'}
             ]
         }
-        handle_table(connection, json, csv_location)
+        handle_table(connection, json, cmd.csv_location, cmd.drop)
     except Exception as e:
         raise Exception("\nError at procedure: handle_database_autonomous - " + str(e))
 
@@ -299,7 +302,7 @@ def handle_database_autonomous(connection, csv_location):
 ##########################################################################
 # Check Table Structure for File Storage
 ##########################################################################
-def handle_file_storage(connection, csv_location):
+def handle_file_storage(connection, cmd):
     try:
 
         json = {
@@ -307,14 +310,14 @@ def handle_file_storage(connection, csv_location):
             'csv_file': "file_storage.csv",
             'items': [
                 {'col': 'tenant_name        ', 'csv': 'tenant_name        ', 'type': 'varchar2(1000)', 'pk': 'n'},
-                {'col': 'tenant_id          ', 'csv': 'tenant_id          ', 'type': 'varchar2(100) ', 'pk': 'n'},
+                {'col': 'tenant_id          ', 'csv': 'tenant_id          ', 'type': 'varchar2(1000)', 'pk': 'n'},
                 {'col': 'id                 ', 'csv': 'id                 ', 'type': 'varchar2(1000)', 'pk': 'y'},
-                {'col': 'region_name        ', 'csv': 'region_name        ', 'type': 'varchar2(100) ', 'pk': 'n'},
-                {'col': 'availability_domain', 'csv': 'availability_domain', 'type': 'varchar2(100) ', 'pk': 'n'},
+                {'col': 'region_name        ', 'csv': 'region_name        ', 'type': 'varchar2(1000)', 'pk': 'n'},
+                {'col': 'availability_domain', 'csv': 'availability_domain', 'type': 'varchar2(1000)', 'pk': 'n'},
                 {'col': 'compartment_path   ', 'csv': 'compartment_path   ', 'type': 'varchar2(2000)', 'pk': 'n'},
                 {'col': 'compartment_name   ', 'csv': 'compartment_name   ', 'type': 'varchar2(1000)', 'pk': 'n'},
                 {'col': 'display_name       ', 'csv': 'display_name       ', 'type': 'varchar2(1000)', 'pk': 'n'},
-                {'col': 'size_gb            ', 'csv': 'size               ', 'type': 'number        ', 'pk': 'n'},
+                {'col': 'size_gb            ', 'csv': 'size_gb            ', 'type': 'number        ', 'pk': 'n'},
                 {'col': 'exports            ', 'csv': 'exports            ', 'type': 'varchar2(2000)', 'pk': 'n'},
                 {'col': 'snapshots          ', 'csv': 'snapshots          ', 'type': 'varchar2(2000)', 'pk': 'n'},
                 {'col': 'mount_ips          ', 'csv': 'mount_ips          ', 'type': 'varchar2(2000)', 'pk': 'n'},
@@ -324,7 +327,7 @@ def handle_file_storage(connection, csv_location):
                 {'col': 'extract_date       ', 'csv': 'extract_date       ', 'type': 'date          ', 'pk': 'n'}
             ]
         }
-        handle_table(connection, json, csv_location)
+        handle_table(connection, json, cmd.csv_location, cmd.drop)
     except Exception as e:
         raise Exception("\nError at procedure: handle_file_storage - " + str(e))
 
@@ -332,41 +335,41 @@ def handle_file_storage(connection, csv_location):
 ##########################################################################
 # Check Table Structure for File Storage
 ##########################################################################
-def handle_object_storage(connection, csv_location):
+def handle_object_storage(connection, cmd):
     try:
 
         json = {
             'table_name': "OCI_SHOWOCI_OBJECT_STORAGE",
             'csv_file': "object_storage_buckets.csv",
             'items': [
-                {'col': 'tenant_name        ', 'csv': 'tenant_name        ', 'type': 'varchar2(1000)', 'pk': 'n'},
-                {'col': 'tenant_id          ', 'csv': 'tenant_id          ', 'type': 'varchar2(100) ', 'pk': 'n'},
-                {'col': 'id                 ', 'csv': 'bucket_id          ', 'type': 'varchar2(1000)', 'pk': 'y'},
-                {'col': 'namespace_name     ', 'csv': 'namespace_name     ', 'type': 'varchar2(100) ', 'pk': 'n'},
-                {'col': 'region_name        ', 'csv': 'region_name        ', 'type': 'varchar2(100) ', 'pk': 'n'},
-                {'col': 'compartment_path   ', 'csv': 'compartment_path   ', 'type': 'varchar2(2000)', 'pk': 'n'},
-                {'col': 'compartment_name   ', 'csv': 'compartment_name   ', 'type': 'varchar2(1000)', 'pk': 'n'},
-                {'col': 'bucket_name        ', 'csv': 'bucket_name        ', 'type': 'varchar2(1000)', 'pk': 'n'},
-                {'col': 'size_gb            ', 'csv': 'size               ', 'type': 'number        ', 'pk': 'n'},
-                {'col': 'objects            ', 'csv': 'objects            ', 'type': 'number        ', 'pk': 'n'},
-                {'col': 'object_lifecycle   ', 'csv': 'object_lifecycle   ', 'type': 'varchar2(2000)', 'pk': 'n'},
-                {'col': 'public_access_type ', 'csv': 'public_access_type ', 'type': 'varchar2(2000)', 'pk': 'n'},
-                {'col': 'storage_tier       ', 'csv': 'storage_tier       ', 'type': 'varchar2(2000)', 'pk': 'n'},
-                {'col': 'is_read_only       ', 'csv': 'is_read_only       ', 'type': 'varchar2(2000)', 'pk': 'n'},
-                {'col': 'versioning         ', 'csv': 'versioning         ', 'type': 'varchar2(2000)', 'pk': 'n'},
-                {'col': 'auto_tiering       ', 'csv': 'auto_tiering       ', 'type': 'varchar2(2000)', 'pk': 'n'},
-                {'col': 'kms_key_id         ', 'csv': 'kms_key_id         ', 'type': 'varchar2(2000)', 'pk': 'n'},
-                {'col': 'logs               ', 'csv': 'logs               ', 'type': 'varchar2(4000)', 'pk': 'n'},
-                {'col': 'defined_tags       ', 'csv': 'defined_tags       ', 'type': 'varchar2(4000)', 'pk': 'n'},
-                {'col': 'freeform_tags      ', 'csv': 'freeform_tags      ', 'type': 'varchar2(4000)', 'pk': 'n'},
+                {'col': 'tenant_name              ', 'csv': 'tenant_name              ', 'type': 'varchar2(1000)', 'pk': 'n'},
+                {'col': 'tenant_id                ', 'csv': 'tenant_id                ', 'type': 'varchar2(1000)', 'pk': 'n'},
+                {'col': 'id                       ', 'csv': 'bucket_id                ', 'type': 'varchar2(1000)', 'pk': 'y'},
+                {'col': 'namespace_name           ', 'csv': 'namespace_name           ', 'type': 'varchar2(100) ', 'pk': 'n'},
+                {'col': 'region_name              ', 'csv': 'region_name              ', 'type': 'varchar2(100) ', 'pk': 'n'},
+                {'col': 'compartment_path         ', 'csv': 'compartment_path         ', 'type': 'varchar2(2000)', 'pk': 'n'},
+                {'col': 'compartment_name         ', 'csv': 'compartment_name         ', 'type': 'varchar2(1000)', 'pk': 'n'},
+                {'col': 'bucket_name              ', 'csv': 'bucket_name              ', 'type': 'varchar2(1000)', 'pk': 'n'},
+                {'col': 'size_gb                  ', 'csv': 'size_gb                  ', 'type': 'number        ', 'pk': 'n'},
+                {'col': 'objects                  ', 'csv': 'objects                  ', 'type': 'number        ', 'pk': 'n'},
+                {'col': 'object_lifecycle         ', 'csv': 'object_lifecycle         ', 'type': 'varchar2(2000)', 'pk': 'n'},
+                {'col': 'public_access_type       ', 'csv': 'public_access_type       ', 'type': 'varchar2(2000)', 'pk': 'n'},
+                {'col': 'storage_tier             ', 'csv': 'storage_tier             ', 'type': 'varchar2(2000)', 'pk': 'n'},
+                {'col': 'is_read_only             ', 'csv': 'is_read_only             ', 'type': 'varchar2(2000)', 'pk': 'n'},
+                {'col': 'versioning               ', 'csv': 'versioning               ', 'type': 'varchar2(2000)', 'pk': 'n'},
+                {'col': 'auto_tiering             ', 'csv': 'auto_tiering             ', 'type': 'varchar2(2000)', 'pk': 'n'},
+                {'col': 'kms_key_id               ', 'csv': 'kms_key_id               ', 'type': 'varchar2(2000)', 'pk': 'n'},
+                {'col': 'logs                     ', 'csv': 'logs                     ', 'type': 'varchar2(4000)', 'pk': 'n'},
+                {'col': 'defined_tags             ', 'csv': 'defined_tags             ', 'type': 'varchar2(4000)', 'pk': 'n'},
+                {'col': 'freeform_tags            ', 'csv': 'freeform_tags            ', 'type': 'varchar2(4000)', 'pk': 'n'},
                 {'col': 'preauthenticated_requests', 'csv': 'preauthenticated_requests', 'type': 'varchar2(2000)', 'pk': 'n'},
                 {'col': 'object_events_enabled    ', 'csv': 'object_events_enabled    ', 'type': 'varchar2(2000)', 'pk': 'n'},
                 {'col': 'replication_enabled      ', 'csv': 'replication_enabled      ', 'type': 'varchar2(2000)', 'pk': 'n'},
-                {'col': 'time_created       ', 'csv': 'time_created       ', 'type': 'date          ', 'pk': 'n'},
-                {'col': 'extract_date       ', 'csv': 'extract_date       ', 'type': 'date          ', 'pk': 'n'}
+                {'col': 'time_created             ', 'csv': 'time_created             ', 'type': 'date          ', 'pk': 'n'},
+                {'col': 'extract_date             ', 'csv': 'extract_date             ', 'type': 'date          ', 'pk': 'n'}
             ]
         }
-        handle_table(connection, json, csv_location)
+        handle_table(connection, json, cmd.csv_location, cmd.drop)
     except Exception as e:
         raise Exception("\nError at procedure: handle_object_storage - " + str(e))
 
@@ -374,7 +377,7 @@ def handle_object_storage(connection, csv_location):
 ##########################################################################
 # Check Table Structure for load_balancer_listeners
 ##########################################################################
-def handle_load_balancer_listeners(connection, csv_location):
+def handle_load_balancer_listeners(connection, cmd):
     try:
 
         json = {
@@ -382,7 +385,7 @@ def handle_load_balancer_listeners(connection, csv_location):
             'csv_file': "load_balancer_listeners.csv",
             'items': [
                 {'col': 'tenant_name        ', 'csv': 'tenant_name        ', 'type': 'varchar2(1000)', 'pk': 'n'},
-                {'col': 'tenant_id          ', 'csv': 'tenant_id          ', 'type': 'varchar2(100) ', 'pk': 'n'},
+                {'col': 'tenant_id          ', 'csv': 'tenant_id          ', 'type': 'varchar2(1000)', 'pk': 'n'},
                 {'col': 'id                 ', 'csv': 'loadbalancer_id    ', 'type': 'varchar2(1000)', 'pk': 'y'},
                 {'col': 'region_name        ', 'csv': 'region_name        ', 'type': 'varchar2(100) ', 'pk': 'n'},
                 {'col': 'compartment_path   ', 'csv': 'compartment_path   ', 'type': 'varchar2(2000)', 'pk': 'n'},
@@ -409,7 +412,7 @@ def handle_load_balancer_listeners(connection, csv_location):
                 {'col': 'extract_date       ', 'csv': 'extract_date       ', 'type': 'date          ', 'pk': 'n'}
             ]
         }
-        handle_table(connection, json, csv_location)
+        handle_table(connection, json, cmd.csv_location, cmd.drop)
     except Exception as e:
         raise Exception("\nError at procedure: handle_load_balancer_listeners - " + str(e))
 
@@ -428,7 +431,7 @@ def variable_generation(item, index):
 ##########################################################################
 # Check Table Structure for Compute
 ##########################################################################
-def handle_table(connection, inputdata, csv_location):
+def handle_table(connection, inputdata, csv_location, drop_before_load):
     process_location = "Start"
     try:
 
@@ -464,6 +467,12 @@ def handle_table(connection, inputdata, csv_location):
             cursor.execute(sql, table_name=table_name)
             val, = cursor.fetchone()
 
+            # if main table exist and drop before load
+            if val > 0 and drop_before_load:
+                sql = "drop table " + table_name
+                cursor.execute(sql)
+                val = 0
+
             # if main table not exist, create it
             if val == 0:
                 print("   Table " + table_name + " was not exist, creating")
@@ -472,11 +481,17 @@ def handle_table(connection, inputdata, csv_location):
                 print("   Table " + table_name + " created")
             else:
                 print("   Table " + table_name + " exist")
-
+                    
             # check if temp table exist, if not create
             sql = "select count(*) from user_tables where table_name = :table_name"
             cursor.execute(sql, table_name=tmp_table_name)
             val, = cursor.fetchone()
+
+            # if temp table exist and drop before load
+            if val > 0 and drop_before_load:
+                sql = "drop table " + tmp_table_name
+                cursor.execute(sql)
+                val = 0
 
             # if table not exist, create it
             if val == 0:
@@ -602,13 +617,13 @@ def main_process():
             print("   Connected")
 
             # Handling CSVs
-            handle_compute(connection, cmd.csvlocation)
-            handle_block_volume(connection, cmd.csvlocation)
-            handle_database_systems(connection, cmd.csvlocation)
-            handle_database_autonomous(connection, cmd.csvlocation)
-            handle_file_storage(connection, cmd.csvlocation)
-            handle_object_storage(connection, cmd.csvlocation)
-            handle_load_balancer_listeners(connection, cmd.csvlocation)
+            handle_compute(connection, cmd)
+            handle_block_volume(connection, cmd)
+            handle_database_systems(connection, cmd)
+            handle_database_autonomous(connection, cmd)
+            handle_file_storage(connection, cmd)
+            handle_object_storage(connection, cmd)
+            handle_load_balancer_listeners(connection, cmd)
 
     except oracledb.DatabaseError as e:
         print("\nError manipulating database - " + str(e) + "\n")
