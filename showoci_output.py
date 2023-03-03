@@ -20,7 +20,7 @@ import csv
 
 
 class ShowOCIOutput(object):
-    version = "23.03.07"
+    version = "23.03.14"
 
     ##########################################################################
     # spaces for align
@@ -4546,7 +4546,7 @@ class ShowOCICSV(object):
                     'database_edition': backup['database_edition'],
                     'backup_name': backup['display_name'],
                     'time': backup['time'],
-                    'size': backup['size'],
+                    'size': backup['sum_size_gb'],
                     'id': backup['id'],
                     'database_id': backup['database_id'],
                     'lifecycle_state': backup['lifecycle_state']
@@ -4784,11 +4784,11 @@ class ShowOCICSV(object):
                             'domain': "",
                             'db_nodes': str(', '.join(x['desc'] for x in vm['db_nodes'])),
                             'db_homes': str(', '.join(x['home'] for x in vm['db_homes'])),
-                            'freeform_tags': str(', '.join(key + "=" + vm['freeform_tags'][key] for key in vm['freeform_tags'].keys())),
-                            'defined_tags': self.__get_defined_tags(vm['defined_tags']),
                             'maintenance_window': dbs['maintenance_window']['display'] if dbs['maintenance_window'] else "",
                             'last_maintenance_run': dbs['last_maintenance_run']['maintenance_display'] if dbs['last_maintenance_run'] else "",
                             'next_maintenance_run': dbs['next_maintenance_run']['maintenance_display'] if dbs['next_maintenance_run'] else "",
+                            'freeform_tags': self.__get_freeform_tags(vm['freeform_tags']),
+                            'defined_tags': self.__get_defined_tags(vm['defined_tags']),
                             'id': vm['id'],
                             'infra_id': dbs['id'],
                             }
@@ -4830,7 +4830,7 @@ class ShowOCICSV(object):
                                     'domain': "",
                                     'auto_backup_enabled': db['auto_backup_enabled'],
                                     'db_nodes': str(', '.join(x['desc'] for x in vm['db_nodes'])),
-                                    'freeform_tags': str(', '.join(key + "=" + db['freeform_tags'][key] for key in db['freeform_tags'].keys())),
+                                    'freeform_tags': self.__get_freeform_tags(db['freeform_tags']),
                                     'defined_tags': self.__get_defined_tags(db['defined_tags']),
                                     'database_id': db['id'],
                                     'dbsystem_id': vm['id'],
@@ -4885,7 +4885,7 @@ class ShowOCICSV(object):
                                     'domain': "",
                                     'auto_backup_enabled': "True",
                                     'db_nodes': "",
-                                    'freeform_tags': str(', '.join(key + "=" + db['freeform_tags'][key] for key in db['freeform_tags'].keys())),
+                                    'freeform_tags': self.__get_freeform_tags(db['freeform_tags']),
                                     'defined_tags': self.__get_defined_tags(db['defined_tags']),
                                     'database_id': db['id'],
                                     'dbsystem_id': vm['id'],
@@ -4932,7 +4932,7 @@ class ShowOCICSV(object):
                         'db_nodes': "",
                         'freeform_tags': str(', '.join(key + "=" + dbs['freeform_tags'][key] for key in dbs['freeform_tags'].keys())),
                         'defined_tags': self.__get_defined_tags(dbs['defined_tags']),
-                        'database_id': "",
+                        'database_id': dbs['id'],
                         'dbsystem_id': dbs['id'],
                         'db_home': "",
                         'db_home_version': dbs['db_version']
@@ -5478,6 +5478,7 @@ class ShowOCICSV(object):
                             'log_access': log_access,
                             'logs': str(', '.join(x['name'] for x in load_balance_obj['logs'])),
                             'subnets': str(', '.join(x for x in lb['subnets'])),
+                            'listener_name': "No Listener",
                             'listener_port': "No Listener",
                             'listener_def_bs': "",
                             'listener_ssl': "",
@@ -5488,7 +5489,8 @@ class ShowOCICSV(object):
                             'lb_certificates': lb['certificates'],
                             'freeform_tags': self.__get_freeform_tags(lb['freeform_tags']),
                             'defined_tags': self.__get_defined_tags(lb['defined_tags']),
-                            'loadbalancer_id': lb['id']
+                            'loadbalancer_id': lb['id'],
+                            'id': lb['id']
                             }
                     self.csv_load_balancer.append(data)
 
@@ -5506,6 +5508,7 @@ class ShowOCICSV(object):
                             'log_access': log_access,
                             'logs': str(', '.join(x['name'] for x in load_balance_obj['logs'])),
                             'subnets': str(', '.join(x for x in lb['subnets'])),
+                            'listener_name': listener['id'],
                             'listener_port': listener['port'],
                             'listener_def_bs': listener['default_backend_set_name'],
                             'listener_ssl': listener['ssl_configuration'],
@@ -5516,7 +5519,8 @@ class ShowOCICSV(object):
                             'lb_certificates': lb['certificates'],
                             'freeform_tags': self.__get_freeform_tags(lb['freeform_tags']),
                             'defined_tags': self.__get_defined_tags(lb['defined_tags']),
-                            'loadbalancer_id': lb['id']
+                            'loadbalancer_id': lb['id'],
+                            'id': lb['id'] + ":" + listener['id']
                             }
                     self.csv_load_balancer.append(data)
 
@@ -5524,7 +5528,7 @@ class ShowOCICSV(object):
             self.__print_error("__csv_load_balancer_details", e)
 
     ##########################################################################
-    # csv load balancer config
+    # __csv_apigw
     ##########################################################################
     def __csv_apigw(self, region_name, apigw):
         try:
@@ -5546,12 +5550,24 @@ class ShowOCICSV(object):
                             'gw_name': api['display_name'],
                             'gw_endpoint_type': api['endpoint_type'],
                             'gw_hostname': api['hostname'],
+                            'gw_subnet_id': api['subnet_id'],
                             'gw_subnet_name': api['subnet_name'],
                             'gw_time_created': api['time_created'],
+                            'gw_time_updated': api['time_updated'],
+                            'gw_lifecycle_state': api['lifecycle_state'],
+                            'gw_nsg_ids': api['nsg_ids'],
+                            'gw_nsg_names': api['nsg_names'],
+                            'gw_certificate_id': api['certificate_id'],
+                            'gw_freeform_tags': self.__get_freeform_tags(api['freeform_tags']),
+                            'gw_defined_tags': self.__get_defined_tags(api['defined_tags']),
                             'dp_display_name': dp['display_name'],
                             'path_prefix': dp['path_prefix'],
                             'endpoint': dp['endpoint'],
+                            'lifecycle_state': dp['lifecycle_state'],
                             'time_created': dp['time_created'],
+                            'time_updated': dp['time_updated'],
+                            'freeform_tags': self.__get_freeform_tags(dp['freeform_tags']),
+                            'defined_tags': self.__get_defined_tags(dp['defined_tags']),
                             'log_execution': log_execution,
                             'log_access': log_access,
                             'logs': str(', '.join(x['name'] for x in dp['logs'])),
@@ -5561,7 +5577,7 @@ class ShowOCICSV(object):
                     self.csv_apigw.append(data)
 
         except Exception as e:
-            self.__print_error("__csv_load_balancer_details", e)
+            self.__print_error("__csv_apigw", e)
 
     ##########################################################################
     # csv load balancer backedset
@@ -5596,13 +5612,17 @@ class ShowOCICSV(object):
                                 'type': ("Private" if lb['is_private'] else "Public"),
                                 'ip_addresses': str(', '.join(x for x in lb['ips'])),
                                 'subnets': str(', '.join(x for x in lb['subnets'])),
-                                'bs_name': bs['desc'],
+                                'bs_name': bs['name'],
+                                'bs_desc': bs['desc'],
                                 'bs_status': bs['status'],
                                 'health_check': bs['health_check']['desc1'] + " " + bs['health_check']['desc2'],
                                 'session_persistence': session_persistence,
                                 'ssl_cert': ssl_cert,
+                                'backend_name': backend['name'],
                                 'backend': backend['desc'],
-                                'loadbalancer_id': lb['id']
+                                'backend_ip': backend['ip_address'] + ":" + backend['port'],
+                                'loadbalancer_id': lb['id'],
+                                'id': lb['id'] + ":" + bs['name'] + ":" + backend['name'] + ":" + backend['ip_address'] + ":" + backend['port']
                                 }
                         self.csv_load_balancer_bs.append(data)
 
@@ -5900,10 +5920,35 @@ class ShowOCICSV(object):
                         'compartment_name': ar['compartment_name'],
                         'compartment_path': ar['compartment_path'],
                         'name': ar['name'],
-                        'lifecycle_state': ar['lifecycle_state'],
-                        'kubernetes_version': ar['kubernetes_version'],
                         'vcn': ar['vcn_name'],
                         'node_pools': len(ar['node_pools']),
+                        'lifecycle_state': ar['lifecycle_state'],
+                        'kubernetes_version': ar['kubernetes_version'],
+                        'compartment_id': ar['compartment_id'],
+                        'endpoint_is_public_ip_enabled': ar['endpoint_is_public_ip_enabled'],
+                        'endpoint_nsg_ids': ar['endpoint_nsg_ids'],
+                        'endpoint_nsg_names': ar['endpoint_nsg_names'],
+                        'endpoint_subnet_id': ar['endpoint_subnet_id'],
+                        'endpoint_subnet_name': ar['endpoint_subnet_name'],
+                        'option_lb_ids': ar['option_lb_ids'],
+                        'option_network_pods_cidr': ar['option_network_pods_cidr'],
+                        'option_network_services_cidr': ar['option_network_services_cidr'],
+                        'option_is_kubernetes_dashboard_enabled': ar['option_is_kubernetes_dashboard_enabled'],
+                        'option_is_tiller_enabled': ar['option_is_tiller_enabled'],
+                        'option_is_pod_security_policy_enabled': ar['option_is_pod_security_policy_enabled'],
+                        'time_created': ar['time_created'],
+                        'time_deleted': ar['time_deleted'],
+                        'time_updated': ar['time_updated'],
+                        'created_by_user_id': ar['created_by_user_id'],
+                        'deleted_by_user_id': ar['deleted_by_user_id'],
+                        'updated_by_user_id': ar['updated_by_user_id'],
+                        'endpoint_kubernetes': ar['endpoint_kubernetes'],
+                        'endpoint_public_endpoint': ar['endpoint_public_endpoint'],
+                        'endpoint_private_endpoint': ar['endpoint_private_endpoint'],
+                        'endpoint_vcn_hostname_endpoint': ar['endpoint_vcn_hostname_endpoint'],
+                        'available_kubernetes_upgrades': ar['available_kubernetes_upgrades'],
+                        'freeform_tags': self.__get_freeform_tags(ar['freeform_tags']),
+                        'defined_tags': self.__get_defined_tags(ar['defined_tags']),
                         'id': ar['id'],
                         'vcn_id': ar['vcn_id'],
                     }
@@ -5924,8 +5969,15 @@ class ShowOCICSV(object):
                             'kubernetes_version': nd['kubernetes_version'],
                             'node_shape': nd['node_shape'],
                             'quantity_per_subnet': nd['quantity_per_subnet'],
+                            'node_shape_mem_gb': nd['node_shape_mem_gb'],
+                            'node_shape_ocpus': nd['node_shape_ocpus'],
+                            'node_source_type': nd['node_source_type'],
+                            'node_source_name': nd['node_source_name'],
+                            'freeform_tags': self.__get_freeform_tags(nd['freeform_tags']),
+                            'defined_tags': self.__get_defined_tags(nd['defined_tags']),
                             'vcn': ar['vcn_name'],
                             'subnets': str(', '.join(x for x in nd['subnets'])),
+                            'subnet_ids': str(', '.join(x for x in nd['subnet_ids'])),
                             'container_id': ar['id'],
                             'node_pool_id': nd['id'],
                             'vcn_id': ar['vcn_id'],
@@ -6098,6 +6150,9 @@ class ShowOCICSV(object):
                         'message_packs': ar['message_packs'],
                         'is_byol': ar['is_byol'],
                         'is_file_server_enabled': ar['is_file_server_enabled'],
+                        'is_visual_builder_enabled': ar['is_visual_builder_enabled'],
+                        'network_endpoint_type': ar['network_endpoint_type'],
+                        'shape': ar['shape'],
                         'consumption_model': ar['consumption_model'],
                         'freeform_tags': self.__get_freeform_tags(ar['freeform_tags']),
                         'defined_tags': self.__get_defined_tags(ar['defined_tags']),

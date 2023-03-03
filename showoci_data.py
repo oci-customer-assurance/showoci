@@ -18,7 +18,7 @@ from showoci_service import ShowOCIService, ShowOCIFlags
 
 
 class ShowOCIData(object):
-    version = "23.03.07"
+    version = "23.03.14"
 
     ############################################
     # ShowOCIService - Service object to query
@@ -3422,6 +3422,7 @@ class ShowOCIData(object):
                     'default_backend_set_name': str(lo['default_backend_set_name']),
                     'path_route_set_name': lo['path_route_set_name'],
                     'rule_set_names': lo['rule_set_names'],
+                    'id': lo['id'],
                     'desc': (lo['id'].ljust(20) + " - " + str(lo['port']) + "/" + str(lo['protocol']) + " - BS: " + str(lo['default_backend_set_name']) + ("" if lo['ssl_configuration'] == "" else " - Cert: " + str(lo['ssl_configuration'])))
                 }
 
@@ -3642,6 +3643,30 @@ class ShowOCIData(object):
                            'compartment_path': container['compartment_path'],
                            'compartment_id': container['compartment_id'],
                            'region_name': container['region_name'],
+                           'endpoint_is_public_ip_enabled': container['endpoint_is_public_ip_enabled'],
+                           'endpoint_nsg_ids': container['endpoint_nsg_ids'],
+                           'endpoint_nsg_names': container['endpoint_nsg_names'],
+                           'endpoint_subnet_id': container['endpoint_subnet_id'],
+                           'endpoint_subnet_name': container['endpoint_subnet_name'],
+                           'option_lb_ids': container['option_lb_ids'],
+                           'option_network_pods_cidr': container['option_network_pods_cidr'],
+                           'option_network_services_cidr': container['option_network_services_cidr'],
+                           'option_is_kubernetes_dashboard_enabled': container['option_is_kubernetes_dashboard_enabled'],
+                           'option_is_tiller_enabled': container['option_is_tiller_enabled'],
+                           'option_is_pod_security_policy_enabled': container['option_is_pod_security_policy_enabled'],
+                           'time_created': container['time_created'],
+                           'time_deleted': container['time_deleted'],
+                           'time_updated': container['time_updated'],
+                           'created_by_user_id': container['created_by_user_id'],
+                           'deleted_by_user_id': container['deleted_by_user_id'],
+                           'updated_by_user_id': container['updated_by_user_id'],
+                           'endpoint_kubernetes': container['endpoint_kubernetes'],
+                           'endpoint_public_endpoint': container['endpoint_public_endpoint'],
+                           'endpoint_private_endpoint': container['endpoint_private_endpoint'],
+                           'endpoint_vcn_hostname_endpoint': container['endpoint_vcn_hostname_endpoint'],
+                           'available_kubernetes_upgrades': container['available_kubernetes_upgrades'],
+                           'defined_tags': container['defined_tags'],
+                           'freeform_tags': container['freeform_tags'],
                            'vcn_id': container['vcn_id'],
                            'node_pools': [],
                            'vcn_name': self.__get_core_network_vcn_name(container['vcn_id'])}
@@ -3649,13 +3674,25 @@ class ShowOCIData(object):
                     # add the node pools
                     nodes = self.service.search_multi_items(self.service.C_CONTAINER, self.service.C_CONTAINER_NODE_POOLS, 'cluster_id', container['id'])
                     for np in nodes:
-                        nval = {'id': np['id'], 'name': np['name'], 'node_image_id': np['node_image_id'], 'node_image_name': np['node_image_name'],
-                                'kubernetes_version': np['kubernetes_version'], 'node_shape': np['node_shape'],
-                                'quantity_per_subnet': np['quantity_per_subnet'],
-                                'compartment_name': np['compartment_name'],
-                                'compartment_path': np['compartment_path'],
-                                'compartment_id': np['compartment_id'],
-                                'subnets': [], 'subnet_ids': np['subnet_ids']}
+                        nval = {
+                            'id': np['id'],
+                            'name': np['name'],
+                            'node_image_id': np['node_image_id'],
+                            'node_image_name': np['node_image_name'],
+                            'kubernetes_version': np['kubernetes_version'],
+                            'node_shape': np['node_shape'],
+                            'quantity_per_subnet': np['quantity_per_subnet'],
+                            'node_shape_mem_gb': np['node_shape_mem_gb'],
+                            'node_shape_ocpus': np['node_shape_ocpus'],
+                            'node_source_type': np['node_source_type'],
+                            'node_source_name': np['node_source_name'],
+                            'defined_tags': np['defined_tags'],
+                            'freeform_tags': np['freeform_tags'],
+                            'compartment_name': np['compartment_name'],
+                            'compartment_path': np['compartment_path'],
+                            'compartment_id': np['compartment_id'],
+                            'subnets': [],
+                            'subnet_ids': np['subnet_ids']}
 
                         # subnets
                         for sub in np['subnet_ids']:
@@ -3738,10 +3775,6 @@ class ShowOCIData(object):
             if apigs:
                 for ap in apigs:
                     val = ap
-
-                    # subnet
-                    if ap['subnet_id']:
-                        val['subnet_name'] = self.__get_core_network_subnet_name(ap['subnet_id'])
 
                     # deployments
                     apidep = self.service.search_multi_items(self.service.C_API, self.service.C_API_DEPLOYMENT, 'region_name', region_name, 'gateway_id', val['id'])

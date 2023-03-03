@@ -32,7 +32,7 @@ import platform
 # class ShowOCIService
 ##########################################################################
 class ShowOCIService(object):
-    version = "23.03.07"
+    version = "23.03.14"
     oci_compatible_version = "2.90.3"
 
     ##########################################################################
@@ -9815,6 +9815,7 @@ class ShowOCIService(object):
 
                     val = {'id': str(arr.id),
                            'name': str(arr.name),
+                           'lifecycle_state': str(arr.lifecycle_state),
                            'cluster_id': str(arr.cluster_id),
                            'node_image_id': str(arr.node_image_id),
                            'kubernetes_version': str(arr.kubernetes_version),
@@ -9822,10 +9823,24 @@ class ShowOCIService(object):
                            'node_shape': str(arr.node_shape),
                            'quantity_per_subnet': str(arr.quantity_per_subnet),
                            'subnet_ids': [subnets for subnets in arr.subnet_ids],
+                           'node_shape_mem_gb': "",
+                           'node_shape_ocpus': "",
+                           'node_source_type': "",
+                           'node_source_name': "",
+                           'defined_tags': [] if arr.defined_tags is None else arr.defined_tags,
+                           'freeform_tags': [] if arr.freeform_tags is None else arr.freeform_tags,
                            'compartment_name': str(compartment['name']),
                            'compartment_path': str(compartment['path']),
                            'compartment_id': str(compartment['id']),
                            'region_name': str(self.config['region'])}
+
+                    if arr.node_shape_config:
+                        val['node_shape_ocpus'] = arr.node_shape_config.ocpus
+                        val['node_shape_mem_gb'] = arr.node_shape_config.memory_in_gbs
+
+                    if arr.node_source:
+                        val['node_source_type'] = arr.node_source.source_type
+                        val['node_source_name'] = arr.node_source.source_name
 
                     # add the data
                     cnt += 1
@@ -9881,14 +9896,76 @@ class ShowOCIService(object):
                     if not self.check_lifecycle_state_active(arr.lifecycle_state):
                         continue
 
-                    val = {'id': str(arr.id), 'name': str(arr.name),
+                    val = {'id': str(arr.id),
+                           'name': str(arr.name),
                            'lifecycle_state': str(arr.lifecycle_state),
                            'vcn_id': str(arr.vcn_id),
                            'kubernetes_version': str(arr.kubernetes_version),
+                           'defined_tags': [] if arr.defined_tags is None else arr.defined_tags,
+                           'freeform_tags': [] if arr.freeform_tags is None else arr.freeform_tags,
+                           'endpoint_is_public_ip_enabled': "",
+                           'endpoint_nsg_ids': "",
+                           'endpoint_nsg_names': "",
+                           'endpoint_subnet_id': "",
+                           'endpoint_subnet_name': "",
+                           'option_lb_ids': "",
+                           'option_network_pods_cidr': "",
+                           'option_network_services_cidr': "",
+                           'option_is_kubernetes_dashboard_enabled': "",
+                           'option_is_tiller_enabled': "",
+                           'option_is_pod_security_policy_enabled': "",
+                           'time_created': "",
+                           'time_deleted': "",
+                           'time_updated': "",
+                           'created_by_user_id': "",
+                           'deleted_by_user_id': "",
+                           'updated_by_user_id': "",
+                           'endpoint_kubernetes': "",
+                           'endpoint_public_endpoint': "",
+                           'endpoint_private_endpoint': "",
+                           'endpoint_vcn_hostname_endpoint': "",
+                           'available_kubernetes_upgrades': str(arr.available_kubernetes_upgrades),
                            'compartment_name': str(compartment['name']),
                            'compartment_path': str(compartment['path']),
                            'compartment_id': str(compartment['id']),
                            'region_name': str(self.config['region'])}
+
+                    # endpoint_config
+                    if arr.endpoint_config:
+                        val['endpoint_is_public_ip_enabled'] = arr.endpoint_config.is_public_ip_enabled
+                        val['endpoint_subnet_id'] = str(arr.endpoint_config.subnet_id)
+                        if arr.endpoint_config.subnet_id:
+                            val['endpoint_subnet_name'] = self.get_network_subnet(arr.endpoint_config.subnet_id)
+                        val['endpoint_nsg_ids'] = arr.endpoint_config.nsg_ids
+                        if arr.endpoint_config.nsg_ids:
+                            val['endpoint_nsg_names'] = self.__load_core_network_get_nsg_names(arr.endpoint_config.nsg_ids)
+
+                    # options
+                    if arr.options:
+                        val['option_lb_ids'] = arr.options.service_lb_subnet_ids
+                        if arr.options.kubernetes_network_config:
+                            val['option_network_pods_cidr'] = str(arr.options.kubernetes_network_config.pods_cidr)
+                            val['option_network_services_cidr'] = str(arr.options.kubernetes_network_config.services_cidr)
+                        if arr.options.add_ons:
+                            val['option_is_kubernetes_dashboard_enabled'] = str(arr.options.add_ons.is_kubernetes_dashboard_enabled)
+                            val['option_is_tiller_enabled'] = str(arr.options.add_ons.is_tiller_enabled)
+                        if arr.options.admission_controller_options:
+                            val['option_is_pod_security_policy_enabled'] = str(arr.options.admission_controller_options.is_pod_security_policy_enabled)
+
+                    # metadata
+                    if arr.metadata:
+                        val['time_created'] = str(arr.metadata.time_created)[0:16]
+                        val['time_deleted'] = str(arr.metadata.time_deleted)[0:16]
+                        val['time_updated'] = str(arr.metadata.time_updated)[0:16]
+                        val['created_by_user_id'] = str(arr.metadata.created_by_user_id)
+                        val['deleted_by_user_id'] = str(arr.metadata.deleted_by_user_id)
+                        val['updated_by_user_id'] = str(arr.metadata.updated_by_user_id)
+
+                    if arr.endpoints:
+                        val['endpoint_kubernetes'] = str(arr.endpoints.kubernetes)
+                        val['endpoint_public_endpoint'] = str(arr.endpoints.public_endpoint)
+                        val['endpoint_private_endpoint'] = str(arr.endpoints.private_endpoint)
+                        val['endpoint_vcn_hostname_endpoint'] = str(arr.endpoints.vcn_hostname_endpoint)
 
                     # add the data
                     cnt += 1
@@ -10154,8 +10231,8 @@ class ShowOCIService(object):
                 apigs = []
                 try:
                     apigs = oci.pagination.list_call_get_all_results(
-                        api_client.list_gateways, compartment_id=compartment['id'],
-                        lifecycle_state="ACTIVE",
+                        api_client.list_gateways,
+                        compartment_id=compartment['id'],
                         retry_strategy=oci.retry.DEFAULT_RETRY_STRATEGY
                     ).data
 
@@ -10172,15 +10249,23 @@ class ShowOCIService(object):
 
                 # load apis
                 for apig in apigs:
+                    if not self.check_lifecycle_state_active(apig.lifecycle_state):
+                        continue
+
                     val = {'id': str(apig.id),
                            'display_name': str(apig.display_name),
                            'endpoint_type': str(apig.endpoint_type),
                            'hostname': str(apig.hostname),
                            'subnet_id': str(apig.subnet_id),
                            'subnet_name': "",
+                           'nsg_ids': str(apig.network_security_group_ids),
+                           'nsg_names': str(self.__load_core_network_get_nsg_names(apig.network_security_group_ids)) if apig.network_security_group_ids else "",
                            'time_created': str(apig.time_created),
                            'time_updated': str(apig.time_updated),
-                           'compartment_name': str(compartment['name']), 'compartment_id': str(compartment['id']),
+                           'lifecycle_state': str(apig.lifecycle_state),
+                           'certificate_id': str(apig.certificate_id),
+                           'compartment_name': str(compartment['name']),
+                           'compartment_id': str(compartment['id']),
                            'compartment_path': str(compartment['path']),
                            'defined_tags': [] if apig.defined_tags is None else apig.defined_tags,
                            'freeform_tags': [] if apig.freeform_tags is None else apig.freeform_tags,
@@ -10227,7 +10312,6 @@ class ShowOCIService(object):
                 try:
                     apids = oci.pagination.list_call_get_all_results(
                         api_deployment_client.list_deployments, compartment_id=compartment['id'],
-                        lifecycle_state="ACTIVE",
                         retry_strategy=oci.retry.DEFAULT_RETRY_STRATEGY
                     ).data
 
@@ -10244,10 +10328,14 @@ class ShowOCIService(object):
 
                 # load deployment
                 for apid in apids:
+                    if not self.check_lifecycle_state_active(apid.lifecycle_state):
+                        continue
+
                     val = {'id': str(apid.id),
                            'gateway_id': str(apid.gateway_id),
                            'display_name': str(apid.display_name),
                            'path_prefix': str(apid.path_prefix),
+                           'lifecycle_state': str(apid.lifecycle_state),
                            'endpoint': str(apid.endpoint),
                            'time_created': str(apid.time_created),
                            'time_updated': str(apid.time_updated),
@@ -12401,6 +12489,7 @@ class ShowOCIService(object):
                         'is_file_server_enabled': str(oic.is_file_server_enabled),
                         'is_visual_builder_enabled': str(oic.is_visual_builder_enabled),
                         'shape': str(oic.shape),
+                        'network_endpoint_type': "",
                         'consumption_model': str(oic.consumption_model),
                         'defined_tags': [] if oic.defined_tags is None else oic.defined_tags,
                         'freeform_tags': [] if oic.freeform_tags is None else oic.freeform_tags,
@@ -12408,6 +12497,10 @@ class ShowOCIService(object):
                         'compartment_path': str(compartment['path']),
                         'compartment_id': str(compartment['id']),
                         'region_name': str(self.config['region'])}
+
+                    # end point
+                    if oic.network_endpoint_details:
+                        val['network_endpoint_type'] = str(oic.network_endpoint_details.network_endpoint_type)
 
                     # add the data
                     cnt += 1
@@ -12652,6 +12745,8 @@ class ShowOCIService(object):
                         # Fetch main OAC object for Vanity URL
                         try:
                             oac_main = oac_client.get_analytics_instance(oac.id, retry_strategy=oci.retry.DEFAULT_RETRY_STRATEGY).data
+                            val['defined_tags'] = [] if oac_main.defined_tags is None else oac_main.defined_tags
+                            val['freeform_tags'] = [] if oac_main.freeform_tags is None else oac_main.freeform_tags
                             if oac_main.vanity_url_details:
                                 for k, v in oac_main.vanity_url_details.items():
                                     if v:
@@ -13751,7 +13846,6 @@ class ShowOCIService(object):
                             'target_vcn_name': self.get_network_vcn(bs.target_vcn_id),
                             'target_subnet_id': str(bs.target_subnet_id),
                             'target_subnet_name': self.get_network_subnet(bs.target_subnet_id),
-
                             'time_created': str(bs.time_created),
                             'time_updated': str(bs.time_updated),
                             'lifecycle_state': str(bs.lifecycle_state),
