@@ -606,7 +606,7 @@ def handle_database_vm_bm(connection, cmd):
                 {'col': 'cluster_name        ', 'csv': '           ', 'type': 'varchar2(100) ', 'pk': 'n'},
                 {'col': 'domain              ', 'csv': '           ', 'type': 'varchar2(1000)', 'pk': 'n'},
                 {'col': 'db_nodes            ', 'csv': '           ', 'type': 'varchar2(4000)', 'pk': 'n'},
-                {'col': 'db_home             ', 'csv': '           ', 'type': 'varchar2(4000)', 'pk': 'n'},
+                {'col': 'db_homes            ', 'csv': '           ', 'type': 'varchar2(4000)', 'pk': 'n'},
                 {'col': 'infra_id            ', 'csv': '           ', 'type': 'varchar2(4000)', 'pk': 'n'},
                 {'col': 'defined_tags        ', 'csv': '           ', 'type': 'varchar2(4000)', 'pk': 'n'},
                 {'col': 'freeform_tags       ', 'csv': '           ', 'type': 'varchar2(4000)', 'pk': 'n'},

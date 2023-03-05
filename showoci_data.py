@@ -2896,6 +2896,7 @@ class ShowOCIData(object):
                     'cloud_exadata_infrastructure_id': vm['cloud_exadata_infrastructure_id'],
                     'hostname': vm['hostname'],
                     'domain': vm['domain'],
+                    'is_dedicated': True,
                     'available_cpus': vm['available_cpus'],
                     'reclaimable_cpus': vm['reclaimable_cpus'],
                     'available_container_databases': vm['available_container_databases'],

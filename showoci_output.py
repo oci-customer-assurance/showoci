@@ -5096,6 +5096,7 @@ class ShowOCICSV(object):
                                     'connection_strings': db['connection_strings'],
                                     'is_auto_scaling_enabled': db['is_auto_scaling_enabled'],
                                     'is_data_guard_enabled': db['is_data_guard_enabled'],
+                                    'is_dedicated': db['is_dedicated'],
                                     'standby_lag_time_in_seconds': db['standby_lag_time_in_seconds'],
                                     'standby_lifecycle_state': db['standby_lifecycle_state'],
                                     'time_of_last_switchover': db['time_of_last_switchover'],
