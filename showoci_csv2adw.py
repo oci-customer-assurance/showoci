@@ -1192,12 +1192,13 @@ def handle_table(connection, inputdata, csv_location, drop_before_load):
         insert_val_sql_columns = str(', '.join("b." + x['col'] for x in inputdata['items']))
         primary_key = next((col for col in inputdata['items'] if col['pk'] == "y"), None)['col']
         insert_bulk_func = str(', '.join(variable_generation(x, index) for index, x in enumerate(inputdata['items'], start=1)))
-        print("\nHandling " + csv_file)
 
         # Check if file exist
         if not os.path.isfile(path_filename):
-            print("   file " + path_filename + " does not exist, skipping...")
+            print("\nFile " + path_filename + " does not exist, skipping...")
             return
+
+        print("\nHandling " + table_name + " - " + path_filename)
 
         ################################################
         # Check Table Structure and create if not exist
@@ -1220,12 +1221,10 @@ def handle_table(connection, inputdata, csv_location, drop_before_load):
 
             # if main table not exist, create it
             if val == 0:
-                print("   Table " + table_name + " was not exist, creating")
+                print("   Table " + table_name + " was not exist, creating, ", end="")
                 sql = "create table " + table_name + " ( " + compute_sql_columns + " ,CONSTRAINT " + table_name + "_PK PRIMARY KEY (" + primary_key + ") USING INDEX) "
                 cursor.execute(sql)
-                print("   Table " + table_name + " created")
-            else:
-                print("   Table " + table_name + " exist")
+                print("Table " + table_name + " created")
 
             # check if temp table exist, if not create
             sql = "select count(*) from user_tables where table_name = :table_name"
@@ -1241,12 +1240,10 @@ def handle_table(connection, inputdata, csv_location, drop_before_load):
 
             # if table not exist, create it
             if val == 0:
-                print("   Table " + tmp_table_name + " was not exist, creating")
+                print("   Table " + tmp_table_name + " was not exist, creating, ", end="")
                 sql = "create GLOBAL TEMPORARY TABLE " + tmp_table_name + " ( " + compute_sql_columns + " ) ON COMMIT PRESERVE ROWS "
                 cursor.execute(sql)
-                print("   Table " + tmp_table_name + " created")
-            else:
-                print("   Table " + tmp_table_name + " exist")
+                print("Table " + tmp_table_name + " created")
 
         ################################################
         # Load Data
@@ -1296,7 +1293,7 @@ def handle_table(connection, inputdata, csv_location, drop_before_load):
                 if data:
                     cursor.executemany(sql, data)
 
-                print("   Completed file " + csv_file + " - " + str(num_rows) + " Rows Inserted")
+                print("   Loading data to tmp  table... Insert Completed, " + str(num_rows) + " Rows Inserted")
                 connection.commit()
 
         ################################################
@@ -1306,7 +1303,7 @@ def handle_table(connection, inputdata, csv_location, drop_before_load):
 
         with connection.cursor() as cursor:
 
-            print("   Merging data to main table...")
+            print("   Merging data to main table... ", end="")
 
             # run merge to oci_update_stats
             sql = "merge into " + table_name + " a using " + tmp_table_name + " b "
@@ -1320,9 +1317,7 @@ def handle_table(connection, inputdata, csv_location, drop_before_load):
 
             cursor.execute(sql)
             connection.commit()
-            print("   Merge Completed, " + str(cursor.rowcount) + " rows merged")
-
-            print("   " + csv_file + " Completed " + get_time_elapsed(start_time))
+            print("Merge  Completed, " + str(cursor.rowcount) + " rows merged" + get_time_elapsed(start_time))
 
     except oracledb.DatabaseError as e:
         print("\nDatabaseError at procedure: handle_table() - " + process_location + " - " + str(e) + "\n")
