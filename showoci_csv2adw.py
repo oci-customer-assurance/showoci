@@ -91,6 +91,8 @@ import time
 import os
 
 version = "23.03.14"
+cmd = None
+file_num = 0
 
 
 ##########################################################################
@@ -150,6 +152,7 @@ def set_parser_arguments():
     parser.add_argument('-wp', default="", dest='wallet_password', help='Wallet Password')
 
     parser.add_argument('-drop', action='store_true', default=False, dest='drop', help='Drop Tables before Load')
+    parser.add_argument('-verbose', action='store_true', default=False, dest='verbose', help='Print more details')
 
     parser.add_argument('--version', action='version', version='%(prog)s ' + version)
 
@@ -166,7 +169,7 @@ def set_parser_arguments():
 ##########################################################################
 # Check Table Structure for Compute
 ##########################################################################
-def handle_compute(connection, cmd):
+def handle_compute(connection):
     try:
 
         json = {
@@ -208,7 +211,7 @@ def handle_compute(connection, cmd):
                 {'col': 'extract_date          ', 'csv': '    ', 'type': 'date          ', 'pk': 'n'}
             ]
         }
-        handle_table(connection, json, cmd.csv_location, cmd.drop)
+        handle_table(connection, json)
     except Exception as e:
         raise Exception("\nError at procedure: handle_compute - " + str(e))
 
@@ -216,7 +219,7 @@ def handle_compute(connection, cmd):
 ##########################################################################
 # Check Table Structure for Block Storage
 ##########################################################################
-def handle_block_volume(connection, cmd):
+def handle_block_volume(connection):
     try:
 
         json = {
@@ -242,7 +245,7 @@ def handle_block_volume(connection, cmd):
                 {'col': 'extract_date       ', 'csv': '     ', 'type': 'date          ', 'pk': 'n'}
             ]
         }
-        handle_table(connection, json, cmd.csv_location, cmd.drop)
+        handle_table(connection, json)
     except Exception as e:
         raise Exception("\nError at procedure: handle_block_storage - " + str(e))
 
@@ -250,7 +253,7 @@ def handle_block_volume(connection, cmd):
 ##########################################################################
 # Check Table Structure for Database All
 ##########################################################################
-def handle_database_all(connection, cmd):
+def handle_database_all(connection):
     try:
 
         json = {
@@ -299,7 +302,7 @@ def handle_database_all(connection, cmd):
                 {'col': 'extract_date        ', 'csv': '     ', 'type': 'date          ', 'pk': 'n'}
             ]
         }
-        handle_table(connection, json, cmd.csv_location, cmd.drop)
+        handle_table(connection, json)
     except Exception as e:
         raise Exception("\nError at procedure: handle_database_all - " + str(e))
 
@@ -307,7 +310,7 @@ def handle_database_all(connection, cmd):
 ##########################################################################
 # Check Table Structure for handle_database_backups
 ##########################################################################
-def handle_database_backups(connection, cmd):
+def handle_database_backups(connection):
     try:
 
         json = {
@@ -332,7 +335,7 @@ def handle_database_backups(connection, cmd):
                 {'col': 'extract_date        ', 'csv': '     ', 'type': 'date          ', 'pk': 'n'}
             ]
         }
-        handle_table(connection, json, cmd.csv_location, cmd.drop)
+        handle_table(connection, json)
     except Exception as e:
         raise Exception("\nError at procedure: handle_database_backups - " + str(e))
 
@@ -340,7 +343,7 @@ def handle_database_backups(connection, cmd):
 ##########################################################################
 # Check Table Structure for handle_database_exa_cs_vms
 ##########################################################################
-def handle_database_exa_cs_vms(connection, cmd):
+def handle_database_exa_cs_vms(connection):
     try:
 
         json = {
@@ -389,7 +392,7 @@ def handle_database_exa_cs_vms(connection, cmd):
                 {'col': 'extract_date        ', 'csv': '     ', 'type': 'date          ', 'pk': 'n'}
             ]
         }
-        handle_table(connection, json, cmd.csv_location, cmd.drop)
+        handle_table(connection, json)
     except Exception as e:
         raise Exception("\nError at procedure: handle_database_exa_cs_vms - " + str(e))
 
@@ -397,7 +400,7 @@ def handle_database_exa_cs_vms(connection, cmd):
 ##########################################################################
 # Check Table Structure for handle_database_exa_infra
 ##########################################################################
-def handle_database_exa_infra(connection, cmd):
+def handle_database_exa_infra(connection):
     try:
 
         json = {
@@ -448,7 +451,7 @@ def handle_database_exa_infra(connection, cmd):
                 {'col': 'extract_date                 ', 'csv': '        ', 'type': 'date          ', 'pk': 'n'}
             ]
         }
-        handle_table(connection, json, cmd.csv_location, cmd.drop)
+        handle_table(connection, json)
     except Exception as e:
         raise Exception("\nError at procedure: handle_database_exa_infra - " + str(e))
 
@@ -456,7 +459,7 @@ def handle_database_exa_infra(connection, cmd):
 ##########################################################################
 # Check Table Structure for handle_database_exa_cc_vms
 ##########################################################################
-def handle_database_exa_cc_vms(connection, cmd):
+def handle_database_exa_cc_vms(connection):
     try:
 
         json = {
@@ -505,7 +508,7 @@ def handle_database_exa_cc_vms(connection, cmd):
                 {'col': 'extract_date        ', 'csv': '     ', 'type': 'date          ', 'pk': 'n'}
             ]
         }
-        handle_table(connection, json, cmd.csv_location, cmd.drop)
+        handle_table(connection, json)
     except Exception as e:
         raise Exception("\nError at procedure: handle_database_exa_cs_vms - " + str(e))
 
@@ -513,7 +516,7 @@ def handle_database_exa_cc_vms(connection, cmd):
 ##########################################################################
 # Check Table Structure for Database
 ##########################################################################
-def handle_database(connection, cmd):
+def handle_database(connection):
     try:
 
         json = {
@@ -560,7 +563,7 @@ def handle_database(connection, cmd):
                 {'col': 'extract_date        ', 'csv': '           ', 'type': 'date          ', 'pk': 'n'}
             ]
         }
-        handle_table(connection, json, cmd.csv_location, cmd.drop)
+        handle_table(connection, json)
     except Exception as e:
         raise Exception("\nError at procedure: handle_database - " + str(e))
 
@@ -568,7 +571,7 @@ def handle_database(connection, cmd):
 ##########################################################################
 # Check Table Structure for handle_database_vm_bm
 ##########################################################################
-def handle_database_vm_bm(connection, cmd):
+def handle_database_vm_bm(connection):
     try:
 
         json = {
@@ -614,7 +617,7 @@ def handle_database_vm_bm(connection, cmd):
                 {'col': 'extract_date        ', 'csv': '           ', 'type': 'date          ', 'pk': 'n'}
             ]
         }
-        handle_table(connection, json, cmd.csv_location, cmd.drop)
+        handle_table(connection, json)
     except Exception as e:
         raise Exception("\nError at procedure: handle_database_vm_bm - " + str(e))
 
@@ -622,7 +625,7 @@ def handle_database_vm_bm(connection, cmd):
 ##########################################################################
 # Check Table Structure for Databases
 ##########################################################################
-def handle_database_autonomous(connection, cmd):
+def handle_database_autonomous(connection):
     try:
 
         json = {
@@ -675,7 +678,7 @@ def handle_database_autonomous(connection, cmd):
                 {'col': 'extract_date                 ', 'csv': '     ', 'type': 'date          ', 'pk': 'n'}
             ]
         }
-        handle_table(connection, json, cmd.csv_location, cmd.drop)
+        handle_table(connection, json)
     except Exception as e:
         raise Exception("\nError at procedure: handle_database_autonomous - " + str(e))
 
@@ -683,7 +686,7 @@ def handle_database_autonomous(connection, cmd):
 ##########################################################################
 # Check Table Structure for File Storage
 ##########################################################################
-def handle_file_storage(connection, cmd):
+def handle_file_storage(connection):
     try:
 
         json = {
@@ -708,7 +711,7 @@ def handle_file_storage(connection, cmd):
                 {'col': 'extract_date       ', 'csv': '    ', 'type': 'date          ', 'pk': 'n'}
             ]
         }
-        handle_table(connection, json, cmd.csv_location, cmd.drop)
+        handle_table(connection, json)
     except Exception as e:
         raise Exception("\nError at procedure: handle_file_storage - " + str(e))
 
@@ -716,7 +719,7 @@ def handle_file_storage(connection, cmd):
 ##########################################################################
 # Check Table Structure for File Storage
 ##########################################################################
-def handle_object_storage(connection, cmd):
+def handle_object_storage(connection):
     try:
 
         json = {
@@ -750,7 +753,7 @@ def handle_object_storage(connection, cmd):
                 {'col': 'extract_date             ', 'csv': '          ', 'type': 'date          ', 'pk': 'n'}
             ]
         }
-        handle_table(connection, json, cmd.csv_location, cmd.drop)
+        handle_table(connection, json)
     except Exception as e:
         raise Exception("\nError at procedure: handle_object_storage - " + str(e))
 
@@ -758,7 +761,7 @@ def handle_object_storage(connection, cmd):
 ##########################################################################
 # Check Table Structure for load_balancer_listeners
 ##########################################################################
-def handle_load_balancer_listeners(connection, cmd):
+def handle_load_balancer_listeners(connection):
     try:
 
         json = {
@@ -795,7 +798,7 @@ def handle_load_balancer_listeners(connection, cmd):
                 {'col': 'extract_date       ', 'csv': '     ', 'type': 'date          ', 'pk': 'n'}
             ]
         }
-        handle_table(connection, json, cmd.csv_location, cmd.drop)
+        handle_table(connection, json)
     except Exception as e:
         raise Exception("\nError at procedure: handle_load_balancer_listeners - " + str(e))
 
@@ -803,7 +806,7 @@ def handle_load_balancer_listeners(connection, cmd):
 ##########################################################################
 # Check Table Structure for handle_load_balancer_backendset
 ##########################################################################
-def handle_load_balancer_backendset(connection, cmd):
+def handle_load_balancer_backendset(connection):
     try:
 
         json = {
@@ -835,7 +838,7 @@ def handle_load_balancer_backendset(connection, cmd):
                 {'col': 'extract_date       ', 'csv': '     ', 'type': 'date          ', 'pk': 'n'}
             ]
         }
-        handle_table(connection, json, cmd.csv_location, cmd.drop)
+        handle_table(connection, json)
     except Exception as e:
         raise Exception("\nError at procedure: handle_load_balancer_backendset - " + str(e))
 
@@ -843,7 +846,7 @@ def handle_load_balancer_backendset(connection, cmd):
 ##########################################################################
 # Check Table Structure for handle_load_oac
 ##########################################################################
-def handle_load_oac(connection, cmd):
+def handle_load_oac(connection):
     try:
 
         json = {
@@ -873,7 +876,7 @@ def handle_load_oac(connection, cmd):
                 {'col': 'extract_date            ', 'csv': '    ', 'type': 'date          ', 'pk': 'n'}
             ]
         }
-        handle_table(connection, json, cmd.csv_location, cmd.drop)
+        handle_table(connection, json)
     except Exception as e:
         raise Exception("\nError at procedure: handle_load_oac - " + str(e))
 
@@ -881,7 +884,7 @@ def handle_load_oac(connection, cmd):
 ##########################################################################
 # Check Table Structure for handle_load_oic
 ##########################################################################
-def handle_load_oic(connection, cmd):
+def handle_load_oic(connection):
     try:
 
         json = {
@@ -910,7 +913,7 @@ def handle_load_oic(connection, cmd):
                 {'col': 'extract_date             ', 'csv': '     ', 'type': 'date          ', 'pk': 'n'}
             ]
         }
-        handle_table(connection, json, cmd.csv_location, cmd.drop)
+        handle_table(connection, json)
     except Exception as e:
         raise Exception("\nError at procedure: handle_load_oic - " + str(e))
 
@@ -918,7 +921,7 @@ def handle_load_oic(connection, cmd):
 ##########################################################################
 # Check Table Structure for handle_load_oce
 ##########################################################################
-def handle_load_oce(connection, cmd):
+def handle_load_oce(connection):
     try:
 
         json = {
@@ -945,7 +948,7 @@ def handle_load_oce(connection, cmd):
                 {'col': 'extract_date             ', 'csv': '     ', 'type': 'date          ', 'pk': 'n'}
             ]
         }
-        handle_table(connection, json, cmd.csv_location, cmd.drop)
+        handle_table(connection, json)
     except Exception as e:
         raise Exception("\nError at procedure: handle_load_oce - " + str(e))
 
@@ -953,7 +956,7 @@ def handle_load_oce(connection, cmd):
 ##########################################################################
 # Check Table Structure for handle_load_visual_builder
 ##########################################################################
-def handle_load_visual_builder(connection, cmd):
+def handle_load_visual_builder(connection):
     try:
 
         json = {
@@ -981,7 +984,7 @@ def handle_load_visual_builder(connection, cmd):
                 {'col': 'extract_date              ', 'csv': '             ', 'type': 'date          ', 'pk': 'n'}
             ]
         }
-        handle_table(connection, json, cmd.csv_location, cmd.drop)
+        handle_table(connection, json)
     except Exception as e:
         raise Exception("\nError at procedure: handle_load_visual_builder - " + str(e))
 
@@ -989,7 +992,7 @@ def handle_load_visual_builder(connection, cmd):
 ##########################################################################
 # Check Table Structure for handle_load_containers
 ##########################################################################
-def handle_load_containers(connection, cmd):
+def handle_load_containers(connection):
     try:
 
         json = {
@@ -1035,7 +1038,7 @@ def handle_load_containers(connection, cmd):
                 {'col': 'extract_date                           ', 'csv': '             ', 'type': 'date          ', 'pk': 'n'}
             ]
         }
-        handle_table(connection, json, cmd.csv_location, cmd.drop)
+        handle_table(connection, json)
     except Exception as e:
         raise Exception("\nError at procedure: handle_load_visual_builder - " + str(e))
 
@@ -1043,7 +1046,7 @@ def handle_load_containers(connection, cmd):
 ##########################################################################
 # Check Table Structure for handle_load_containers_nodepools
 ##########################################################################
-def handle_load_containers_nodepools(connection, cmd):
+def handle_load_containers_nodepools(connection):
     try:
 
         json = {
@@ -1077,7 +1080,7 @@ def handle_load_containers_nodepools(connection, cmd):
                 {'col': 'extract_date              ', 'csv': '             ', 'type': 'date          ', 'pk': 'n'}
             ]
         }
-        handle_table(connection, json, cmd.csv_location, cmd.drop)
+        handle_table(connection, json)
     except Exception as e:
         raise Exception("\nError at procedure: handle_load_containers_nodepools - " + str(e))
 
@@ -1085,7 +1088,7 @@ def handle_load_containers_nodepools(connection, cmd):
 ##########################################################################
 # Check Table Structure for handle_load_apigw
 ##########################################################################
-def handle_load_apigw(connection, cmd):
+def handle_load_apigw(connection):
     try:
 
         json = {
@@ -1127,7 +1130,7 @@ def handle_load_apigw(connection, cmd):
                 {'col': 'extract_date             ', 'csv': '             ', 'type': 'date          ', 'pk': 'n'}
             ]
         }
-        handle_table(connection, json, cmd.csv_location, cmd.drop)
+        handle_table(connection, json)
     except Exception as e:
         raise Exception("\nError at procedure: handle_load_apigw - " + str(e))
 
@@ -1175,16 +1178,25 @@ def handle_old_structure(connection):
 ##########################################################################
 # Check Table Structure for Compute
 ##########################################################################
-def handle_table(connection, inputdata, csv_location, drop_before_load):
+def handle_table(connection, inputdata):
+    global cmd
+    global file_num
     process_location = "Start"
     try:
-
         start_time = time.time()
+        file_num += 1
+        file_num_str = str(str(file_num) + ".   ")[0:4]
+
+        # Input Parameters from CMD
+        csv_location = cmd.csv_location
+        drop_before_load = cmd.drop
+        verbose = cmd.verbose
 
         # Parameters
         csv_file = inputdata['csv_file']
         path_filename = csv_location + '_' + csv_file
         table_name = inputdata['table_name']
+        csv_table_name_lpad = str(table_name + ", " + csv_file).ljust(60, ' ')
         tmp_table_name = table_name + "_TMP"
         compute_sql_columns = str(',\n '.join(x['col'] + " " + x['type'] for x in inputdata['items']))
         merge_sql_columns = str(', '.join("a." + x['col'] + " = b." + x['col'] for x in inputdata['items'] if x['pk'] != "y"))
@@ -1195,10 +1207,16 @@ def handle_table(connection, inputdata, csv_location, drop_before_load):
 
         # Check if file exist
         if not os.path.isfile(path_filename):
-            print("\nFile " + path_filename + " does not exist, skipping...")
+            if verbose:
+                print("\nFile " + path_filename + " does not exist, skipping...")
+            else:
+                print(file_num_str + csv_table_name_lpad + " ---> Does not exist, skipping...")
             return
 
-        print("\nHandling " + table_name + " - " + path_filename)
+        if verbose:
+            print("\nHandling " + table_name + " - " + path_filename)
+        else:
+            print(file_num_str + csv_table_name_lpad, end="")
 
         ################################################
         # Check Table Structure and create if not exist
@@ -1214,17 +1232,23 @@ def handle_table(connection, inputdata, csv_location, drop_before_load):
 
             # if main table exist and drop before load
             if val > 0 and drop_before_load:
-                print("   Table " + table_name + " exist, but drop flag enabled, dropping..")
+                if verbose:
+                    print("   Table " + table_name + " exist, but drop flag enabled, dropping..")
+                else:
+                    print(" Drop Flag, ", end="")
+
                 sql = "drop table " + table_name
                 cursor.execute(sql)
                 val = 0
 
             # if main table not exist, create it
             if val == 0:
-                print("   Table " + table_name + " was not exist, creating, ", end="")
+                if verbose:
+                    print("   Table " + table_name + " was not exist, creating, ", end="")
                 sql = "create table " + table_name + " ( " + compute_sql_columns + " ,CONSTRAINT " + table_name + "_PK PRIMARY KEY (" + primary_key + ") USING INDEX) "
                 cursor.execute(sql)
-                print("Table " + table_name + " created")
+                if verbose:
+                    print("Table " + table_name + " created")
 
             # check if temp table exist, if not create
             sql = "select count(*) from user_tables where table_name = :table_name"
@@ -1233,17 +1257,20 @@ def handle_table(connection, inputdata, csv_location, drop_before_load):
 
             # if temp table exist and drop before load
             if val > 0 and drop_before_load:
-                print("   Table " + tmp_table_name + " exist, but drop flag enabled, dropping..")
+                if verbose:
+                    print("   Table " + tmp_table_name + " exist, but drop flag enabled, dropping..")
                 sql = "drop table " + tmp_table_name
                 cursor.execute(sql)
                 val = 0
 
             # if table not exist, create it
             if val == 0:
-                print("   Table " + tmp_table_name + " was not exist, creating, ", end="")
+                if verbose:
+                    print("   Table " + tmp_table_name + " was not exist, creating, ", end="")
                 sql = "create GLOBAL TEMPORARY TABLE " + tmp_table_name + " ( " + compute_sql_columns + " ) ON COMMIT PRESERVE ROWS "
                 cursor.execute(sql)
-                print("Table " + tmp_table_name + " created")
+                if verbose:
+                    print("Table " + tmp_table_name + " created")
 
         ################################################
         # Load Data
@@ -1293,7 +1320,11 @@ def handle_table(connection, inputdata, csv_location, drop_before_load):
                 if data:
                     cursor.executemany(sql, data)
 
-                print("   Loading data to tmp  table... Insert Completed, " + str(num_rows) + " Rows Inserted")
+                if verbose:
+                    print("   Loading data to tmp  table... Insert Completed, " + str(num_rows) + " Rows Inserted")
+                else:
+                    print(" TMP = " + str(num_rows).ljust(6), end="")
+
                 connection.commit()
 
         ################################################
@@ -1303,7 +1334,8 @@ def handle_table(connection, inputdata, csv_location, drop_before_load):
 
         with connection.cursor() as cursor:
 
-            print("   Merging data to main table... ", end="")
+            if verbose:
+                print("   Merging data to main table... ", end="")
 
             # run merge to oci_update_stats
             sql = "merge into " + table_name + " a using " + tmp_table_name + " b "
@@ -1317,7 +1349,10 @@ def handle_table(connection, inputdata, csv_location, drop_before_load):
 
             cursor.execute(sql)
             connection.commit()
-            print("Merge  Completed, " + str(cursor.rowcount) + " rows merged" + get_time_elapsed(start_time))
+            if verbose:
+                print("Merge  Completed, " + str(cursor.rowcount) + " rows merged" + get_time_elapsed(start_time))
+            else:
+                print(" Merged = " + str(cursor.rowcount) + " Rows.")
 
     except oracledb.DatabaseError as e:
         print("\nDatabaseError at procedure: handle_table() - " + process_location + " - " + str(e) + "\n")
@@ -1331,6 +1366,7 @@ def handle_table(connection, inputdata, csv_location, drop_before_load):
 # Main
 ##########################################################################
 def main_process():
+    global cmd
     cmd = set_parser_arguments()
     if cmd is None:
         exit()
@@ -1354,34 +1390,34 @@ def main_process():
     # connect to database
     ############################################
     try:
-        print("\nConnecting to database " + cmd.dname)
+        print("\nConnecting to database " + cmd.dname, end="")
         with oracledb.connect(user=cmd.duser, password=cmd.dpass, dsn=cmd.dname, config_dir=cmd.wallet_location, wallet_location=cmd.wallet_location, wallet_password=cmd.wallet_password) as connection:
 
-            print("   Connected")
+            print("...Connected\n")
 
             # Handling CSVs
             handle_old_structure(connection)
-            handle_compute(connection, cmd)
-            handle_block_volume(connection, cmd)
-            handle_database_all(connection, cmd)
-            handle_database(connection, cmd)
-            handle_database_backups(connection, cmd)
-            handle_database_exa_cs_vms(connection, cmd)
-            handle_database_exa_cc_vms(connection, cmd)
-            handle_database_exa_infra(connection, cmd)
-            handle_database_autonomous(connection, cmd)
-            handle_database_vm_bm(connection, cmd)
-            handle_file_storage(connection, cmd)
-            handle_object_storage(connection, cmd)
-            handle_load_balancer_listeners(connection, cmd)
-            handle_load_balancer_backendset(connection, cmd)
-            handle_load_oac(connection, cmd)
-            handle_load_oic(connection, cmd)
-            handle_load_oce(connection, cmd)
-            handle_load_visual_builder(connection, cmd)
-            handle_load_containers(connection, cmd)
-            handle_load_containers_nodepools(connection, cmd)
-            handle_load_apigw(connection, cmd)
+            handle_compute(connection)
+            handle_block_volume(connection)
+            handle_database_all(connection)
+            handle_database(connection)
+            handle_database_backups(connection)
+            handle_database_exa_cs_vms(connection)
+            handle_database_exa_cc_vms(connection)
+            handle_database_exa_infra(connection)
+            handle_database_autonomous(connection)
+            handle_database_vm_bm(connection)
+            handle_file_storage(connection)
+            handle_object_storage(connection)
+            handle_load_balancer_listeners(connection)
+            handle_load_balancer_backendset(connection)
+            handle_load_oac(connection)
+            handle_load_oic(connection)
+            handle_load_oce(connection)
+            handle_load_visual_builder(connection)
+            handle_load_containers(connection)
+            handle_load_containers_nodepools(connection)
+            handle_load_apigw(connection)
 
     except oracledb.DatabaseError as e:
         print("\nError manipulating database - " + str(e) + "\n")
